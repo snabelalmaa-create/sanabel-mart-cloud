@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سنابل مارت Cloud V24</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#111827;--muted:#64748b;--line:#e2e8f0;--primary:#5b35f5;--primary2:#11a36a;--dark:#07152f;--danger:#ef4444;--warn:#f59e0b;--ok:#16a34a;--blue:#2563eb;--shadow:0 20px 60px rgba(15,23,42,.10);--radius:22px}
+*{box-sizing:border-box}body{margin:0;font-family:Tajawal,Arial,sans-serif;background:radial-gradient(circle at top,#ffffff,#eef3fb 55%,#e9eef7);color:var(--text);font-size:16px;font-variant-numeric:tabular-nums}button,input,select,textarea{font-family:inherit;font-size:16px}button{cursor:pointer;border:0}.hide{display:none!important}.login{min-height:100vh;display:grid;place-items:center;padding:24px}.login-card{width:min(520px,100%);background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:32px;box-shadow:var(--shadow);padding:28px}.brand{display:flex;align-items:center;gap:14px;margin-bottom:18px}.logo{width:64px;height:64px;border-radius:22px;background:linear-gradient(135deg,#dcfce7,#4ade80);display:grid;place-items:center;font-size:34px}.brand h1{margin:0;font-size:30px;font-weight:900}.brand p{margin:4px 0 0;color:var(--muted)}.notice{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:18px;padding:13px;font-weight:800;line-height:1.7}.field{margin-top:14px}.field label{display:block;font-weight:900;margin-bottom:8px;color:#1e293b}.field input,.field select,.field textarea{width:100%;border:1px solid #cbd5e1;border-radius:16px;padding:14px;background:white;outline:0}.field input:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(91,53,245,.11)}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{border-radius:16px;padding:13px 18px;font-weight:900;background:linear-gradient(135deg,#2563eb,#6d28d9);color:#fff;box-shadow:0 12px 24px rgba(91,53,245,.2)}.btn.secondary{background:#0f172a}.btn.light{background:#eef2ff;color:#4338ca;box-shadow:none;border:1px solid #c7d2fe}.btn.ok{background:linear-gradient(135deg,#059669,#22c55e)}.btn.danger{background:linear-gradient(135deg,#dc2626,#ef4444)}.btn.warn{background:linear-gradient(135deg,#d97706,#f59e0b)}.app{display:grid;grid-template-columns:300px 1fr;min-height:100vh}.sidebar{background:linear-gradient(180deg,#08152f,#0b1f45);color:white;padding:20px;position:sticky;top:0;height:100vh;overflow:auto}.side-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}.side-brand .logo{width:52px;height:52px;font-size:27px}.side-brand h2{margin:0;font-size:22px}.side-brand p{margin:3px 0 0;color:#aab6d3;font-size:13px}.nav button{width:100%;display:flex;align-items:center;gap:10px;padding:14px;margin:8px 0;border-radius:16px;background:transparent;color:#dbeafe;text-align:right;font-weight:900}.nav button.active,.nav button:hover{background:linear-gradient(135deg,#1d4ed8,#7c3aed);color:white}.main{padding:24px}.topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}.topbar h1{margin:0;font-size:30px}.sub{color:var(--muted);margin-top:5px}.pill{background:white;border:1px solid var(--line);border-radius:999px;padding:10px 14px;font-weight:900;box-shadow:var(--shadow)}.grid{display:grid;gap:16px}.cards{grid-template-columns:repeat(4,minmax(170px,1fr));margin-bottom:18px}.card{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;overflow:hidden}.stat{position:relative}.stat:after{content:"";position:absolute;width:110px;height:110px;left:-35px;bottom:-45px;background:rgba(91,53,245,.08);border-radius:50%}.stat .label{color:var(--muted);font-weight:900}.stat .value{font-size:27px;font-weight:900;margin-top:8px}.stat .hint{color:var(--muted);font-size:13px;margin-top:5px}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:repeat(3,1fr)}.section{display:none}.section.active{display:block}.panel-title{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px}.panel-title h2,.panel-title h3{margin:0}.form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.table-wrap{overflow:auto}table{width:100%;border-collapse:separate;border-spacing:0 9px}th{font-size:13px;color:#64748b;text-align:right;padding:0 12px}td{background:white;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px;vertical-align:middle}td:first-child{border-right:1px solid var(--line);border-radius:0 14px 14px 0}td:last-child{border-left:1px solid var(--line);border-radius:14px 0 0 14px}.badge{display:inline-block;border-radius:999px;padding:5px 10px;font-size:13px;font-weight:900}.badge.ok{background:#dcfce7;color:#166534}.badge.warn{background:#fef3c7;color:#92400e}.badge.danger{background:#fee2e2;color:#991b1b}.badge.blue{background:#dbeafe;color:#1d4ed8}.timecell{direction:ltr;text-align:right}.empty{text-align:center;color:#64748b;padding:24px}.mobile-wrap{max-width:620px;margin:auto}.scanner{height:190px;border-radius:24px;border:2px dashed #93c5fd;background:linear-gradient(135deg,#eff6ff,#f8fafc);display:grid;place-items:center;color:#2563eb;font-weight:900;text-align:center;margin:12px 0}.toast{position:fixed;bottom:18px;left:18px;background:#0f172a;color:white;border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);z-index:9999;display:none}.toast.show{display:block}.small{font-size:13px;color:var(--muted)}@media(max-width:1000px){.app{grid-template-columns:1fr}.sidebar{height:auto;position:relative}.cards,.two,.three,.form{grid-template-columns:1fr}.main{padding:14px}.topbar{align-items:flex-start;flex-direction:column}}@media print{.sidebar,.topbar,.actions,.no-print{display:none!important}.app{display:block}.main{padding:0}.card{box-shadow:none;border:1px solid #ddd}body{background:white}}
+</style>
+</head>
+<body>
+<div id="login" class="login">
+  <div class="login-card">
+    <div class="brand"><div class="logo">🛒</div><div><h1>سنابل مارت</h1><p>النظام السحابي لإغلاق الورديات والاستلام</p></div></div>
+    <div class="notice">نسخة V24 Cloud متصلة بـ Supabase. اختر المستخدم وأدخل الرقم السري.</div>
+    <div class="field"><label>اختر المستخدم</label><select id="loginUser"><option>جاري تحميل المستخدمين...</option></select></div>
+    <div class="field"><label>الرقم السري PIN</label><input id="loginPin" type="password" placeholder="ادخل الرقم السري"></div>
+    <div class="actions"><button class="btn" onclick="login()">دخول للنظام</button><button class="btn light" onclick="loadUsers()">تحديث المستخدمين</button></div>
+    <p class="small" id="loginMsg">إذا لم تظهر الأسماء، تأكد من تشغيل SQL وسياسات V20.</p>
+  </div>
+</div>
+<div id="app" class="app hide">
+  <aside class="sidebar">
+    <div class="side-brand"><div class="logo">🛒</div><div><h2>سنابل مارت</h2><p id="orgName">النظام السحابي</p></div></div>
+    <div class="nav" id="nav"></div>
+    <div class="notice" style="font-size:13px;margin-top:18px">المستخدم: <b id="sideUser"></b><br>الصلاحية: <b id="sideRole"></b></div>
+    <div class="actions"><button class="btn light" onclick="logout()">تسجيل خروج</button></div>
+  </aside>
+  <main class="main">
+    <div class="topbar"><div><h1 id="pageTitle">لوحة المدير</h1><div class="sub" id="pageSub">متابعة مباشرة للورديات والاستلام.</div></div><div class="pill" id="todayPill"></div></div>
+    <section id="dashboard" class="section active">
+      <div class="grid cards" id="stats"></div>
+      <div class="grid two">
+        <div class="card"><div class="panel-title"><h3>ورديات بانتظار الاعتماد</h3><button class="btn light" onclick="loadAll()">تحديث</button></div><div class="table-wrap"><table id="pendingTable"></table></div></div>
+        <div class="card"><div class="panel-title"><h3>آخر الورديات</h3></div><div class="table-wrap"><table id="latestTable"></table></div></div>
+      </div>
+    </section>
+    <section id="mobileShift" class="section">
+      <div class="mobile-wrap">
+        <div class="card"><div class="panel-title"><h2>إغلاق وردية الكاشير</h2><span class="badge blue">جوال</span></div>
+          <div class="form">
+            <div class="field"><label>التاريخ</label><input id="shDate" type="date"></div>
+            <div class="field"><label>رقم الوردية</label><input id="shNo" placeholder="مثال: 1"></div>
+            <div class="field"><label>نقدي</label><input id="shCash" type="number" step="0.01" value="0"></div>
+            <div class="field"><label>شبكة</label><input id="shCard" type="number" step="0.01" value="0"></div>
+            <div class="field"><label>تحويل</label><input id="shTransfer" type="number" step="0.01" value="0"></div>
+            <div class="field"><label>آجل</label><input id="shCredit" type="number" step="0.01" value="0"></div>
+            <div class="field"><label>مرتجع</label><input id="shReturns" type="number" step="0.01" value="0"></div>
+            <div class="field"><label>ملاحظة</label><input id="shNote" placeholder="اختياري"></div>
+          </div>
+          <div class="scanner">📷 لاحقًا: تصوير درج الكاش / تقرير الشبكة / توقيع الكاشير</div>
+          <div class="actions"><button class="btn ok" onclick="submitShift()">إرسال الوردية للإدارة</button><button class="btn light" onclick="clearShift()">تفريغ</button></div>
+        </div>
+      </div>
+    </section>
+    <section id="managerReview" class="section">
+      <div class="card"><div class="panel-title"><h2>مراجعة واعتماد الورديات</h2><button class="btn light" onclick="loadShifts()">تحديث</button></div><div class="table-wrap"><table id="reviewTable"></table></div></div>
+      <div class="card" id="reviewCard" style="display:none"><div class="panel-title"><h3>تفاصيل الوردية</h3><span id="reviewBadge"></span></div>
+        <div class="grid cards" id="reviewStats"></div>
+        <div class="form">
+          <div class="field"><label>مبيعات سمارت</label><input id="rvSmart" type="number" step="0.01"></div>
+          <div class="field"><label>ملاحظة المدير</label><input id="rvNote" placeholder="اختياري"></div>
+        </div>
+        <div class="actions"><button class="btn ok" onclick="approveShift()">اعتماد الوردية</button><button class="btn warn" onclick="saveReviewOnly()">حفظ مراجعة فقط</button><button class="btn light" onclick="sendWhatsapp()">إرسال واتساب</button></div>
+      </div>
+    </section>
+    <section id="receiving" class="section">
+      <div class="card"><div class="panel-title"><h2>استلام البضاعة بالباركود</h2><span class="badge warn">مرحلة تجريبية</span></div>
+        <div class="form"><div class="field"><label>المورد</label><input id="recSupplier" placeholder="اسم المورد"></div><div class="field"><label>رقم الفاتورة</label><input id="recInvoice" placeholder="رقم الفاتورة"></div><div class="field"><label>التاريخ</label><input id="recDate" type="date"></div><div class="field"><label>ملاحظة</label><input id="recNote"></div></div>
+        <div class="scanner">📷 قارئ باركود احترافي سيضاف هنا: الكاميرا مفتوحة، تكرار القراءة يزيد الكمية، صوت واهتزاز.</div>
+        <div class="actions"><button class="btn" onclick="createReceivingOrder()">إرسال استلام تجريبي</button></div>
+      </div>
+      <div class="card"><div class="panel-title"><h3>استلامات اليوم</h3></div><div class="table-wrap"><table id="receivingTable"></table></div></div>
+    </section>
+
+    <section id="posDevices" class="section">
+      <div class="card"><div class="panel-title"><h2>إعداد أجهزة نقاط البيع</h2><div class="actions"><button class="btn light" onclick="resetDeviceForm()">جديد</button><button class="btn light" onclick="loadPosDevices()">تحديث</button></div></div>
+        <div class="notice">أضف رقم الجهاز مرة واحدة مع اسم البنك والوصف، وبعدها يظهر تلقائياً في شاشة مطابقة الشبكة.</div>
+        <input id="devId" type="hidden">
+        <div class="form">
+          <div class="field"><label>رقم الجهاز</label><input id="devNo" placeholder="مثال: 001"></div>
+          <div class="field"><label>اسم البنك</label><input id="devBank" placeholder="الراجحي / الأهلي / الإنماء"></div>
+          <div class="field"><label>الوصف</label><input id="devDesc" placeholder="مثال: كاشير 1"></div>
+          <div class="field"><label>الحالة</label><select id="devActive"><option value="true">نشط</option><option value="false">متوقف</option></select></div>
+        </div>
+        <div class="actions"><button class="btn ok" onclick="saveDevice()">حفظ الجهاز</button></div>
+      </div>
+      <div class="card"><div class="panel-title"><h3>قائمة الأجهزة</h3></div><div class="table-wrap"><table id="devicesTable"></table></div></div>
+    </section>
+
+    <section id="networkMatch" class="section">
+      <div class="card"><div class="panel-title"><h2>مطابقة رصيد الشبكة</h2><div class="actions"><button class="btn light" onclick="loadNetworkMatches()">تحديث</button><button class="btn light" onclick="printNetworkMatch()">🖨️ طباعة</button></div></div>
+        <div class="notice">هذه الشاشة مخصصة فقط لمطابقة أجهزة الشبكة: رقم الجهاز، رقم الموازنة، قيمة الموازنة، ما نزل في البنك، والرسوم. لا يظهر فيها النقدي ولا بيانات الوردية.</div>
+        <input id="nwId" type="hidden">
+        <div class="form">
+          <div class="field"><label>التاريخ</label><input id="nwDate" type="date"></div>
+          <div class="field"><label>رقم الجهاز</label><select id="nwDevice" onchange="fillDeviceInfo()"><option value="">اختر الجهاز</option></select></div>
+          <div class="field"><label>اسم البنك</label><input id="nwBank" readonly placeholder="يظهر تلقائياً"></div>
+          <div class="field"><label>الوصف</label><input id="nwDesc" readonly placeholder="يظهر تلقائياً"></div>
+          <div class="field"><label>رقم الموازنة</label><input id="nwBalanceNo" placeholder="رقم الموازنة / التقرير"></div>
+          <div class="field"><label>قيمة الموازنة</label><input id="nwBalanceValue" type="number" step="0.01" value="0" oninput="previewNetworkPending()"></div>
+          <div class="field"><label>نزل في البنك</label><input id="nwDeposit" type="number" step="0.01" value="0" oninput="previewNetworkPending()"></div>
+          <div class="field"><label>رسوم البنك</label><input id="nwFee" type="number" step="0.01" value="0" oninput="previewNetworkPending()"></div>
+          <div class="field"><label>المبلغ المعلق</label><input id="nwPending" readonly value="0.00"></div>
+          <div class="field"><label>ملاحظة</label><input id="nwNote" placeholder="اختياري"></div>
+        </div>
+        <div class="actions"><button class="btn ok" onclick="saveNetworkMatch()">حفظ المطابقة</button><button class="btn light" onclick="resetNetworkForm()">تفريغ</button></div>
+      </div>
+      <div class="grid cards" id="networkStats"></div>
+      <div class="card"><div class="panel-title"><h3>سجل مطابقة الشبكة</h3></div><div class="table-wrap"><table id="networkMatchTable"></table></div></div>
+    </section>
+
+    <section id="users" class="section">
+      <div class="card">
+        <div class="panel-title"><h2>إدارة المستخدمين والصلاحيات</h2><button class="btn light" onclick="loadUsers();renderUsers()">تحديث</button></div>
+        <div class="notice">أضف المستخدمين من هنا وحدد الصلاحية والـ PIN. يمكن إيقاف المستخدم بدون حذف سجله.</div>
+        <input id="usrId" type="hidden">
+        <div class="form">
+          <div class="field"><label>اسم المستخدم</label><input id="usrName" placeholder="مثال: أحمد عسيري"></div>
+          <div class="field"><label>رقم الجوال</label><input id="usrPhone" placeholder="9665xxxxxxxx أو 05xxxxxxxx"></div>
+          <div class="field"><label>PIN</label><input id="usrPin" placeholder="مثال: 1234"></div>
+          <div class="field"><label>الصلاحية</label><select id="usrRole">
+            <option value="owner">مدير عام</option><option value="manager">مدير</option><option value="accountant">محاسب</option><option value="cashier">كاشير</option><option value="purchase_manager">مدير مشتريات</option><option value="receiver">موظف استلام</option>
+          </select></div>
+        </div>
+        <div class="actions"><button class="btn ok" onclick="saveUser()">حفظ المستخدم</button><button class="btn light" onclick="resetUserForm()">جديد</button></div>
+      </div>
+      <div class="card"><div class="panel-title"><h3>قائمة المستخدمين</h3><div class="actions" style="margin:0"><button class="btn light" onclick="printUsers()">🖨️ طباعة</button></div></div><div class="table-wrap"><table id="usersTable"></table></div></div>
+    </section>
+  </main>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
+const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
+const ORG_ID='41e9d7b4-71c1-4de4-b797-f7f5d5e1817d';
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let users=[], currentUser=null, shifts=[], receiving=[], selectedShift=null, posDevices=[], networkMatches=[];
+const roleMap={owner:'مدير عام',manager:'مدير',accountant:'محاسب',cashier:'كاشير',purchase_manager:'مدير مشتريات',receiver:'موظف استلام'};
+const tabsAll=[['dashboard','🏠','لوحة المدير',['owner','manager','accountant','purchase_manager']],['mobileShift','📱','إغلاق وردية الجوال',['cashier','owner']],['managerReview','✅','اعتماد الورديات',['owner','manager','accountant']],['networkMatch','🏦','مطابقة الشبكة',['owner','manager','accountant']],['posDevices','💳','أجهزة الشبكة',['owner','manager','accountant']],['receiving','📦','استلام البضاعة',['receiver','purchase_manager','owner']],['users','👥','المستخدمون',['owner','manager']]];
+function byId(id){return document.getElementById(id)}
+function n(v){return Number(v||0)}
+function money(v){return n(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ر.س'}
+function today(){return new Date().toISOString().slice(0,10)}
+function toast(msg){const t=byId('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500)}
+function rowsTable(headers,rows){if(!rows.length)return '<div class="empty">لا توجد بيانات</div>';return `<thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody>`}
+function stat(label,value,hint=''){return `<div class="card stat"><div class="label">${label}</div><div class="value">${value}</div><div class="hint">${hint}</div></div>`}
+async function loadUsers(){byId('loginMsg').textContent='جاري تحميل المستخدمين...';const {data,error}=await db.from('app_users').select('*').eq('organization_id',ORG_ID).order('full_name');if(error){byId('loginMsg').textContent='خطأ في تحميل المستخدمين: '+error.message;return}users=data||[];const active=users.filter(u=>u.is_active!==false);byId('loginUser').innerHTML=active.map(u=>`<option value="${u.id}">${u.full_name} - ${roleMap[u.role]||u.role}</option>`).join('');const qp=new URLSearchParams(location.search);const uid=qp.get('user');if(uid&&active.some(u=>u.id===uid))byId('loginUser').value=uid;byId('loginMsg').textContent=active.length?'تم تحميل المستخدمين.':'لا يوجد مستخدمون نشطون.';renderUsers()}
+async function login(){const id=byId('loginUser').value,pin=byId('loginPin').value;const u=users.find(x=>x.id===id);if(!u)return alert('اختر المستخدم');if(String(u.pin)!==String(pin))return alert('الرقم السري غير صحيح');currentUser=u;localStorage.setItem('sanabel_cloud_user',JSON.stringify(u));startApp()}
+function logout(){localStorage.removeItem('sanabel_cloud_user');location.reload()}
+async function startApp(){byId('login').classList.add('hide');byId('app').classList.remove('hide');byId('sideUser').textContent=currentUser.full_name;byId('sideRole').textContent=roleMap[currentUser.role]||currentUser.role;byId('todayPill').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});byId('shDate').value=today();byId('recDate').value=today(); if(byId('nwDate'))byId('nwDate').value=today();renderNav();await loadAll();subscribeRealtime()}
+function renderNav(){const tabs=tabsAll.filter(t=>t[3].includes(currentUser.role));byId('nav').innerHTML=tabs.map((t,i)=>`<button class="${i?'':'active'}" onclick="show('${t[0]}',this)"><span>${t[1]}</span><span>${t[2]}</span></button>`).join('');show(tabs[0][0],byId('nav').querySelector('button'))}
+function show(id,btn){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));byId(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');const tab=tabsAll.find(t=>t[0]===id);byId('pageTitle').textContent=tab?tab[2]:'سنابل مارت'}
+async function loadAll(){await Promise.all([loadShifts(),loadReceiving(),loadPosDevices(),loadNetworkMatches()]);renderDashboard();}
+async function loadShifts(){const {data,error}=await db.from('cashier_shifts').select('*, app_users(full_name, phone)').eq('organization_id',ORG_ID).order('created_at',{ascending:false});if(error){toast('خطأ الورديات: '+error.message);return}shifts=data||[];renderShifts()}
+function calcShift(r){const entered=n(r.cash)+n(r.card)+n(r.transfer)+n(r.credit)-n(r.returns);const diff=n(r.smart_sales)-entered;return {entered,diff,shortage:diff>0?diff:0,surplus:diff<0?Math.abs(diff):0}}
+function renderDashboard(){const pending=shifts.filter(s=>s.status==='pending').length;const approved=shifts.filter(s=>s.status==='approved').length;const total=shifts.reduce((a,s)=>a+calcShift(s).entered,0);const shortage=shifts.reduce((a,s)=>a+n(s.shortage),0);const net=networkTotals();byId('stats').innerHTML=stat('ورديات بانتظار الاعتماد',pending,'تظهر فوراً من الجوال')+stat('ورديات معتمدة',approved,'إجمالي المعتمد')+stat('إجمالي المبيعات المسجلة',money(total),'حسب إدخال الكاشير')+stat('الشبكة المعلقة',money(net.pending),'حسب الموازنات');const pRows=shifts.filter(s=>s.status==='pending').slice(0,8).map(s=>shiftRow(s,true));byId('pendingTable').innerHTML=rowsTable(['التاريخ','الكاشير','الوردية','الإجمالي','الحالة','إجراء'],pRows);byId('latestTable').innerHTML=rowsTable(['التاريخ','الكاشير','الوردية','الإجمالي','الحالة'],shifts.slice(0,8).map(s=>shiftRow(s,false)))}
+function shiftRow(s,action){const c=calcShift(s);const status=s.status==='approved'?'<span class="badge ok">معتمدة</span>':s.status==='reviewed'?'<span class="badge blue">مراجعة</span>':s.status==='rejected'?'<span class="badge danger">مرفوضة</span>':'<span class="badge warn">بانتظار</span>';return `<tr><td>${s.shift_date}</td><td>${s.app_users?.full_name||'-'}</td><td>${s.shift_no||'-'}</td><td><b>${money(c.entered)}</b></td><td>${status}</td>${action?`<td><button class="btn light" onclick="openReview('${s.id}')">فتح</button></td>`:''}</tr>`}
+function renderShifts(){byId('reviewTable').innerHTML=rowsTable(['التاريخ','الكاشير','الوردية','نقدي','شبكة','تحويل','آجل','سمارت','العجز','الزيادة','الحالة','إجراء'],shifts.map(s=>{const c=calcShift(s);return `<tr><td>${s.shift_date}</td><td>${s.app_users?.full_name||'-'}</td><td>${s.shift_no||'-'}</td><td>${money(s.cash)}</td><td>${money(s.card)}</td><td>${money(s.transfer)}</td><td>${money(s.credit)}</td><td>${money(s.smart_sales)}</td><td><span class="badge ${n(s.shortage)>0?'danger':'ok'}">${money(s.shortage)}</span></td><td><span class="badge ${n(s.surplus)>0?'blue':'ok'}">${money(s.surplus)}</span></td><td>${s.status}</td><td><button class="btn light" onclick="openReview('${s.id}')">مراجعة</button></td></tr>`}))}
+async function submitShift(){if(!currentUser||!['cashier','owner'].includes(currentUser.role))return alert('هذه الشاشة للكاشير');const payload={organization_id:ORG_ID,cashier_id:currentUser.id,shift_no:byId('shNo').value,shift_date:byId('shDate').value,cash:n(byId('shCash').value),card:n(byId('shCard').value),transfer:n(byId('shTransfer').value),credit:n(byId('shCredit').value),returns:n(byId('shReturns').value),cashier_note:byId('shNote').value,status:'pending',created_by:currentUser.id};const {error}=await db.from('cashier_shifts').insert(payload);if(error)return alert('خطأ الحفظ: '+error.message);toast('تم إرسال الوردية للإدارة');clearShift();await loadShifts();}
+function clearShift(){['shNo','shNote'].forEach(id=>byId(id).value='');['shCash','shCard','shTransfer','shCredit','shReturns'].forEach(id=>byId(id).value=0);byId('shDate').value=today()}
+function openReview(id){selectedShift=shifts.find(s=>s.id===id);if(!selectedShift)return;show('managerReview',[...document.querySelectorAll('.nav button')].find(b=>b.textContent.includes('اعتماد')));byId('reviewCard').style.display='block';const c=calcShift(selectedShift);byId('reviewStats').innerHTML=stat('إجمالي الكاشير',money(c.entered),'نقدي + شبكة + تحويل + آجل - مرتجع')+stat('مبيعات سمارت',money(selectedShift.smart_sales),'يدخلها المدير')+stat('العجز',money(selectedShift.shortage),'إذا سمارت أكبر')+stat('الزيادة',money(selectedShift.surplus),'إذا الكاشير أكبر');byId('rvSmart').value=n(selectedShift.smart_sales);byId('rvNote').value=selectedShift.manager_note||'';byId('reviewBadge').innerHTML=selectedShift.status==='approved'?'<span class="badge ok">معتمدة</span>':'<span class="badge warn">بانتظار الاعتماد</span>';setTimeout(()=>byId('reviewCard').scrollIntoView({behavior:'smooth'}),80)}
+async function saveReview(status='reviewed'){if(!selectedShift)return;const entered=n(selectedShift.cash)+n(selectedShift.card)+n(selectedShift.transfer)+n(selectedShift.credit)-n(selectedShift.returns);const diff=n(byId('rvSmart').value)-entered;const payload={smart_sales:n(byId('rvSmart').value),shortage:diff>0?diff:0,surplus:diff<0?Math.abs(diff):0,status,manager_note:byId('rvNote').value,reviewed_by:currentUser.id,reviewed_at:new Date().toISOString()};if(status==='approved'){payload.approved_by=currentUser.id;payload.approved_at=new Date().toISOString()}const {error}=await db.from('cashier_shifts').update(payload).eq('id',selectedShift.id);if(error)return alert(error.message);toast(status==='approved'?'تم اعتماد الوردية':'تم حفظ المراجعة');await loadShifts();selectedShift={...selectedShift,...payload};openReview(selectedShift.id)}
+function saveReviewOnly(){saveReview('reviewed')}function approveShift(){saveReview('approved')}
+function sendWhatsapp(){if(!selectedShift)return;const c=calcShift({...selectedShift,smart_sales:n(byId('rvSmart').value)});const phone=(selectedShift.app_users?.phone||'').replace(/\D/g,'');const msg=`سنابل مارت%0Aتمت مراجعة ورديتك.%0Aالتاريخ: ${selectedShift.shift_date}%0Aالوردية: ${selectedShift.shift_no||'-'}%0Aالكاشير: ${selectedShift.app_users?.full_name||'-'}%0Aإجمالي المسجل: ${money(c.entered)}%0Aمبيعات سمارت: ${money(n(byId('rvSmart').value))}%0Aالعجز: ${money(c.shortage)}%0Aالزيادة: ${money(c.surplus)}%0Aالحالة: ${selectedShift.status==='approved'?'معتمدة':'تحت المراجعة'}`;window.open(`https://wa.me/${phone?phone:''}?text=${msg}`,'_blank')}
+async function createReceivingOrder(){const payload={organization_id:ORG_ID,supplier_name:byId('recSupplier').value,invoice_no:byId('recInvoice').value,invoice_date:byId('recDate').value,status:'pending',receiver_id:currentUser.id,note:byId('recNote').value};const {error}=await db.from('receiving_orders').insert(payload);if(error)return alert(error.message);toast('تم إرسال الاستلام التجريبي');await loadReceiving()}
+async function loadReceiving(){const {data,error}=await db.from('receiving_orders').select('*').eq('organization_id',ORG_ID).order('created_at',{ascending:false});if(error){console.warn(error);return}receiving=data||[];byId('receivingTable').innerHTML=rowsTable(['التاريخ','المورد','الفاتورة','الحالة','ملاحظة'],receiving.map(r=>`<tr><td>${r.invoice_date||'-'}</td><td>${r.supplier_name||'-'}</td><td>${r.invoice_no||'-'}</td><td><span class="badge warn">${r.status}</span></td><td>${r.note||'-'}</td></tr>`))}
+
+async function loadPosDevices(){
+  const {data,error}=await db.from('pos_devices').select('*').eq('organization_id',ORG_ID).order('device_no');
+  if(error){console.warn(error); if(byId('devicesTable')) byId('devicesTable').innerHTML='<div class="empty">شغّل تحديث قاعدة البيانات V24 لإضافة جدول الأجهزة.</div>'; return}
+  posDevices=data||[]; renderPosDevices(); fillDeviceSelect();
+}
+function fillDeviceSelect(){
+  const sel=byId('nwDevice'); if(!sel)return;
+  sel.innerHTML='<option value="">اختر الجهاز</option>'+posDevices.filter(d=>d.is_active!==false).map(d=>`<option value="${d.id}">${d.device_no} - ${d.bank_name||''} - ${d.description||''}</option>`).join('');
+}
+function renderPosDevices(){
+  if(!byId('devicesTable'))return;
+  byId('devicesTable').innerHTML=rowsTable(['رقم الجهاز','اسم البنك','الوصف','الحالة','إجراء'],posDevices.map(d=>`<tr><td><b>${d.device_no||'-'}</b></td><td>${d.bank_name||'-'}</td><td>${d.description||'-'}</td><td>${d.is_active!==false?'<span class="badge ok">نشط</span>':'<span class="badge danger">متوقف</span>'}</td><td><button class="btn light" onclick="editDevice('${d.id}')">تعديل</button> <button class="btn warn" onclick="toggleDevice('${d.id}')">${d.is_active!==false?'إيقاف':'تفعيل'}</button></td></tr>`));
+}
+function resetDeviceForm(){ if(!byId('devId'))return; devId.value=''; devNo.value=''; devBank.value=''; devDesc.value=''; devActive.value='true'; }
+function editDevice(id){const d=posDevices.find(x=>x.id===id); if(!d)return; devId.value=d.id; devNo.value=d.device_no||''; devBank.value=d.bank_name||''; devDesc.value=d.description||''; devActive.value=String(d.is_active!==false); toast('تم تحميل بيانات الجهاز للتعديل')}
+async function saveDevice(){
+  const payload={organization_id:ORG_ID,device_no:(devNo.value||'').trim(),bank_name:(devBank.value||'').trim(),description:(devDesc.value||'').trim(),is_active:devActive.value==='true',created_by:currentUser?.id};
+  if(!payload.device_no)return alert('أدخل رقم الجهاز');
+  let res=devId.value?await db.from('pos_devices').update(payload).eq('id',devId.value):await db.from('pos_devices').insert(payload);
+  if(res.error)return alert('خطأ حفظ الجهاز: '+res.error.message);
+  toast('تم حفظ الجهاز'); resetDeviceForm(); await loadPosDevices();
+}
+async function toggleDevice(id){const d=posDevices.find(x=>x.id===id); if(!d)return; const {error}=await db.from('pos_devices').update({is_active:!(d.is_active!==false)}).eq('id',id); if(error)return alert(error.message); await loadPosDevices();}
+function fillDeviceInfo(){const d=posDevices.find(x=>x.id===byId('nwDevice').value); byId('nwBank').value=d?.bank_name||''; byId('nwDesc').value=d?.description||''; previewNetworkPending();}
+function previewNetworkPending(){const p=n(byId('nwBalanceValue')?.value)-n(byId('nwDeposit')?.value)-n(byId('nwFee')?.value); if(byId('nwPending')) byId('nwPending').value=p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function resetNetworkForm(){ if(!byId('nwId'))return; nwId.value=''; nwDate.value=today(); nwDevice.value=''; nwBank.value=''; nwDesc.value=''; nwBalanceNo.value=''; nwBalanceValue.value=0; nwDeposit.value=0; nwFee.value=0; nwPending.value='0.00'; nwNote.value='';}
+async function saveNetworkMatch(){
+  const d=posDevices.find(x=>x.id===byId('nwDevice').value);
+  if(!d)return alert('اختر رقم الجهاز');
+  const payload={organization_id:ORG_ID,tx_date:byId('nwDate').value,device_name:d.device_no,bank_name:d.bank_name||'',device_description:d.description||'',balance_no:(byId('nwBalanceNo').value||'').trim(),smart_card_sales:n(byId('nwBalanceValue').value),bank_deposit:n(byId('nwDeposit').value),bank_fee:n(byId('nwFee').value),pos_device_id:d.id,note:byId('nwNote').value,created_by:currentUser?.id};
+  if(!payload.tx_date)return alert('حدد التاريخ');
+  if(!payload.balance_no)return alert('أدخل رقم الموازنة');
+  let res=nwId.value?await db.from('bank_reconciliations').update(payload).eq('id',nwId.value):await db.from('bank_reconciliations').insert(payload);
+  if(res.error)return alert('خطأ حفظ المطابقة: '+res.error.message);
+  toast('تم حفظ مطابقة الشبكة'); resetNetworkForm(); await loadNetworkMatches(); renderDashboard();
+}
+async function loadNetworkMatches(){
+  const {data,error}=await db.from('bank_reconciliations').select('*').eq('organization_id',ORG_ID).order('tx_date',{ascending:false}).order('created_at',{ascending:false});
+  if(error){console.warn(error); if(byId('networkMatchTable'))byId('networkMatchTable').innerHTML='<div class="empty">شغّل تحديث قاعدة البيانات V24 لإضافة أعمدة مطابقة الشبكة.</div>'; return}
+  networkMatches=data||[]; renderNetworkMatches();
+}
+function networkTotals(){return (networkMatches||[]).reduce((a,r)=>{a.balance+=n(r.smart_card_sales);a.deposit+=n(r.bank_deposit);a.fee+=n(r.bank_fee);a.pending+=n(r.smart_card_sales)-n(r.bank_deposit)-n(r.bank_fee);return a},{balance:0,deposit:0,fee:0,pending:0})}
+function renderNetworkMatches(){
+  if(!byId('networkMatchTable'))return;
+  const t=networkTotals();
+  byId('networkStats').innerHTML=stat('إجمالي قيمة الموازنات',money(t.balance),'حسب أجهزة الشبكة')+stat('إجمالي ما نزل بالبنك',money(t.deposit),'المبالغ الظاهرة فعلياً')+stat('إجمالي رسوم البنك',money(t.fee),'اختياري')+stat('إجمالي المعلق',money(t.pending),'قيمة الموازنة - النازل - الرسوم');
+  byId('networkMatchTable').innerHTML=rowsTable(['التاريخ','رقم الجهاز','اسم البنك','الوصف','رقم الموازنة','قيمة الموازنة','نزل في البنك','رسوم البنك','المعلق','الحالة','ملاحظة','إجراء'],networkMatches.map(r=>{const p=n(r.smart_card_sales)-n(r.bank_deposit)-n(r.bank_fee);return `<tr><td>${r.tx_date||'-'}</td><td><b>${r.device_name||'-'}</b></td><td>${r.bank_name||'-'}</td><td>${r.device_description||'-'}</td><td>${r.balance_no||'-'}</td><td>${money(r.smart_card_sales)}</td><td>${money(r.bank_deposit)}</td><td>${money(r.bank_fee)}</td><td><span class="badge ${Math.abs(p)<0.01?'ok':p>0?'warn':'danger'}">${money(p)}</span></td><td>${Math.abs(p)<0.01?'<span class="badge ok">مكتمل</span>':'<span class="badge warn">معلق</span>'}</td><td>${r.note||'-'}</td><td><button class="btn light" onclick="editNetworkMatch('${r.id}')">تعديل</button></td></tr>`}))
+}
+function editNetworkMatch(id){const r=networkMatches.find(x=>x.id===id); if(!r)return; nwId.value=r.id; nwDate.value=r.tx_date||today(); const d=posDevices.find(x=>x.id===r.pos_device_id||x.device_no===r.device_name); if(d){nwDevice.value=d.id; fillDeviceInfo()} else {nwDevice.value=''; nwBank.value=r.bank_name||''; nwDesc.value=r.device_description||'';} nwBalanceNo.value=r.balance_no||''; nwBalanceValue.value=n(r.smart_card_sales); nwDeposit.value=n(r.bank_deposit); nwFee.value=n(r.bank_fee); nwNote.value=r.note||''; previewNetworkPending(); toast('تم تحميل المطابقة للتعديل')}
+function printNetworkMatch(){
+  const t=networkTotals();
+  const w=window.open('','_blank','width=1200,height=800');
+  w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير مطابقة الشبكة</title><style>body{font-family:Arial,Tahoma,sans-serif;direction:rtl;padding:20px;color:#111}h2{text-align:center}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:15px 0}.box{border:1px solid #ddd;border-radius:10px;padding:10px;text-align:center}.box b{display:block;margin-bottom:5px;color:#555}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:center}th{background:#0f172a;color:white}</style></head><body><h2>سنابل مارت - تقرير مطابقة الشبكة</h2><div class="summary"><div class="box"><b>إجمالي الموازنات</b>${money(t.balance)}</div><div class="box"><b>نزل في البنك</b>${money(t.deposit)}</div><div class="box"><b>رسوم البنك</b>${money(t.fee)}</div><div class="box"><b>المعلق</b>${money(t.pending)}</div></div>${byId('networkMatchTable').outerHTML}</body></html>`);
+  w.document.close(); setTimeout(()=>w.print(),250);
+}
+
+function renderUsers(){if(!byId('usersTable'))return;byId('usersTable').innerHTML=rowsTable(['الاسم','الجوال','الدور','PIN','الحالة','رابط الدخول','إجراء'],users.map(u=>{const link=location.href.split('?')[0]+'?user='+u.id;return `<tr><td><b>${u.full_name}</b></td><td>${u.phone||'-'}</td><td>${roleMap[u.role]||u.role}</td><td>${u.pin||'-'}</td><td>${u.is_active!==false?'<span class="badge ok">نشط</span>':'<span class="badge danger">موقوف</span>'}</td><td><button class="btn light" onclick="copyText('${link}')">نسخ QR</button></td><td><button class="btn light" onclick="editUser('${u.id}')">تعديل</button> <button class="btn warn" onclick="toggleUser('${u.id}')">${u.is_active!==false?'إيقاف':'تفعيل'}</button> <button class="btn ok" onclick="whatsappUser('${u.id}')">واتساب</button></td></tr>`}))}
+function resetUserForm(){if(!byId('usrId'))return;usrId.value='';usrName.value='';usrPhone.value='';usrPin.value='';usrRole.value='cashier'}
+function editUser(id){const u=users.find(x=>x.id===id);if(!u)return;usrId.value=u.id;usrName.value=u.full_name||'';usrPhone.value=u.phone||'';usrPin.value=u.pin||'';usrRole.value=u.role||'cashier';toast('تم تحميل بيانات المستخدم للتعديل')}
+async function saveUser(){const name=(usrName.value||'').trim(), phone=(usrPhone.value||'').trim(), pin=(usrPin.value||'').trim(), role=usrRole.value;if(!name||!pin){alert('اكتب اسم المستخدم والرقم السري PIN');return}const payload={organization_id:ORG_ID,full_name:name,phone,pin,role,is_active:true};let res;if(usrId.value){res=await db.from('app_users').update(payload).eq('id',usrId.value)}else{res=await db.from('app_users').insert(payload)}if(res.error)return alert('خطأ حفظ المستخدم: '+res.error.message);toast('تم حفظ المستخدم');resetUserForm();await loadUsers();renderUsers()}
+async function toggleUser(id){const u=users.find(x=>x.id===id);if(!u)return;const {error}=await db.from('app_users').update({is_active:!(u.is_active!==false)}).eq('id',id);if(error)return alert(error.message);toast((u.is_active!==false)?'تم إيقاف المستخدم':'تم تفعيل المستخدم');await loadUsers();renderUsers()}
+function copyText(txt){navigator.clipboard?.writeText(txt);toast('تم نسخ رابط المستخدم. يمكن تحويله إلى QR أو إرساله للموظف.')}
+function whatsappUser(id){const u=users.find(x=>x.id===id);if(!u)return;const phone=(u.phone||'').replace(/\D/g,'');const link=location.href.split('?')[0]+'?user='+u.id;const msg=`سنابل مارت%0Aبيانات دخولك:%0Aالاسم: ${u.full_name}%0Aالصلاحية: ${roleMap[u.role]||u.role}%0APIN: ${u.pin||'-'}%0Aرابط الدخول: ${encodeURIComponent(link)}`;window.open(`https://wa.me/${phone}?text=${msg}`,'_blank')}
+function printUsers(){const w=window.open('','_blank','width=1000,height=700');w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير المستخدمين</title><style>body{font-family:Arial,Tahoma,sans-serif;direction:rtl;padding:20px}h2{text-align:center}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:center}th{background:#0f172a;color:white}</style></head><body><h2>سنابل مارت - تقرير المستخدمين</h2>${byId('usersTable').outerHTML}</body></html>`);w.document.close();setTimeout(()=>w.print(),250)}
+function subscribeRealtime(){db.channel('sanabel-mart-live').on('postgres_changes',{event:'*',schema:'public',table:'cashier_shifts'},()=>{toast('تحديث جديد في الورديات');loadShifts()}).on('postgres_changes',{event:'*',schema:'public',table:'receiving_orders'},()=>{toast('تحديث جديد في الاستلام');loadReceiving()}).on('postgres_changes',{event:'*',schema:'public',table:'app_users'},()=>{loadUsers()}).on('postgres_changes',{event:'*',schema:'public',table:'pos_devices'},()=>{loadPosDevices()}).on('postgres_changes',{event:'*',schema:'public',table:'bank_reconciliations'},()=>{loadNetworkMatches();renderDashboard()}).subscribe()}
+(async function boot(){await loadUsers();const saved=localStorage.getItem('sanabel_cloud_user');if(saved){const u=JSON.parse(saved);currentUser=users.find(x=>x.id===u.id)||u;if(currentUser)startApp()}})();
+</script>
+</body>
+</html>
