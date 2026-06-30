@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sanabel OS Cashier Mobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#07152f;--muted:#64748b;--line:#dbe4f0;--primary:#3157ff;--dark:#061a36;--green:#16b76a;--danger:#ef4444;--warn:#f59e0b;--shadow:0 18px 60px rgba(15,23,42,.10);--radius:24px}
+*{box-sizing:border-box}body{margin:0;font-family:Tajawal,Arial,sans-serif;background:linear-gradient(180deg,#f8fbff,#edf3fb);color:var(--text);font-size:17px;font-variant-numeric:tabular-nums}button,input,select{font-family:inherit;font-size:17px}button{border:0;cursor:pointer}.wrap{max-width:640px;margin:auto;min-height:100vh;padding:16px 14px 90px}.top{background:linear-gradient(135deg,#09285b,#08735d);color:white;border-radius:30px;padding:22px;box-shadow:var(--shadow);position:relative;overflow:hidden}.top:before{content:"";position:absolute;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.08);left:-55px;bottom:-70px}.brand{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand h1{margin:0;font-size:27px;font-weight:900}.brand p{margin:6px 0 0;color:#dbeafe;font-weight:700}.logo{width:56px;height:56px;border-radius:20px;display:grid;place-items:center;background:linear-gradient(135deg,#bbf7d0,#4ade80);font-size:30px}.status{margin-top:18px;display:flex;gap:8px;align-items:center;font-weight:900}.dot{width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block}.card{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-top:14px}.card h2,.card h3{margin:0 0 12px}.field{margin-top:12px}.field label{display:block;font-weight:900;margin-bottom:7px}.field input,.field select{width:100%;border:1px solid #cbd5e1;border-radius:17px;padding:14px;background:white;outline:0}.field input:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(49,87,255,.12)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border-radius:18px;padding:14px 18px;font-weight:900;color:#fff;background:linear-gradient(135deg,#3157ff,#7c3aed);box-shadow:0 12px 30px rgba(49,87,255,.18)}.btn.ok{background:linear-gradient(135deg,#059669,#22c55e)}.btn.light{background:#eef2ff;color:#4338ca;box-shadow:none;border:1px solid #c7d2fe}.btn.danger{background:linear-gradient(135deg,#dc2626,#ef4444)}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.actions .btn{flex:1}.total{background:#eef4fb;border:1px solid #dbe4f0;border-radius:18px;padding:15px;margin-top:14px;font-weight:900;text-align:center}.success{background:#ecfdf5;border:1px solid #86efac;color:#14532d;border-radius:20px;padding:14px;margin-top:14px;font-weight:900}.ref{direction:ltr;display:inline-block;background:#061a36;color:white;padding:7px 10px;border-radius:12px;margin:5px}.attach{border:1px dashed #b7c8ff;background:#f8fbff;border-radius:24px;padding:14px;margin-top:14px}.att-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}.att{background:white;border:1px solid var(--line);border-radius:16px;padding:8px}.att img{width:100%;height:110px;object-fit:cover;border-radius:12px}.small{font-size:13px;color:var(--muted)}.hide{display:none!important}table{width:100%;border-collapse:separate;border-spacing:0 8px}th{font-size:12px;color:#64748b;text-align:right;padding:0 8px}td{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 8px;font-size:14px}td:first-child{border-right:1px solid var(--line);border-radius:0 13px 13px 0}td:last-child{border-left:1px solid var(--line);border-radius:13px 0 0 13px}.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:900}.badge.warn{background:#fef3c7;color:#92400e}.badge.ok{background:#dcfce7;color:#166534}.badge.blue{background:#dbeafe;color:#1d4ed8}.footer{position:fixed;bottom:0;left:0;right:0;background:#061a36;color:white;padding:12px 16px;text-align:center;font-weight:900;font-size:13px}.toast{position:fixed;bottom:58px;left:12px;right:12px;background:#0f172a;color:white;border-radius:16px;padding:14px;display:none;z-index:10}.toast.show{display:block}@media(max-width:420px){.grid{grid-template-columns:1fr}.brand h1{font-size:23px}.wrap{padding:12px 10px 90px}.card{padding:14px}.att-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><div><h1>Sanabel OS</h1><p>إغلاق وردية الكاشير - نسخة الجوال</p></div><div class="logo">🛒</div></div>
+    <div class="status"><span class="dot"></span><span id="conn">النظام جاهز</span></div>
+  </div>
+
+  <div id="loginCard" class="card">
+    <h2>دخول الكاشير</h2>
+    <div class="field"><label>اختر المستخدم</label><select id="loginUser"><option>جاري تحميل المستخدمين...</option></select></div>
+    <div class="field"><label>PIN</label><input id="loginPin" type="password" inputmode="numeric" placeholder="الرقم السري"></div>
+    <div class="actions"><button class="btn ok" onclick="login()">دخول</button><button class="btn light" onclick="loadUsers()">تحديث</button></div>
+    <p class="small" id="loginMsg"></p>
+  </div>
+
+  <div id="app" class="hide">
+    <div class="card">
+      <h2>إغلاق وردية الكاشير</h2>
+      <p class="small">المستخدم: <b id="userName"></b> — <button class="btn light" style="padding:7px 12px" onclick="logout()">خروج</button></p>
+      <div class="grid">
+        <div class="field"><label>التاريخ والوقت</label><input id="shDate" readonly></div>
+        <div class="field"><label>رقم التسليم</label><input id="shRefPreview" readonly placeholder="يتولد تلقائيًا"></div>
+        <div class="field"><label>نقدي</label><input id="shCash" type="number" step="0.01" inputmode="decimal" value="0"></div>
+        <div class="field"><label>شبكة</label><input id="shCard" type="number" step="0.01" inputmode="decimal" value="0"></div>
+        <div class="field"><label>تحويل</label><input id="shTransfer" type="number" step="0.01" inputmode="decimal" value="0"></div>
+        <div class="field"><label>آجل</label><input id="shCredit" type="number" step="0.01" inputmode="decimal" value="0"></div>
+        <div class="field"><label>مرتجع</label><input id="shReturns" type="number" step="0.01" inputmode="decimal" value="0"></div>
+        <div class="field"><label>ملاحظة</label><input id="shNote" placeholder="اختياري"></div>
+      </div>
+      <div class="total">إجمالي طرق الدفع: <span id="shiftAutoTotal">0.00 ر.س</span></div>
+      <div class="attach">
+        <h3>📎 مرفقات الوردية</h3>
+        <p class="small">صورة الموازنة / صورة التحويل / صورة المرتجعات / مرفق آخر</p>
+        <div class="grid">
+          <div class="field"><label>نوع المرفق</label><select id="attType"><option>صورة الموازنة</option><option>صورة التحويل</option><option>صورة المرتجعات</option><option>مرفق آخر</option></select></div>
+          <div class="field"><label>ملاحظة المرفق</label><input id="attNote" placeholder="اختياري"></div>
+          <div class="field"><label>اختيار/تصوير صورة</label><input id="attFile" type="file" accept="image/*" multiple onchange="addShiftFiles(this.files)"></div>
+        </div>
+        <div class="att-grid" id="pendingAttachments"></div>
+      </div>
+      <div id="result"></div>
+      <div class="actions"><button class="btn ok" onclick="submitShift()">إرسال الوردية للإدارة</button><button class="btn light" onclick="clearShift()">تفريغ</button></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3>آخر وردياتي</h3><button class="btn light" style="padding:8px 12px" onclick="loadMyShifts()">تحديث</button></div>
+      <div style="overflow:auto"><table id="myShifts"></table></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div><div class="footer">Sanabel OS 2.0.2 Cashier Mobile</div>
+<script>
+const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
+const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
+const ORG_ID='41e9d7b4-71c1-4de4-b797-f7f5d5e1817d';
+const WORKSPACE_ID='retail';
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let users=[], currentUser=null, pendingShiftAttachments=[];
+function byId(id){return document.getElementById(id)}
+function n(v){return Number(v||0)}
+function money(v){return n(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ر.س'}
+function today(){return new Date().toISOString().slice(0,10)}
+function toast(msg){const t=byId('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+function rowsTable(headers,rows){if(!rows.length)return '<tbody><tr><td colspan="20" style="text-align:center;color:#64748b">لا توجد بيانات</td></tr></tbody>';return `<thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody>`}
+function updateTotal(){const total=n(shCash.value)+n(shCard.value)+n(shTransfer.value)+n(shCredit.value)-n(shReturns.value);shiftAutoTotal.textContent=money(total)}
+['shCash','shCard','shTransfer','shCredit','shReturns'].forEach(id=>setTimeout(()=>{const el=byId(id); if(el)el.addEventListener('input',updateTotal)},0));
+async function loadUsers(){loginMsg.textContent='جاري تحميل المستخدمين...';const {data,error}=await db.from('app_users').select('*').eq('organization_id',ORG_ID).in('role',['cashier','owner']).order('full_name');if(error){loginMsg.textContent='خطأ تحميل المستخدمين: '+error.message;return}users=data||[];loginUser.innerHTML=users.filter(u=>u.is_active!==false).map(u=>`<option value="${u.id}">${u.full_name}</option>`).join('');const uid=new URLSearchParams(location.search).get('user');if(uid&&users.some(u=>u.id===uid))loginUser.value=uid;loginMsg.textContent=users.length?'تم تحميل المستخدمين':'لا يوجد كاشير نشط'}
+function login(){const u=users.find(x=>x.id===loginUser.value);if(!u)return alert('اختر المستخدم');if(String(u.pin)!==String(loginPin.value))return alert('الرقم السري غير صحيح');currentUser=u;localStorage.setItem('sanabel_cashier_user',JSON.stringify(u));startApp()}
+function logout(){localStorage.removeItem('sanabel_cashier_user');location.reload()}
+function startApp(){loginCard.classList.add('hide');app.classList.remove('hide');userName.textContent=currentUser.full_name;shDate.value=new Date().toLocaleString('ar-SA');updateTotal();loadMyShifts();subscribeRealtime()}
+async function generateRef(){return `SM-${today().replaceAll('-','')}-${Math.floor(100000+Math.random()*900000)}`}
+function fileToDataUrl(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)})}
+async function addShiftFiles(files){const type=attType.value,note=attNote.value||'';for(const file of Array.from(files||[])){if(!file.type.startsWith('image/')){toast('يسمح بالصور فقط');continue}const data=await fileToDataUrl(file);pendingShiftAttachments.push({attachment_type:type,file_name:file.name,file_mime:file.type,file_data:data,note})}attFile.value='';attNote.value='';renderAttachments()}
+function renderAttachments(){pendingAttachments.innerHTML=pendingShiftAttachments.map((a,i)=>`<div class="att"><img src="${a.file_data}"><b>${a.attachment_type}</b><div class="small">${a.note||a.file_name}</div><button class="btn danger" style="padding:7px 10px;margin-top:6px" onclick="pendingShiftAttachments.splice(${i},1);renderAttachments()">حذف</button></div>`).join('')||'<div class="small">لا توجد مرفقات بعد</div>'}
+async function submitShift(){if(!currentUser)return alert('سجل الدخول أولاً');const ref=await generateRef();const payload={organization_id:ORG_ID,workspace_id:WORKSPACE_ID,reference_no:ref,shift_no:ref,cashier_id:currentUser.id,shift_date:today(),cash:n(shCash.value),card:n(shCard.value),transfer:n(shTransfer.value),credit:n(shCredit.value),returns:n(shReturns.value),cashier_note:shNote.value,status:'pending',created_by:currentUser.id};const {data,error}=await db.from('cashier_shifts').insert(payload).select().single();if(error)return alert('خطأ حفظ الوردية: '+error.message);if(pendingShiftAttachments.length){const rows=pendingShiftAttachments.map(a=>({organization_id:ORG_ID,workspace_id:WORKSPACE_ID,shift_id:data.id,attachment_type:a.attachment_type,file_name:a.file_name,file_mime:a.file_mime,file_data:a.file_data,note:a.note,uploaded_by:currentUser.id}));const res=await db.from('shift_attachments').insert(rows);if(res.error)alert('تم حفظ الوردية لكن تعذر حفظ المرفقات: '+res.error.message)}shRefPreview.value=ref;result.innerHTML=`<div class="success">✅ تم إرسال الوردية بنجاح<br>رقم التسليم: <span class="ref">${ref}</span><div class="actions"><button class="btn light" onclick="copyText('${ref}')">نسخ الرقم</button><button class="btn ok" onclick="sendWhats('${ref}')">إرسال للمحاسب واتساب</button></div></div>`;toast('تم إرسال الوردية');pendingShiftAttachments=[];renderAttachments();clearShift(false);loadMyShifts()}
+function clearShift(clearResult=true){['shCash','shCard','shTransfer','shCredit','shReturns'].forEach(id=>byId(id).value=0);shNote.value='';shRefPreview.value='';shDate.value=new Date().toLocaleString('ar-SA');updateTotal();if(clearResult)result.innerHTML=''}
+function copyText(t){navigator.clipboard?.writeText(t);toast('تم النسخ')}
+function sendWhats(ref){const msg=`Sanabel OS%0Aتم إغلاق وردية جديدة%0Aالكاشير: ${currentUser.full_name}%0Aرقم التسليم: ${ref}%0Aالتاريخ: ${today()}`;window.open(`https://wa.me/?text=${msg}`,'_blank')}
+function statusLabel(s){return s.status==='approved'?'<span class="badge ok">مغلقة</span>':s.status==='reviewed'?'<span class="badge blue">عند المدير</span>':'<span class="badge warn">بانتظار المحاسب</span>'}
+async function loadMyShifts(){if(!currentUser)return;const {data,error}=await db.from('cashier_shifts').select('*').eq('organization_id',ORG_ID).eq('cashier_id',currentUser.id).order('created_at',{ascending:false}).limit(10);if(error){myShifts.innerHTML='<tbody><tr><td>'+error.message+'</td></tr></tbody>';return}myShifts.innerHTML=rowsTable(['رقم التسليم','التاريخ','الإجمالي','الحالة'],(data||[]).map(s=>`<tr><td><b>${s.reference_no||s.shift_no||'-'}</b></td><td>${s.shift_date||'-'}</td><td>${money(n(s.cash)+n(s.card)+n(s.transfer)+n(s.credit)-n(s.returns))}</td><td>${statusLabel(s)}</td></tr>`))}
+function subscribeRealtime(){db.channel('cashier-mobile-live').on('postgres_changes',{event:'*',schema:'public',table:'cashier_shifts'},()=>loadMyShifts()).subscribe()}
+loadUsers().then(()=>{const saved=localStorage.getItem('sanabel_cashier_user');if(saved){try{currentUser=JSON.parse(saved);startApp()}catch(e){}}});
+</script>
+</body>
+</html>
