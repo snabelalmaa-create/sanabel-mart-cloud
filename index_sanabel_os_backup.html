@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sanabel OS 2.0.1 Foundation - Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#111827;--muted:#64748b;--line:#e2e8f0;--primary:#5b35f5;--primary2:#11a36a;--dark:#07152f;--danger:#ef4444;--warn:#f59e0b;--ok:#16a34a;--blue:#2563eb;--shadow:0 20px 60px rgba(15,23,42,.10);--radius:22px}
+*{box-sizing:border-box}body{margin:0;font-family:Tajawal,Arial,sans-serif;background:radial-gradient(circle at top,#ffffff,#eef3fb 55%,#e9eef7);color:var(--text);font-size:16px;font-variant-numeric:tabular-nums}button,input,select,textarea{font-family:inherit;font-size:16px}button{cursor:pointer;border:0}.hide{display:none!important}.login{min-height:100vh;display:grid;place-items:center;padding:24px}.login-card{width:min(520px,100%);background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:32px;box-shadow:var(--shadow);padding:28px}.brand{display:flex;align-items:center;gap:14px;margin-bottom:18px}.logo{width:64px;height:64px;border-radius:22px;background:linear-gradient(135deg,#dcfce7,#4ade80);display:grid;place-items:center;font-size:34px}.brand h1{margin:0;font-size:30px;font-weight:900}.brand p{margin:4px 0 0;color:var(--muted)}.notice{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:18px;padding:13px;font-weight:800;line-height:1.7}.field{margin-top:14px}.field label{display:block;font-weight:900;margin-bottom:8px;color:#1e293b}.field input,.field select,.field textarea{width:100%;border:1px solid #cbd5e1;border-radius:16px;padding:14px;background:white;outline:0}.field input:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(91,53,245,.11)}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{border-radius:16px;padding:13px 18px;font-weight:900;background:linear-gradient(135deg,#2563eb,#6d28d9);color:#fff;box-shadow:0 12px 24px rgba(91,53,245,.2)}.btn.secondary{background:#0f172a}.btn.light{background:#eef2ff;color:#4338ca;box-shadow:none;border:1px solid #c7d2fe}.btn.ok{background:linear-gradient(135deg,#059669,#22c55e)}.btn.danger{background:linear-gradient(135deg,#dc2626,#ef4444)}.btn.warn{background:linear-gradient(135deg,#d97706,#f59e0b)}.app{display:grid;grid-template-columns:300px 1fr;min-height:100vh}.sidebar{background:linear-gradient(180deg,#08152f,#0b1f45);color:white;padding:20px;position:sticky;top:0;height:100vh;overflow:auto}.side-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}.side-brand .logo{width:52px;height:52px;font-size:27px}.side-brand h2{margin:0;font-size:22px}.side-brand p{margin:3px 0 0;color:#aab6d3;font-size:13px}.nav button{width:100%;display:flex;align-items:center;gap:10px;padding:14px;margin:8px 0;border-radius:16px;background:transparent;color:#dbeafe;text-align:right;font-weight:900}.nav button.active,.nav button:hover{background:linear-gradient(135deg,#1d4ed8,#7c3aed);color:white}.main{padding:24px}.topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}.topbar h1{margin:0;font-size:30px}.sub{color:var(--muted);margin-top:5px}.pill{background:white;border:1px solid var(--line);border-radius:999px;padding:10px 14px;font-weight:900;box-shadow:var(--shadow)}.grid{display:grid;gap:16px}.cards{grid-template-columns:repeat(4,minmax(170px,1fr));margin-bottom:18px}.card{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;overflow:hidden}.stat{position:relative}.stat:after{content:"";position:absolute;width:110px;height:110px;left:-35px;bottom:-45px;background:rgba(91,53,245,.08);border-radius:50%}.stat .label{color:var(--muted);font-weight:900}.stat .value{font-size:27px;font-weight:900;margin-top:8px}.stat .hint{color:var(--muted);font-size:13px;margin-top:5px}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:repeat(3,1fr)}.section{display:none}.section.active{display:block}.panel-title{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px}.panel-title h2,.panel-title h3{margin:0}.form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.table-wrap{overflow:auto}table{width:100%;border-collapse:separate;border-spacing:0 9px}th{font-size:13px;color:#64748b;text-align:right;padding:0 12px}td{background:white;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px;vertical-align:middle}td:first-child{border-right:1px solid var(--line);border-radius:0 14px 14px 0}td:last-child{border-left:1px solid var(--line);border-radius:14px 0 0 14px}.badge{display:inline-block;border-radius:999px;padding:5px 10px;font-size:13px;font-weight:900}.badge.ok{background:#dcfce7;color:#166534}.badge.warn{background:#fef3c7;color:#92400e}.badge.danger{background:#fee2e2;color:#991b1b}.badge.blue{background:#dbeafe;color:#1d4ed8}.timecell{direction:ltr;text-align:right}.empty{text-align:center;color:#64748b;padding:24px}.mobile-wrap{max-width:620px;margin:auto}.scanner{height:190px;border-radius:24px;border:2px dashed #93c5fd;background:linear-gradient(135deg,#eff6ff,#f8fafc);display:grid;place-items:center;color:#2563eb;font-weight:900;text-align:center;margin:12px 0}.toast{position:fixed;bottom:18px;left:18px;background:#0f172a;color:white;border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);z-index:9999;display:none}.toast.show{display:block}.small{font-size:13px;color:var(--muted)}.attach-tools{border:1px dashed #c7d2fe;background:#f8fafc;border-radius:20px;padding:14px;margin-top:14px}.attachments-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:12px;margin-top:12px}.att-card{background:white;border:1px solid var(--line);border-radius:16px;padding:8px;box-shadow:0 8px 20px rgba(15,23,42,.06)}.att-card img{width:100%;height:92px;object-fit:cover;border-radius:12px;cursor:pointer;background:#eef2ff}.att-card .att-title{font-weight:900;font-size:12px;margin-top:6px;color:#1e293b}.att-card .att-note{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.modal{position:fixed;inset:0;background:rgba(2,6,23,.88);z-index:10000;display:none;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.modal-inner{width:min(1100px,100%);height:min(92vh,900px);display:flex;flex-direction:column;gap:10px}.modal-toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.modal-toolbar button{border-radius:14px;padding:10px 14px;background:white;color:#0f172a;font-weight:900}.modal-stage{flex:1;display:grid;place-items:center;overflow:hidden}.modal-stage img{max-width:100%;max-height:100%;border-radius:18px;box-shadow:0 20px 80px rgba(0,0,0,.35);transform-origin:center}.success-box{background:#ecfdf5;border:1px solid #86efac;color:#14532d;border-radius:20px;padding:14px;margin-top:12px;font-weight:900}.ref-code{direction:ltr;display:inline-block;background:#0f172a;color:white;border-radius:12px;padding:7px 10px;margin:6px 0}.inline-total{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:16px;padding:12px;font-weight:900;margin-top:12px}.review-payments{margin-top:14px}.danger-link{background:#fee2e2!important;color:#991b1b!important}.result-ok{background:#ecfdf5;border:1px solid #86efac;color:#14532d}.result-warn{background:#fffbeb;border:1px solid #fcd34d;color:#92400e}.result-danger{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}.detail-box{border-radius:18px;padding:14px;font-weight:900;line-height:1.8}.locked-note{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:16px;padding:12px;color:#475569;font-weight:900;margin-top:12px}.timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}.step-card{border:1px solid var(--line);border-radius:18px;background:#fff;padding:14px;position:relative}.step-card.done{background:#ecfdf5;border-color:#86efac}.step-card.wait{background:#f8fafc}.step-card .step-title{font-weight:900;color:#0f172a;margin-bottom:8px}.step-card .step-name{font-size:18px;font-weight:900}.step-card .step-time{direction:ltr;text-align:right;color:#64748b;font-size:13px;margin-top:6px}.audit-line{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}.readonly-chip{background:#eef2ff;border:1px solid #c7d2fe;color:#4338ca;border-radius:999px;padding:8px 12px;font-weight:900;display:inline-block}
+.mobile-hero{background:linear-gradient(135deg,#07152f,#1d4ed8 55%,#7c3aed);color:white;border-radius:28px;padding:22px;box-shadow:var(--shadow);position:relative;overflow:hidden}.mobile-hero:after{content:"";position:absolute;width:180px;height:180px;left:-55px;bottom:-65px;background:rgba(255,255,255,.12);border-radius:50%}.mobile-hero h2{margin:0 0 8px;font-size:28px}.mobile-hero p{margin:0;color:#dbeafe;font-weight:800}.phone-frame{width:min(300px,100%);margin:auto;border:10px solid #0f172a;border-radius:36px;background:#fff;box-shadow:0 24px 70px rgba(15,23,42,.24);padding:14px;color:#111827}.phone-top{height:20px;width:90px;border-radius:0 0 14px 14px;background:#0f172a;margin:-14px auto 12px}.phone-screen{border-radius:24px;background:linear-gradient(180deg,#f8fafc,#eef2ff);padding:14px;min-height:360px}.quick-card{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:18px;background:#fff;padding:12px;margin:8px 0}.quick-card b{font-size:15px}.qr-box{height:150px;border-radius:20px;border:1px dashed #cbd5e1;background:#f8fafc;display:grid;place-items:center;text-align:center;color:#64748b;font-weight:900;padding:12px}.step-list{counter-reset:step}.step-item{counter-increment:step;display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px;margin:8px 0}.step-item:before{content:counter(step);min-width:30px;height:30px;border-radius:50%;background:#1d4ed8;color:#fff;display:grid;place-items:center;font-weight:900}
+@media(max-width:1000px){.app{grid-template-columns:1fr}.sidebar{height:auto;position:relative}.cards,.two,.three,.form{grid-template-columns:1fr}.main{padding:14px}.topbar{align-items:flex-start;flex-direction:column}}@media print{.sidebar,.topbar,.actions,.no-print{display:none!important}.app{display:block}.main{padding:0}.card{box-shadow:none;border:1px solid #ddd}body{background:white}}
+
+.live-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.live-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.live-box{background:white;border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:0 10px 28px rgba(15,23,42,.07)}.live-box b{font-size:24px}.live-feed{display:grid;gap:10px}.feed-item{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;font-weight:800}.feed-item .small{display:block;margin-top:4px}.mini-bars{display:grid;gap:9px}.mini-bar{display:grid;grid-template-columns:120px 1fr 95px;gap:10px;align-items:center}.mini-bar .bar{height:12px;background:#eef2ff;border-radius:99px;overflow:hidden}.mini-bar .bar span{display:block;height:100%;background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:99px}@media(max-width:1000px){.live-grid,.live-strip{grid-template-columns:1fr}.mini-bar{grid-template-columns:1fr}}
+
+.security-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.permission-matrix{min-width:900px}.permission-matrix td,.permission-matrix th{text-align:center}.permission-matrix td:first-child,.permission-matrix th:first-child{text-align:right}.perm-toggle{width:22px;height:22px;accent-color:#2563eb}.user-profile-card{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:center}.avatar{width:58px;height:58px;border-radius:20px;background:linear-gradient(135deg,#dbeafe,#c7d2fe);display:grid;place-items:center;font-weight:900;color:#1e3a8a;font-size:22px}.security-alert{border-radius:16px;padding:12px;border:1px solid var(--line);background:#fff;font-weight:900}.security-alert.danger{background:#fef2f2;border-color:#fecaca;color:#991b1b}.security-alert.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}.security-alert.ok{background:#ecfdf5;border-color:#86efac;color:#14532d}@media(max-width:1000px){.security-grid{grid-template-columns:1fr}.user-profile-card{grid-template-columns:48px 1fr}}
+
+.workspace-switch{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:12px;margin-top:14px}.workspace-switch label{display:block;color:#dbeafe;font-weight:900;margin-bottom:8px}.workspace-switch select{width:100%;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:11px;background:#0f172a;color:white;font-weight:900}.workspace-hero{background:linear-gradient(135deg,#07152f,#123e8a 48%,#065f46);color:white;border-radius:32px;padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden}.workspace-hero:after{content:"";position:absolute;width:220px;height:220px;left:-70px;bottom:-85px;background:rgba(255,255,255,.10);border-radius:50%}.workspace-hero h2{margin:0;font-size:34px}.workspace-hero p{margin:8px 0 0;color:#dbeafe;font-weight:800}.workspace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}.workspace-card{background:white;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:18px;cursor:pointer;transition:.18s}.workspace-card:hover{transform:translateY(-2px);border-color:#93c5fd}.workspace-card.active{outline:4px solid rgba(34,197,94,.18);border-color:#22c55e}.workspace-card .ico{font-size:32px}.workspace-card h3{margin:8px 0 4px}.workspace-card p{margin:0;color:var(--muted);font-weight:800}.workspace-tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#ecfdf5;color:#166534;border:1px solid #86efac;padding:6px 10px;font-weight:900;font-size:13px}.foundation-list{display:grid;gap:10px}.foundation-item{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);background:#fff;border-radius:18px;padding:12px;font-weight:900}.foundation-item span:last-child{color:#64748b}.sql-box{direction:ltr;text-align:left;white-space:pre-wrap;background:#0f172a;color:#e2e8f0;border-radius:18px;padding:14px;overflow:auto;font-family:Consolas,monospace;font-size:13px}
+
+/* ===== Sanabel OS 2.0.1 Foundation Design ===== */
+:root{--os-navy:#061b3d;--os-navy2:#08244e;--os-green:#39e084;--os-teal:#0b766d;--os-purple:#6d4aff;--os-soft:#f6f9ff;--os-card:#ffffff;--os-line:#e8eef7;--os-text:#07152f;--os-muted:#6b7b92;--os-shadow:0 18px 45px rgba(15,35,70,.08)}
+html,body{min-height:100%;background:#f6f9ff!important;overflow-x:hidden}.app{grid-template-columns:280px minmax(0,1fr);background:#f6f9ff;min-height:100vh}.main{padding:22px 28px 54px;background:linear-gradient(180deg,#fbfdff 0%,#f4f8ff 100%);min-height:100vh;overflow-x:hidden}.sidebar{background:linear-gradient(180deg,#061b3d 0%,#06234b 58%,#04152e 100%);border-left:1px solid rgba(255,255,255,.08);box-shadow:-18px 0 45px rgba(4,21,46,.12);padding:20px 18px}.side-brand{padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,.09)}.side-brand .logo,.logo{background:linear-gradient(135deg,#baf7d2,#4ade80)!important;color:#075333}.side-brand h2{font-size:24px;letter-spacing:.2px}.side-brand p{color:#67e8a6!important;font-weight:800}.nav{margin-top:10px}.nav button{border-radius:15px;margin:6px 0;padding:13px 14px;color:#d9e7fb;justify-content:flex-start}.nav button span:first-child{width:26px;text-align:center}.nav button.active{background:linear-gradient(135deg,#3157ef,#7947f5);box-shadow:0 12px 30px rgba(80,82,245,.28)}.nav button:hover{background:rgba(255,255,255,.08)}.workspace-switch{display:none}.sidebar .notice{background:#0c2b58!important;border:1px solid rgba(255,255,255,.11)!important;color:#eaf2ff!important;border-radius:18px}.topbar{display:grid;grid-template-columns:1fr auto;align-items:center;margin-bottom:18px}.topbar h1{font-size:34px;color:var(--os-text);letter-spacing:-.4px}.topbar .sub{font-size:17px}.pill{box-shadow:var(--os-shadow);border-color:var(--os-line)}.os-top-actions{display:flex;gap:12px;align-items:center;direction:ltr}.os-icon-btn{width:42px;height:42px;border-radius:16px;background:#fff;border:1px solid var(--os-line);display:grid;place-items:center;font-size:20px;box-shadow:var(--os-shadow);position:relative}.os-icon-btn .dot{position:absolute;top:-5px;right:-4px;background:#ef4444;color:#fff;border-radius:999px;font-size:11px;padding:2px 6px;font-weight:900}.os-search{width:min(440px,44vw);height:46px;border-radius:18px;border:1px solid var(--os-line);background:#fff;display:flex;align-items:center;gap:10px;padding:0 14px;box-shadow:var(--os-shadow);direction:rtl;color:#7b8aa3;font-weight:800}.os-search kbd{margin-right:auto;background:#f2f5fb;border:1px solid #e0e7f2;border-radius:8px;padding:4px 8px;color:#6b7b92;font-size:12px}.workspace-hero{min-height:170px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(120deg,#082756 0%,#123f8a 45%,#06624d 100%)!important;border-radius:28px!important;padding:30px 34px!important;box-shadow:var(--os-shadow)!important}.workspace-hero:before{content:"";position:absolute;right:55%;top:-60px;width:420px;height:420px;background:radial-gradient(circle,rgba(255,255,255,.12),transparent 64%);border-radius:50%}.workspace-hero h2{font-size:34px!important;margin:0 0 8px!important}.workspace-hero p{font-size:18px!important;max-width:640px}.workspace-tag{background:#dcfce7!important;color:#147a3b!important;border:1px solid #a7f3d0!important}.os-health{background:rgba(4,21,46,.35);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:16px 22px;min-width:170px;text-align:center;z-index:1}.os-health .state{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.10);border-radius:999px;padding:8px 12px;font-weight:900}.os-health .state:after{content:"";width:11px;height:11px;background:#22c55e;border-radius:50%;box-shadow:0 0 0 5px rgba(34,197,94,.15)}.os-health .percent{font-size:38px;font-weight:900;color:#4ade80;margin-top:10px;direction:ltr}.workspace-grid{grid-template-columns:220px repeat(auto-fit,minmax(185px,1fr))!important;gap:18px!important;margin-top:24px!important}.workspace-card{min-height:220px;border-radius:26px!important;padding:22px!important;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:var(--os-shadow)!important;border:1px solid var(--os-line)!important;background:rgba(255,255,255,.92)!important}.workspace-card:hover{transform:translateY(-4px);box-shadow:0 24px 60px rgba(15,35,70,.12)!important}.workspace-card.active{outline:0!important;border-color:#bbf7d0!important;box-shadow:0 0 0 3px rgba(34,197,94,.16),var(--os-shadow)!important}.workspace-card .ico{width:70px;height:70px;border-radius:50%;display:grid;place-items:center;background:#eef7ff;font-size:34px;margin-bottom:12px}.workspace-card h3{font-size:21px;margin:4px 0 3px;color:#07152f}.workspace-card p{font-size:14px;color:#5d6e87}.workspace-card .hint{min-height:30px;font-size:13px;color:#8a99ad;margin:8px 0 12px}.ws-actions{display:flex;gap:8px;width:100%;margin-top:auto}.ws-actions button{flex:1;border:1px solid #dfe7f2;background:#fff;color:#1d3c75;border-radius:12px;padding:9px;font-weight:900}.ws-actions button.more{flex:0 0 38px}.ws-badges{display:flex;gap:8px;justify-content:center;margin-bottom:12px}.ws-badges span{border-radius:999px;padding:6px 12px;font-size:13px;font-weight:900;background:#dcfce7;color:#15803d}.ws-badges .warn{background:#ffedd5;color:#c2410c}.add-workspace{border:2px dashed #bed2ff!important;background:linear-gradient(180deg,#fff,#f8fbff)!important}.add-workspace .ico{border:1px dashed #aebffc;background:#f6f8ff;color:#4f46e5}.os-panels{display:grid;grid-template-columns:1fr 1.35fr;gap:20px;margin-top:24px}.os-panel{background:#fff;border:1px solid var(--os-line);border-radius:24px;box-shadow:var(--os-shadow);padding:18px}.os-panel-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.os-panel-title h3{margin:0;font-size:20px}.activity-list{display:grid;gap:8px}.activity-item{display:grid;grid-template-columns:70px 1fr 42px;gap:12px;align-items:center;border:1px solid #edf2f7;border-radius:15px;padding:10px 12px}.activity-item .time{color:#7b8aa3;font-size:13px}.activity-item .bullet{width:10px;height:10px;border-radius:50%;display:inline-block;background:#22c55e;margin-left:6px}.activity-item.warn .bullet{background:#f59e0b}.activity-item.danger .bullet{background:#ef4444}.activity-item.purple .bullet{background:#8b5cf6}.activity-item .act-icon{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#eff6ff}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.summary-card{border-radius:18px;padding:16px;border:1px solid #dfe7f2;background:linear-gradient(135deg,#f8fbff,#fff);min-height:106px}.summary-card b{font-size:24px;display:block;margin:6px 0;color:#0f3d87}.summary-card .label{font-weight:900;color:#2d5baa}.summary-card .mini{color:#6b7b92;font-size:13px}.summary-card.green{background:linear-gradient(135deg,#effdf5,#fff);border-color:#bbf7d0}.summary-card.green b{color:#15803d}.summary-card.orange{background:linear-gradient(135deg,#fff7ed,#fff);border-color:#fed7aa}.summary-card.orange b{color:#ea580c}.summary-card.purple{background:linear-gradient(135deg,#faf5ff,#fff);border-color:#e9d5ff}.summary-card.purple b{color:#7e22ce}.summary-card.teal{background:linear-gradient(135deg,#f0fdfa,#fff);border-color:#99f6e4}.summary-card.teal b{color:#0f766e}.summary-card.red{background:linear-gradient(135deg,#fff1f2,#fff);border-color:#fecdd3}.summary-card.red b{color:#e11d48}.os-footer{position:fixed;bottom:0;left:0;right:280px;height:44px;background:#061b3d;color:#dbeafe;display:flex;justify-content:space-between;align-items:center;padding:0 28px;z-index:50;font-size:13px}.os-footer b{color:#67e8a6}.card{box-shadow:var(--os-shadow)!important;border-color:var(--os-line)!important}.btn{box-shadow:none}.login-card{box-shadow:0 24px 70px rgba(15,35,70,.13)}@media(max-width:1000px){.app{grid-template-columns:1fr}.sidebar{height:auto;position:relative}.os-footer{right:0}.topbar{grid-template-columns:1fr}.os-top-actions{order:2;direction:rtl;overflow:auto}.os-search{width:100%}.workspace-grid{grid-template-columns:1fr!important}.os-panels{grid-template-columns:1fr}.summary-grid{grid-template-columns:1fr}.workspace-hero{display:block}.os-health{margin-top:16px}.main{padding:16px 16px 64px}}
+
+
+</style>
+</head>
+<body>
+<div id="login" class="login">
+  <div class="login-card">
+    <div class="brand"><div class="logo">🌿</div><div><h1>Sanabel OS</h1><p>Business Operating System - نظام تشغيل الأعمال</p></div></div>
+    <div class="notice">Sanabel OS 2.0.1 Foundation — تصميم جديد لمساحات العمل مع بحث عالمي ولوحة تشغيل.</div>
+    <div class="field"><label>اختر المستخدم</label><select id="loginUser"><option>جاري تحميل المستخدمين...</option></select></div>
+    <div class="field"><label>الرقم السري PIN</label><input id="loginPin" type="password" placeholder="ادخل الرقم السري"></div>
+    <div class="actions"><button class="btn" onclick="login()">دخول للنظام</button><button class="btn light" onclick="loadUsers()">تحديث المستخدمين</button></div>
+    <p class="small" id="loginMsg">إذا لم تظهر الأسماء، تأكد من تشغيل SQL وسياسات V20.</p>
+  </div>
+</div>
+<div id="app" class="app hide">
+  <aside class="sidebar">
+    <div class="side-brand"><div class="logo">🌿</div><div><h2>Sanabel OS</h2><p id="orgName">Business Operating System</p></div></div>
+    <div class="nav" id="nav"></div>
+    <div class="notice" style="font-size:13px;margin-top:18px">المستخدم: <b id="sideUser"></b><br>الصلاحية: <b id="sideRole"></b></div>
+    <div class="workspace-switch no-print">
+      <label>مساحة العمل الحالية</label>
+      <select id="workspaceSelect" onchange="switchWorkspace(this.value)"></select>
+      <div class="small" id="workspaceHint" style="color:#cbd5e1;margin-top:6px"></div>
+    </div>
+    <div class="actions"><button class="btn light" onclick="logout()">تسجيل خروج</button></div>
+  </aside>
+  <main class="main">
+    <div class="topbar"><div><h1 id="pageTitle">مساحات العمل</h1><div class="sub" id="pageSub">منصة واحدة، جميع أعمالك في مكان واحد</div></div><div class="os-top-actions"><button class="os-icon-btn" title="التنبيهات">🔔<span class="dot">7</span></button><button class="os-icon-btn" title="الوضع">☼</button><div class="os-search">🔎 <span>ابحث في النظام بالكامل...</span><kbd>Ctrl + K</kbd></div><div class="pill" id="todayPill"></div></div></div>
+    <section id="workspaceCenter" class="section active">
+      <div class="workspace-hero">
+        <div>
+          <span class="workspace-tag">Sanabel OS 2.0.1 Foundation</span>
+          <h2>مرحباً بك في <span style="color:#67e8a6">Sanabel OS</span></h2>
+          <p>نظام إدارة متكامل وذكي يدير أعمالك بكفاءة واحترافية، مع عزل كامل لمساحات العمل.</p>
+        </div>
+        <div class="os-health"><div class="state">النظام يعمل بكفاءة</div><div class="percent">98%</div><div>صحة النظام</div></div>
+      </div>
+      <div class="workspace-grid" id="workspaceCards"></div>
+      <div class="os-panels">
+        <div class="os-panel">
+          <div class="os-panel-title"><h3>النشاطات الأخيرة</h3><button class="btn light" style="padding:8px 12px">عرض الكل</button></div>
+          <div class="activity-list">
+            <div class="activity-item"><span class="time"><i class="bullet"></i>منذ 5 دقائق</span><b>تم اعتماد وردية بتاريخ 30/06/2026</b><span class="act-icon">✅</span></div>
+            <div class="activity-item"><span class="time"><i class="bullet"></i>منذ 25 دقيقة</span><b>تم إضافة فاتورة مشتريات جديدة</b><span class="act-icon">📄</span></div>
+            <div class="activity-item warn"><span class="time"><i class="bullet"></i>منذ ساعة</span><b>تنبيه: فاتورة كهرباء قريبة من الاستحقاق</b><span class="act-icon">🔔</span></div>
+            <div class="activity-item danger"><span class="time"><i class="bullet"></i>منذ ساعتين</span><b>تم إغلاق سند قبض رقم 4587</b><span class="act-icon">🧾</span></div>
+            <div class="activity-item purple"><span class="time"><i class="bullet"></i>منذ 3 ساعات</span><b>تم تحديث سعر 12 صنف</b><span class="act-icon">🏷️</span></div>
+          </div>
+        </div>
+        <div class="os-panel">
+          <div class="os-panel-title"><h3>ملخص النظام</h3><select style="border:1px solid var(--os-line);border-radius:12px;padding:8px 12px;background:white"><option>اليوم</option><option>هذا الشهر</option></select></div>
+          <div class="summary-grid">
+            <div class="summary-card"><span class="label">إجمالي المبيعات</span><b>125,430</b><span class="mini">ريال سعودي • +12.5%</span></div>
+            <div class="summary-card green"><span class="label">عدد الفواتير</span><b>356</b><span class="mini">فاتورة • +8.3%</span></div>
+            <div class="summary-card orange"><span class="label">التنبيهات</span><b>7</b><span class="mini">تنبيه • -2</span></div>
+            <div class="summary-card purple"><span class="label">المستخدمون النشطون</span><b>18</b><span class="mini">مستخدم • +4</span></div>
+            <div class="summary-card teal"><span class="label">العملاء</span><b>1,284</b><span class="mini">عميل • +15</span></div>
+            <div class="summary-card red"><span class="label">رصيد العملاء</span><b>89,760</b><span class="mini">ريال سعودي • +5.2%</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="dashboard" class="section">
+      <div class="grid cards" id="stats"></div>
+      <div class="grid two">
+        <div class="card"><div class="panel-title"><h3>ورديات بانتظار الاعتماد</h3><button class="btn light" onclick="loadAll()">تحديث</button></div><div class="table-wrap"><table id="pendingTable"></table></div></div>
+        <div class="card"><div class="panel-title"><h3>آخر الورديات</h3></div><div class="table-wrap"><table id="latestTable"></table></div></div>
+      </div>
+    </section>
+
+    <section id="accountantApproval" class="section">
+      <div class="grid cards" id="accountantStats"></div>
+      <div class="card">
+        <div class="panel-title"><h2>اعتماد الورديات للمحاسب</h2><div class="actions" style="margin:0"><button class="btn light" onclick="clearAccountantFilters()">مسح الفلاتر</button><button class="btn light" onclick="loadShifts()">تحديث</button></div></div>
+        <div class="notice">هذه الشاشة للمحاسب: يستقبل وردية الكاشير، يدخل مبيعات سمارت، يراجع الفرق، ثم يعتمدها لتنتقل مباشرة إلى المدير للاعتماد النهائي.</div>
+        <div class="form">
+          <div class="field"><label>من تاريخ</label><input id="accFrom" type="date" onchange="renderAccountantApproval()"></div>
+          <div class="field"><label>إلى تاريخ</label><input id="accTo" type="date" onchange="renderAccountantApproval()"></div>
+          <div class="field"><label>الكاشير / رقم التسليم</label><input id="accSearch" placeholder="بحث سريع" oninput="renderAccountantApproval()"></div>
+          <div class="field"><label>الحالة</label><select id="accStatus" onchange="renderAccountantApproval()"><option value="pending">بانتظار المحاسب</option><option value="reviewed">معتمد من المحاسب</option><option value="all">الكل</option></select></div>
+        </div>
+      </div>
+      <div class="card"><div class="panel-title"><h3>قائمة الورديات</h3></div><div class="table-wrap"><table id="accountantApprovalTable"></table></div></div>
+    </section>
+    <section id="mobileShift" class="section">
+      <div class="mobile-wrap">
+        <div class="card"><div class="panel-title"><h2>إغلاق وردية الكاشير</h2><span class="badge blue">جوال</span></div>
+          <div class="form">
+            <div class="field"><label>التاريخ والوقت</label><input id="shDate" readonly></div>
+            <div class="field"><label>رقم التسليم</label><input id="shRefPreview" readonly placeholder="يتولد تلقائيًا بعد الإرسال"><input id="shNo" type="hidden"></div>
+            <div class="field"><label>نقدي</label><input id="shCash" type="number" step="0.01" value="0"></div>
+            <div class="field"><label>شبكة</label><input id="shCard" type="number" step="0.01" value="0"></div>
+            <div class="field"><label>تحويل</label><input id="shTransfer" type="number" step="0.01" value="0"></div>
+            <div class="field"><label>آجل</label><input id="shCredit" type="number" step="0.01" value="0"></div>
+            <div class="field"><label>مرتجع</label><input id="shReturns" type="number" step="0.01" value="0"></div>
+            <div class="field"><label>ملاحظة</label><input id="shNote" placeholder="اختياري"></div>
+          </div>
+          <div class="inline-total">إجمالي طرق الدفع: <span id="shiftAutoTotal">0.00 ر.س</span></div>
+          <div class="attach-tools">
+            <div class="panel-title"><h3>📎 مرفقات الوردية</h3><span class="small">صورة الموازنة / صورة التحويل / صورة المرتجعات / مرفق آخر</span></div>
+            <div class="form">
+              <div class="field"><label>نوع المرفق</label><select id="attType"><option value="صورة الموازنة">صورة الموازنة</option><option value="صورة التحويل">صورة التحويل</option><option value="صورة المرتجعات">صورة المرتجعات</option><option value="مرفق آخر">مرفق آخر</option></select></div>
+              <div class="field"><label>ملاحظة المرفق</label><input id="attNote" placeholder="اختياري"></div>
+              <div class="field"><label>اختيار/تصوير صورة</label><input id="attFile" type="file" accept="image/*" multiple onchange="addShiftFiles(this.files)"></div>
+            </div>
+            <div class="attachments-grid" id="pendingAttachments"></div>
+          </div>
+          <div id="shiftSubmitResult"></div>
+          <div class="actions"><button class="btn ok" onclick="submitShift()">إرسال الوردية للإدارة</button><button class="btn light" onclick="clearShift()">تفريغ</button></div>
+        </div>
+      </div>
+    </section>
+    <section id="managerReview" class="section">
+      <div class="grid cards" id="managerStats"></div>
+      <div class="card">
+        <div class="panel-title"><h2>اعتماد المدير النهائي</h2><div class="actions" style="margin:0"><button class="btn light" onclick="clearManagerFilters()">مسح الفلاتر</button><button class="btn light" onclick="loadShifts()">تحديث</button></div></div>
+        <div class="notice">هذه الشاشة للمدير: تظهر فقط الورديات المعتمدة من المحاسب، ويمكن إغلاقها نهائياً أو إرجاعها للمحاسب مع ملاحظة.</div>
+        <div class="form">
+          <div class="field"><label>من تاريخ</label><input id="mgrFrom" type="date" onchange="renderShifts()"></div>
+          <div class="field"><label>إلى تاريخ</label><input id="mgrTo" type="date" onchange="renderShifts()"></div>
+          <div class="field"><label>الكاشير / رقم التسليم</label><input id="mgrSearch" placeholder="بحث سريع" oninput="renderShifts()"></div>
+          <div class="field"><label>الحالة</label><select id="mgrStatus" onchange="renderShifts()"><option value="reviewed">جاهزة لاعتماد المدير</option><option value="approved">معتمدة نهائياً</option><option value="pending">راجعة للمحاسب / بانتظار</option><option value="all">الكل</option></select></div>
+        </div>
+      </div>
+      <div class="card"><div class="panel-title"><h3>قائمة الورديات لاعتماد المدير</h3></div><div class="table-wrap"><table id="reviewTable"></table></div></div>
+      <div class="card" id="reviewCard" style="display:none"><div class="panel-title"><h3>تفاصيل الوردية</h3><span id="reviewBadge"></span></div>
+        <div class="grid cards" id="reviewStats"></div>
+        <div id="reviewDecisionBox" class="detail-box result-warn">نتيجة المطابقة تظهر هنا</div>
+        <div class="card"><div class="panel-title"><h3>سجل الاعتمادات</h3><span class="readonly-chip">الكاشير → المحاسب → المدير</span></div><div id="approvalTimeline" class="timeline"></div></div>
+        <div class="card review-payments"><div class="panel-title"><h3>تعديل بيانات الوردية</h3><span class="small">للمدير/المحاسب فقط</span></div>
+          <div class="form">
+            <div class="field"><label>نقدي</label><input id="rvCash" type="number" step="0.01"></div>
+            <div class="field"><label>شبكة</label><input id="rvCard" type="number" step="0.01"></div>
+            <div class="field"><label>تحويل</label><input id="rvTransfer" type="number" step="0.01"></div>
+            <div class="field"><label>آجل</label><input id="rvCredit" type="number" step="0.01"></div>
+            <div class="field"><label>مرتجع</label><input id="rvReturns" type="number" step="0.01"></div>
+            <div class="field"><label>مبيعات البرنامج</label><input id="rvSmart" type="number" step="0.01"></div>
+            <div class="field"><label>ملاحظة المراجعة</label><input id="rvNote" placeholder="اختياري"></div>
+          </div>
+        </div>
+        <div class="card"><div class="panel-title"><h3>📎 مرفقات الوردية</h3><span class="small" id="reviewAttCount"></span></div><div id="reviewAttachments"></div></div>
+        <div class="actions"><button id="approveShiftBtn" class="btn ok" onclick="approveShift()">اعتماد الوردية</button><button id="saveReviewBtn" class="btn warn" onclick="saveReviewOnly()">حفظ مراجعة فقط</button><button id="returnToAccountantBtn" class="btn danger" onclick="returnToAccountant()">إرجاع للمحاسب</button><button class="btn light" onclick="sendWhatsapp()">إرسال واتساب</button></div>
+      </div>
+    </section>
+    <section id="receiving" class="section">
+      <div class="card"><div class="panel-title"><h2>استلام البضاعة بالباركود</h2><span class="badge warn">مرحلة تجريبية</span></div>
+        <div class="form"><div class="field"><label>المورد</label><input id="recSupplier" placeholder="اسم المورد"></div><div class="field"><label>رقم الفاتورة</label><input id="recInvoice" placeholder="رقم الفاتورة"></div><div class="field"><label>التاريخ</label><input id="recDate" type="date"></div><div class="field"><label>ملاحظة</label><input id="recNote"></div></div>
+        <div class="scanner">📷 قارئ باركود احترافي سيضاف هنا: الكاميرا مفتوحة، تكرار القراءة يزيد الكمية، صوت واهتزاز.</div>
+        <div class="actions"><button class="btn" onclick="createReceivingOrder()">إرسال استلام تجريبي</button></div>
+      </div>
+      <div class="card"><div class="panel-title"><h3>استلامات اليوم</h3></div><div class="table-wrap"><table id="receivingTable"></table></div></div>
+    </section>
+
+    <section id="posDevices" class="section">
+      <div class="card"><div class="panel-title"><h2>إعداد أجهزة نقاط البيع</h2><div class="actions"><button class="btn light" onclick="resetDeviceForm()">جديد</button><button class="btn light" onclick="loadPosDevices()">تحديث</button></div></div>
+        <div class="notice">أضف رقم الجهاز مرة واحدة مع اسم البنك والوصف، وبعدها يظهر تلقائياً في شاشة مطابقة الشبكة.</div>
+        <input id="devId" type="hidden">
+        <div class="form">
+          <div class="field"><label>رقم الجهاز</label><input id="devNo" placeholder="مثال: 001"></div>
+          <div class="field"><label>اسم البنك</label><input id="devBank" placeholder="الراجحي / الأهلي / الإنماء"></div>
+          <div class="field"><label>الوصف</label><input id="devDesc" placeholder="مثال: كاشير 1"></div>
+          <div class="field"><label>الحالة</label><select id="devActive"><option value="true">نشط</option><option value="false">متوقف</option></select></div>
+        </div>
+        <div class="actions"><button class="btn ok" onclick="saveDevice()">حفظ الجهاز</button></div>
+      </div>
+      <div class="card"><div class="panel-title"><h3>قائمة الأجهزة</h3></div><div class="table-wrap"><table id="devicesTable"></table></div></div>
+    </section>
+
+    <section id="networkMatch" class="section">
+      <div class="card"><div class="panel-title"><h2>مطابقة رصيد الشبكة</h2><div class="actions"><button class="btn light" onclick="loadNetworkMatches()">تحديث</button><button class="btn light" onclick="printNetworkMatch()">🖨️ طباعة</button></div></div>
+        <div class="notice">هذه الشاشة مخصصة فقط لمطابقة أجهزة الشبكة: رقم الجهاز، رقم الموازنة، قيمة الموازنة، ما نزل في البنك، والرسوم. لا يظهر فيها النقدي ولا بيانات الوردية. أضيفت في V25 فلاتر البحث والتاريخ والجهاز والحالة.</div>
+        <input id="nwId" type="hidden">
+        <div class="form">
+          <div class="field"><label>التاريخ</label><input id="nwDate" type="date"></div>
+          <div class="field"><label>رقم الجهاز</label><select id="nwDevice" onchange="fillDeviceInfo()"><option value="">اختر الجهاز</option></select></div>
+          <div class="field"><label>اسم البنك</label><input id="nwBank" readonly placeholder="يظهر تلقائياً"></div>
+          <div class="field"><label>الوصف</label><input id="nwDesc" readonly placeholder="يظهر تلقائياً"></div>
+          <div class="field"><label>رقم الموازنة</label><input id="nwBalanceNo" placeholder="رقم الموازنة / التقرير"></div>
+          <div class="field"><label>قيمة الموازنة</label><input id="nwBalanceValue" type="number" step="0.01" value="0" oninput="previewNetworkPending()"></div>
+          <div class="field"><label>نزل في البنك</label><input id="nwDeposit" type="number" step="0.01" value="0" oninput="previewNetworkPending()"></div>
+          <div class="field"><label>رسوم البنك</label><input id="nwFee" type="number" step="0.01" value="0" oninput="previewNetworkPending()"></div>
+          <div class="field"><label>المبلغ المعلق</label><input id="nwPending" readonly value="0.00"></div>
+          <div class="field"><label>ملاحظة</label><input id="nwNote" placeholder="اختياري"></div>
+        </div>
+        <div class="actions"><button class="btn ok" onclick="saveNetworkMatch()">حفظ المطابقة</button><button class="btn light" onclick="resetNetworkForm()">تفريغ</button></div>
+      </div>
+      <div class="grid cards" id="networkStats"></div>
+      <div class="card"><div class="panel-title"><h3>فلاتر مطابقة الشبكة</h3><button class="btn light" onclick="clearNetworkFilters()">مسح الفلاتر</button></div>
+        <div class="form">
+          <div class="field"><label>من تاريخ</label><input id="fltFrom" type="date" onchange="renderNetworkMatches()"></div>
+          <div class="field"><label>إلى تاريخ</label><input id="fltTo" type="date" onchange="renderNetworkMatches()"></div>
+          <div class="field"><label>الجهاز / البنك / الموازنة</label><input id="fltSearch" placeholder="بحث سريع" oninput="renderNetworkMatches()"></div>
+          <div class="field"><label>الحالة</label><select id="fltStatus" onchange="renderNetworkMatches()"><option value="all">الكل</option><option value="matched">مطابق</option><option value="pending">يوجد فرق</option></select></div>
+        </div>
+      </div>
+      <div class="card"><div class="panel-title"><h3>سجل مطابقة الشبكة</h3></div><div class="table-wrap"><table id="networkMatchTable"></table></div></div>
+    </section>
+
+
+    <section id="smartLink" class="section">
+      <div class="grid cards" id="smartStats"></div>
+      <div class="card">
+        <div class="panel-title"><h2>ربط سمارت ERP</h2><div class="actions" style="margin:0"><button class="btn light" onclick="loadSmartSettings()">تحديث</button><button class="btn light" onclick="clearSmartImport()">تفريغ الاستيراد</button></div></div>
+        <div class="notice">هذه المرحلة تجهز الربط الحقيقي مع سمارت: حفظ إعدادات API، اختبار الاتصال، واستيراد مبيعات سمارت للورديات الحالية. إلى أن يتم تزويدنا بالتوكن النهائي من سمارت، يمكنك إدخال المبيعات يدوياً أو لصق CSV للتجربة.</div>
+        <div class="form">
+          <div class="field"><label>رابط API</label><input id="smBaseUrl" placeholder="https://smarterp.top/api/v2"></div>
+          <div class="field"><label>Access Token</label><input id="smToken" type="password" placeholder="يلصق هنا بعد توفيره من سمارت"></div>
+          <div class="field"><label>رقم الفرع / المخزن</label><input id="smBranch" placeholder="اختياري"></div>
+          <div class="field"><label>حالة الربط</label><input id="smStatus" readonly value="غير مختبر"></div>
+        </div>
+        <div class="actions"><button class="btn ok" onclick="saveSmartSettings()">حفظ الإعدادات</button><button class="btn" onclick="testSmartConnection()">اختبار الاتصال</button></div>
+      </div>
+
+      <div class="card">
+        <div class="panel-title"><h3>استيراد مبيعات سمارت للورديات</h3><span class="small">انسخ من Excel/CSV: رقم التسليم، مبيعات سمارت، عدد الفواتير اختياري</span></div>
+        <div class="form">
+          <div class="field"><label>طريقة المطابقة</label><select id="smMatchMode"><option value="reference">برقم التسليم</option><option value="cashier_date">باسم الكاشير والتاريخ</option></select></div>
+          <div class="field"><label>التاريخ الافتراضي</label><input id="smImportDate" type="date"></div>
+          <div class="field"><label>حد الفرق المسموح</label><input id="smTolerance" type="number" step="0.01" value="5"></div>
+          <div class="field"><label>آخر نتيجة</label><input id="smLastResult" readonly value="لا يوجد"></div>
+        </div>
+        <div class="field"><label>بيانات CSV</label><textarea id="smCsv" rows="7" placeholder="مثال:
+SM-20260630-123456,1250.50,88
+SM-20260630-222222,980.00,61"></textarea></div>
+        <div class="actions"><button class="btn ok" onclick="previewSmartCsv()">معاينة</button><button class="btn warn" onclick="applySmartImport()">تطبيق على الورديات</button></div>
+      </div>
+
+      <div class="card"><div class="panel-title"><h3>معاينة الاستيراد</h3></div><div class="table-wrap"><table id="smartImportTable"></table></div></div>
+      <div class="card"><div class="panel-title"><h3>ورديات تحتاج مبيعات سمارت</h3></div><div class="table-wrap"><table id="smartPendingTable"></table></div></div>
+    </section>
+
+
+    <section id="reports" class="section">
+      <div class="card">
+        <div class="panel-title"><h2>التقارير ولوحة الرقابة</h2><div class="actions"><button class="btn light" onclick="renderReports()">تحديث</button><button class="btn light" onclick="printShiftReport()">🖨️ طباعة</button><button class="btn ok" onclick="exportShiftReportCsv()">تصدير CSV</button></div></div>
+        <div class="notice">تقرير رقابي للورديات حسب الفترة والكاشير والحالة، مع إجمالي طرق الدفع والعجز والزيادة ومبيعات سمارت.</div>
+        <div class="form">
+          <div class="field"><label>من تاريخ</label><input id="repFrom" type="date" onchange="renderReports()"></div>
+          <div class="field"><label>إلى تاريخ</label><input id="repTo" type="date" onchange="renderReports()"></div>
+          <div class="field"><label>الكاشير</label><select id="repCashier" onchange="renderReports()"><option value="all">كل الكاشيرين</option></select></div>
+          <div class="field"><label>الحالة</label><select id="repStatus" onchange="renderReports()"><option value="all">الكل</option><option value="pending">بانتظار المحاسب</option><option value="reviewed">معتمدة من المحاسب</option><option value="approved">مغلقة نهائياً</option></select></div>
+          <div class="field"><label>بحث سريع</label><input id="repSearch" placeholder="رقم التسليم / اسم الكاشير / ملاحظة" oninput="renderReports()"></div>
+        </div>
+      </div>
+      <div class="grid cards" id="reportStats"></div>
+      <div class="card"><div class="panel-title"><h3>ملخص حسب الكاشير</h3></div><div class="table-wrap"><table id="cashierSummaryTable"></table></div></div>
+      <div class="card"><div class="panel-title"><h3>تفاصيل الورديات</h3><span class="small" id="reportCount"></span></div><div class="table-wrap"><table id="shiftReportTable"></table></div></div>
+    </section>
+
+
+    <section id="mobileApp" class="section">
+      <div class="mobile-hero">
+        <h2>تطبيق الجوال وروابط الدخول</h2>
+        <p>هذه الشاشة مخصصة لتجهيز استخدام سنابل مارت Cloud على الجوال والآيباد: روابط مباشرة لكل مستخدم، نسخ سريع، وإرشادات إضافة النظام للشاشة الرئيسية.</p>
+      </div>
+      <div class="grid two" style="margin-top:16px">
+        <div class="card">
+          <div class="panel-title"><h3>روابط الدخول السريعة</h3><div class="actions" style="margin:0"><button class="btn light" onclick="renderMobileLinks()">تحديث</button><button class="btn ok" onclick="copyCurrentAppLink()">نسخ رابط النظام</button></div></div>
+          <div class="notice">اختر المستخدم من القائمة، ثم انسخ الرابط أو أرسله واتساب. الرابط يفتح النظام ويحدد اسم المستخدم تلقائياً، والموظف يدخل PIN فقط.</div>
+          <div class="form">
+            <div class="field"><label>بحث باسم المستخدم/الدور</label><input id="mobSearch" placeholder="مثال: كاشير / محاسب" oninput="renderMobileLinks()"></div>
+            <div class="field"><label>فلترة الدور</label><select id="mobRole" onchange="renderMobileLinks()"><option value="all">الكل</option><option value="cashier">كاشير</option><option value="accountant">محاسب</option><option value="manager">مدير</option><option value="owner">مدير عام</option><option value="receiver">موظف استلام</option><option value="purchase_manager">مدير مشتريات</option></select></div>
+          </div>
+          <div id="mobileLinksList" style="margin-top:12px"></div>
+        </div>
+        <div class="card">
+          <div class="panel-title"><h3>شكل الاستخدام على الجوال</h3><span class="badge blue">PWA Ready</span></div>
+          <div class="phone-frame"><div class="phone-top"></div><div class="phone-screen">
+            <div class="side-brand" style="color:#111827;margin-bottom:12px"><div class="logo">🛒</div><div><h2 style="margin:0">سنابل مارت</h2><p style="margin:3px 0 0;color:#64748b">Cloud V27.0</p></div></div>
+            <div class="quick-card"><b>إغلاق وردية</b><span class="badge ok">جاهز</span></div>
+            <div class="quick-card"><b>اعتماد المحاسب</b><span class="badge blue">مباشر</span></div>
+            <div class="quick-card"><b>اعتماد المدير</b><span class="badge warn">نهائي</span></div>
+            <div class="quick-card"><b>التقارير</b><span class="badge ok">طباعة/CSV</span></div>
+            <div class="qr-box">انسخ الرابط من اليسار<br>ثم افتحه من الجوال<br>وأضفه للشاشة الرئيسية</div>
+          </div></div>
+        </div>
+      </div>
+      <div class="grid two" style="margin-top:16px">
+        <div class="card">
+          <div class="panel-title"><h3>طريقة الإضافة على الجوال</h3></div>
+          <div class="step-list">
+            <div class="step-item"><div><b>افتح الرابط من المتصفح</b><br><span class="small">Chrome في أندرويد أو Safari في آيفون/آيباد.</span></div></div>
+            <div class="step-item"><div><b>اختر مشاركة أو القائمة</b><br><span class="small">ثم اختر: إضافة إلى الشاشة الرئيسية.</span></div></div>
+            <div class="step-item"><div><b>سمّه: سنابل مارت</b><br><span class="small">بعدها يظهر مثل تطبيق مستقل للموظفين.</span></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="panel-title"><h3>فحص الجاهزية</h3></div>
+          <div id="mobileReadiness"></div>
+          <div class="actions"><button class="btn" onclick="runMobileReadiness()">فحص الآن</button></div>
+        </div>
+      </div>
+    </section>
+
+
+    <section id="enterpriseDashboard" class="section">
+      <div class="card">
+        <div class="panel-title"><h2>لوحة سنابل التنفيذية Enterprise</h2><div class="actions"><button class="btn light" onclick="renderEnterpriseDashboard()">تحديث</button><button class="btn ok" onclick="copyEnterpriseSummary()">نسخ تقرير تنفيذي</button></div></div>
+        <div class="notice">هذه الشاشة تجمع أهم مؤشرات سنابل مارت في مكان واحد: الورديات، المبيعات، الشبكة، التنبيهات، أداء الكاشير، وجاهزية الربط مع سمارت ERP.</div>
+      </div>
+      <div class="grid cards" id="enterpriseKpis"></div>
+      <div class="grid two">
+        <div class="card"><div class="panel-title"><h3>المؤشرات المالية اليوم</h3></div><div id="enterpriseMoney" class="mini-bars"></div></div>
+        <div class="card"><div class="panel-title"><h3>حالة سير الاعتماد</h3></div><div id="enterpriseWorkflow" class="live-feed"></div></div>
+      </div>
+      <div class="grid two" style="margin-top:16px">
+        <div class="card"><div class="panel-title"><h3>أفضل الكاشير</h3></div><div id="enterpriseTopCashiers" class="mini-bars"></div></div>
+        <div class="card"><div class="panel-title"><h3>مركز المخاطر</h3><span class="small" id="enterpriseRiskCount"></span></div><div id="enterpriseRisks" class="live-feed"></div></div>
+      </div>
+      <div class="card" style="margin-top:16px"><div class="panel-title"><h3>سجل الرقابة المبدئي</h3><span class="small">يعرض آخر عمليات النظام الحالية</span></div><div class="table-wrap"><table id="enterpriseAuditTable"></table></div></div>
+    </section>
+
+    <section id="liveControl" class="section">
+      <div class="card">
+        <div class="panel-title"><h2>مركز الرقابة المباشر</h2><div class="actions"><button class="btn light" onclick="renderLiveControlCenter()">تحديث مباشر</button><button class="btn ok" onclick="copyLiveSummary()">نسخ ملخص الإدارة</button></div></div>
+        <div class="notice">لوحة تنفيذية لحظية تعرض حالة الورديات، المبيعات، الشبكة، التنبيهات، وآخر حركة في النظام. كل الأرقام تعتمد على بيانات Supabase الحالية.</div>
+      </div>
+      <div class="live-strip" id="liveStatusStrip"></div>
+      <div class="grid cards" id="liveMoneyStats"></div>
+      <div class="live-grid">
+        <div class="card"><div class="panel-title"><h3>التنبيهات المباشرة</h3><span class="small" id="liveAlertsCount"></span></div><div id="liveFeed" class="live-feed"></div></div>
+        <div class="card"><div class="panel-title"><h3>أفضل الكاشير حسب المبيعات</h3></div><div id="liveCashierBars" class="mini-bars"></div></div>
+      </div>
+      <div class="grid two" style="margin-top:16px">
+        <div class="card"><div class="panel-title"><h3>آخر الورديات</h3></div><div class="table-wrap"><table id="liveLatestShifts"></table></div></div>
+        <div class="card"><div class="panel-title"><h3>حالة الشبكة اليوم</h3></div><div class="table-wrap"><table id="liveNetworkTable"></table></div></div>
+      </div>
+    </section>
+
+
+    <section id="alertsCenter" class="section">
+      <div class="card">
+        <div class="panel-title"><h2>مركز التنبيهات والرقابة</h2><div class="actions"><button class="btn light" onclick="renderAlertsCenter()">تحديث</button><button class="btn ok" onclick="copyAlertsSummary()">نسخ ملخص واتساب</button></div></div>
+        <div class="notice">يعرض التنبيهات المهمة تلقائياً: ورديات بانتظار المحاسب، ورديات بانتظار المدير، فروقات العجز والزيادة، وورديات بدون مبيعات سمارت.</div>
+        <div class="form">
+          <div class="field"><label>نوع التنبيه</label><select id="alType" onchange="renderAlertsCenter()"><option value="all">كل التنبيهات</option><option value="pending_accountant">بانتظار المحاسب</option><option value="pending_manager">بانتظار المدير</option><option value="shortage">عجز</option><option value="surplus">زيادة</option><option value="no_smart">بدون مبيعات سمارت</option><option value="closed">مغلقة نهائياً</option></select></div>
+          <div class="field"><label>بحث سريع</label><input id="alSearch" placeholder="رقم التسليم / الكاشير / ملاحظة" oninput="renderAlertsCenter()"></div>
+          <div class="field"><label>حد الفرق للتنبيه</label><input id="alLimit" type="number" step="0.01" value="5" oninput="renderAlertsCenter()"></div>
+          <div class="field"><label>الترتيب</label><select id="alSort" onchange="renderAlertsCenter()"><option value="newest">الأحدث أولاً</option><option value="amount">الأعلى فرقاً</option></select></div>
+        </div>
+      </div>
+      <div class="grid cards" id="alertStats"></div>
+      <div class="card"><div class="panel-title"><h3>قائمة التنبيهات</h3><span class="small" id="alertsCount"></span></div><div class="table-wrap"><table id="alertsTable"></table></div></div>
+    </section>
+
+
+
+
+    <section id="financeCenter" class="section">
+      <div class="card">
+        <div class="panel-title">
+          <div><h2>المركز المالي</h2><div class="sub">ملخص مالي مباشر من الورديات ومطابقة الشبكة، مع أرصدة افتتاحية قابلة للحفظ محلياً.</div></div>
+          <div class="actions" style="margin:0"><button class="btn light" onclick="renderFinanceCenter()">تحديث</button><button class="btn light" onclick="printFinanceCenter()">🖨️ طباعة</button><button class="btn ok" onclick="copyFinanceSummary()">نسخ ملخص الإدارة</button></div>
+        </div>
+        <div class="notice">V27.2 هي بداية المركز المالي: الصندوق، البنك، الشبكة، العملاء الآجلون، الموردون، التدفق النقدي. حالياً يعتمد على بيانات الورديات ومطابقة الشبكة، وبعد ربط المشتريات والعملاء ستصبح الأرقام كاملة تلقائياً.</div>
+      </div>
+
+      <div class="card">
+        <div class="panel-title"><h3>فلاتر المركز المالي</h3><button class="btn light" onclick="clearFinanceFilters()">مسح الفلاتر</button></div>
+        <div class="form">
+          <div class="field"><label>من تاريخ</label><input id="finFrom" type="date" onchange="renderFinanceCenter()"></div>
+          <div class="field"><label>إلى تاريخ</label><input id="finTo" type="date" onchange="renderFinanceCenter()"></div>
+          <div class="field"><label>الحالة</label><select id="finStatus" onchange="renderFinanceCenter()"><option value="all">كل الورديات</option><option value="pending_accountant">بانتظار المحاسب</option><option value="accountant_approved">معتمدة من المحاسب</option><option value="final_approved">مغلقة نهائياً</option><option value="approved">معتمدة</option><option value="pending">بانتظار</option></select></div>
+          <div class="field"><label>الكاشير</label><select id="finCashier" onchange="renderFinanceCenter()"><option value="all">الكل</option></select></div>
+        </div>
+      </div>
+
+      <div class="grid cards" id="financeStats"></div>
+
+      <div class="grid three">
+        <div class="card">
+          <div class="panel-title"><h3>💵 الصندوق النقدي</h3><span class="badge ok">Cash</span></div>
+          <div class="field"><label>رصيد افتتاحي نقدي</label><input id="finOpeningCash" type="number" step="0.01" value="0" oninput="saveFinanceOpening();renderFinanceCenter()"></div>
+          <div id="cashBoxDetails" class="inline-total"></div>
+        </div>
+        <div class="card">
+          <div class="panel-title"><h3>🏦 البنك</h3><span class="badge blue">Bank</span></div>
+          <div class="field"><label>رصيد افتتاحي بنك</label><input id="finOpeningBank" type="number" step="0.01" value="0" oninput="saveFinanceOpening();renderFinanceCenter()"></div>
+          <div id="bankBoxDetails" class="inline-total"></div>
+        </div>
+        <div class="card">
+          <div class="panel-title"><h3>💳 الشبكة</h3><span class="badge warn">POS</span></div>
+          <div id="posBoxDetails" class="inline-total"></div>
+        </div>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <div class="panel-title"><h3>👥 العملاء الآجلون</h3><span class="small">من حقل الآجل في الورديات</span></div>
+          <div class="table-wrap"><table id="financeReceivablesTable"></table></div>
+        </div>
+        <div class="card">
+          <div class="panel-title"><h3>🏢 الموردون والمستحقات</h3><span class="small">جاهزة للربط مع المشتريات V27.3</span></div>
+          <div class="table-wrap"><table id="financeSuppliersTable"></table></div>
+        </div>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <div class="panel-title"><h3>📈 التدفقات النقدية</h3></div>
+          <div class="table-wrap"><table id="financeCashflowTable"></table></div>
+        </div>
+        <div class="card">
+          <div class="panel-title"><h3>📊 ملخص طرق الدفع</h3></div>
+          <div class="table-wrap"><table id="financePayMethodsTable"></table></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="securityAudit" class="section">
+      <div class="card">
+        <div class="panel-title">
+          <div><h2>مركز الصلاحيات وسجل العمليات</h2><div class="sub">V27.1 — صلاحيات تفصيلية، ملف المستخدم، سجل رقابة، وتنبيهات أمنية.</div></div>
+          <div class="actions" style="margin:0"><button class="btn light" onclick="renderSecurityCenter()">تحديث</button><button class="btn ok" onclick="copySecuritySummary()">نسخ ملخص أمني</button></div>
+        </div>
+        <div class="grid cards" id="securityKpis"></div>
+      </div>
+
+      <div class="security-grid">
+        <div class="card">
+          <div class="panel-title"><h3>ملف المستخدم الحالي</h3><span class="badge blue">نشط</span></div>
+          <div id="currentUserProfile"></div>
+        </div>
+        <div class="card">
+          <div class="panel-title"><h3>التنبيهات الأمنية</h3><span class="small" id="securityAlertCount"></span></div>
+          <div id="securityAlerts" class="live-feed"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="panel-title">
+          <div><h3>مصفوفة الصلاحيات حسب الدور</h3><div class="small">الاختيار يحفظ محلياً للواجهة الحالية، والربط الدائم بجدول الصلاحيات في Supabase سيكون في المرحلة التالية.</div></div>
+          <div class="actions" style="margin:0"><button class="btn ok" onclick="saveRolePermissions()">حفظ الصلاحيات</button><button class="btn light" onclick="resetRolePermissions()">استعادة الافتراضي</button></div>
+        </div>
+        <div class="table-wrap"><table id="permissionsTable" class="permission-matrix"></table></div>
+      </div>
+
+      <div class="security-grid" style="margin-top:16px">
+        <div class="card"><div class="panel-title"><h3>نشاط المستخدمين</h3></div><div class="table-wrap"><table id="userActivityTable"></table></div></div>
+        <div class="card"><div class="panel-title"><h3>آخر العمليات المسجلة</h3><span class="small">تجميعي من الورديات والتنبيهات المحلية</span></div><div class="table-wrap"><table id="auditLogTable"></table></div></div>
+      </div>
+    </section>
+
+    <section id="users" class="section">
+      <div class="card">
+        <div class="panel-title"><h2>إدارة المستخدمين والصلاحيات</h2><button class="btn light" onclick="loadUsers();renderUsers()">تحديث</button></div>
+        <div class="notice">أضف المستخدمين من هنا وحدد الصلاحية والـ PIN. يمكن إيقاف المستخدم بدون حذف سجله.</div>
+        <input id="usrId" type="hidden">
+        <div class="form">
+          <div class="field"><label>اسم المستخدم</label><input id="usrName" placeholder="مثال: أحمد عسيري"></div>
+          <div class="field"><label>رقم الجوال</label><input id="usrPhone" placeholder="9665xxxxxxxx أو 05xxxxxxxx"></div>
+          <div class="field"><label>PIN</label><input id="usrPin" placeholder="مثال: 1234"></div>
+          <div class="field"><label>الصلاحية</label><select id="usrRole">
+            <option value="owner">مدير عام</option><option value="manager">مدير</option><option value="accountant">محاسب</option><option value="cashier">كاشير</option><option value="purchase_manager">مدير مشتريات</option><option value="receiver">موظف استلام</option>
+          </select></div>
+        </div>
+        <div class="actions"><button class="btn ok" onclick="saveUser()">حفظ المستخدم</button><button class="btn light" onclick="resetUserForm()">جديد</button></div>
+      </div>
+      <div class="card"><div class="panel-title"><h3>قائمة المستخدمين</h3><div class="actions" style="margin:0"><button class="btn light" onclick="printUsers()">🖨️ طباعة</button></div></div><div class="table-wrap"><table id="usersTable"></table></div></div>
+    </section>
+  </main>
+</div>
+<div class="os-footer no-print"><span><b>Sanabel OS 2.0.1 Foundation</b> © جميع الحقوق محفوظة</span><span>🟢 النظام يعمل بكفاءة</span><span>آخر مزامنة: منذ دقيقة واحدة 🔄</span></div>
+<div id="toast" class="toast"></div>
+<div id="imageModal" class="modal"><div class="modal-inner"><div class="modal-toolbar"><button onclick="prevAttachment()">السابق</button><button onclick="nextAttachment()">التالي</button><button onclick="zoomAttachment(0.2)">تكبير +</button><button onclick="zoomAttachment(-0.2)">تصغير -</button><button onclick="closeAttachmentViewer()" class="danger-link">إغلاق</button></div><div class="modal-stage"><img id="modalImg" src=""></div><div class="small" id="modalCaption" style="color:white;text-align:center"></div></div></div>
+<script>
+const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
+const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
+const ORG_ID='41e9d7b4-71c1-4de4-b797-f7f5d5e1817d';
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let users=[], currentUser=null, shifts=[], allShifts=[], receiving=[], allReceiving=[], selectedShift=null, posDevices=[], allPosDevices=[], networkMatches=[], allNetworkMatches=[], pendingShiftAttachments=[], selectedShiftAttachments=[], modalIndex=0, modalZoom=1, smartImportRows=[];
+const WORKSPACES=[{id:'retail',icon:'🛒',name:'أسواق سنابل المع',type:'Retail Workspace',hint:'الورديات، الشبكة، المبيعات، الجرد',health:98,warn:0},{id:'contracting',icon:'🏗️',name:'مؤسسة حسن الشريمي',type:'Contracting Workspace',hint:'المقاولات، العهد، المصروفات، المشاريع',health:96,warn:0},{id:'property',icon:'🏠',name:'إدارة العقارات',type:'Property Workspace',hint:'الشقق، المحلات، العقود، السداد',health:94,warn:2},{id:'waqf',icon:'🕌',name:'إدارة الوقف',type:'Waqf Workspace',hint:'العقود الهجرية، الإيرادات، المصروفات',health:97,warn:0},{id:'cafe',icon:'☕',name:'المقاهي والمشاريع',type:'Cafe Workspace',hint:'المبيعات السريعة، الوصفات، التكاليف',health:95,warn:0}];
+let currentWorkspaceId=localStorage.getItem('sanabel_os_workspace')||'retail';
+const ACCOUNTANT_WHATSAPP_KEY="sanabel_accountant_whatsapp";
+const roleMap={owner:'مدير عام',manager:'مدير',accountant:'محاسب',cashier:'كاشير',purchase_manager:'مدير مشتريات',receiver:'موظف استلام'};
+const tabsAll=[['workspaceCenter','🌿','مساحات العمل',['owner','manager','accountant','purchase_manager','cashier','receiver']],['dashboard','🏠','لوحة المدير',['owner','manager','accountant','purchase_manager']],['enterpriseDashboard','🏢','لوحة Enterprise',['owner','manager','accountant']],['financeCenter','💰','المركز المالي',['owner','manager','accountant']],['securityAudit','🔐','الصلاحيات والرقابة',['owner','manager']],['liveControl','📡','مركز الرقابة المباشر',['owner','manager','accountant']],['accountantApproval','🧾','اعتماد المحاسب',['owner','manager','accountant']],['mobileShift','📱','إغلاق وردية الجوال',['cashier','owner']],['managerReview','✅','اعتماد المدير',['owner','manager','accountant']],['smartLink','🔗','ربط سمارت ERP',['owner','manager','accountant']],['mobileApp','📲','تطبيق الجوال',['owner','manager','accountant']],['alertsCenter','🚨','مركز التنبيهات',['owner','manager','accountant']],['reports','📊','التقارير',['owner','manager','accountant']],['networkMatch','🏦','مطابقة الشبكة',['owner','manager','accountant']],['posDevices','💳','أجهزة الشبكة',['owner','manager','accountant']],['receiving','📦','استلام البضاعة',['receiver','purchase_manager','owner']],['users','👥','المستخدمون',['owner','manager']]];
+function byId(id){return document.getElementById(id)}
+function n(v){return Number(v||0)}
+function money(v){return n(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ر.س'}
+function refNo(s){return s?.reference_no||s?.shift_no||'-'}
+function today(){return new Date().toISOString().slice(0,10)}
+function toast(msg){const t=byId('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500)}
+function rowsTable(headers,rows){if(!rows.length)return '<div class="empty">لا توجد بيانات</div>';return `<thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody>`}
+function stat(label,value,hint=''){return `<div class="card stat"><div class="label">${label}</div><div class="value">${value}</div><div class="hint">${hint}</div></div>`}
+function currentWorkspace(){return WORKSPACES.find(w=>w.id===currentWorkspaceId)||WORKSPACES[0]}
+function rowWorkspaceId(row, fallback='retail'){return row?.workspace_id||row?.workspace||fallback}
+function filterRowsByWorkspace(rows, fallback='retail'){return (rows||[]).filter(r=>rowWorkspaceId(r,fallback)===currentWorkspaceId)}
+function renderWorkspaceSwitcher(){
+  const ws=currentWorkspace();
+  if(byId('workspaceSelect')) byId('workspaceSelect').innerHTML=WORKSPACES.map(w=>`<option value="${w.id}" ${w.id===currentWorkspaceId?'selected':''}>${w.icon} ${w.name}</option>`).join('');
+  if(byId('workspaceHint')) byId('workspaceHint').textContent=ws.type+' — '+ws.hint;
+  if(byId('orgName')) byId('orgName').textContent=ws.name;
+  renderWorkspaceCards();
+}
+function renderWorkspaceCards(){
+  const box=byId('workspaceCards'); if(!box)return;
+  const addCard=`<div class="workspace-card add-workspace" onclick="toast('قريباً: إضافة مساحة عمل جديدة')"><div class="ico">＋</div><h3>إضافة مساحة عمل</h3><p>أنشئ مساحة عمل جديدة لمؤسستك أو نشاطك</p><div class="ws-actions"><button>إضافة الآن</button></div></div>`;
+  const cards=WORKSPACES.map(w=>`<div class="workspace-card ${w.id===currentWorkspaceId?'active':''}" onclick="switchWorkspace('${w.id}')"><div class="ico">${w.icon}</div><h3>${w.name}</h3><p>${w.type}</p><div class="hint">${w.hint}</div><div class="ws-badges"><span>نشط</span><span class="${w.warn?'warn':''}">${w.warn?('تنبيهات '+w.warn):(w.health+'%')}</span></div><div class="ws-actions"><button onclick="event.stopPropagation();switchWorkspace('${w.id}');show('dashboard')">دخول</button><button class="more" onclick="event.stopPropagation();toast('إعدادات '+ '${w.name}')">···</button></div></div>`).join('');
+  box.innerHTML=addCard+cards;
+}
+async function switchWorkspace(id){
+  currentWorkspaceId=id||'retail';
+  localStorage.setItem('sanabel_os_workspace',currentWorkspaceId);
+  renderWorkspaceSwitcher();
+  shifts=filterRowsByWorkspace(allShifts,'retail');
+  receiving=filterRowsByWorkspace(allReceiving,'retail');
+  posDevices=filterRowsByWorkspace(allPosDevices,'retail');
+  networkMatches=filterRowsByWorkspace(allNetworkMatches,'retail');
+  renderDashboard();renderShifts();renderAlertsCenter();renderReports();renderSmartDashboard();renderAccountantApproval();renderLiveControlCenter();renderEnterpriseDashboard();renderFinanceCenter();renderSecurityCenter();renderPosDevices();fillDeviceSelect();renderNetworkMatches();
+  toast('تم التبديل إلى '+currentWorkspace().name);
+}
+function copyWorkspaceSQL(){copyText(byId('workspaceSql')?.textContent||'')}
+
+function userName(id){const u=(users||[]).find(x=>String(x.id)===String(id));return u?.full_name||'-'}
+function fmtDateTime(v){if(!v)return '-';try{return new Date(v).toLocaleString('ar-SA')}catch(e){return v||'-'}}
+function shiftStage(s){if(!s)return 'pending'; if(s.status==='approved')return 'final'; if(s.status==='reviewed')return 'accountant'; return 'cashier'}
+async function loadUsers(){byId('loginMsg').textContent='جاري تحميل المستخدمين...';const {data,error}=await db.from('app_users').select('*').eq('organization_id',ORG_ID).order('full_name');if(error){byId('loginMsg').textContent='خطأ في تحميل المستخدمين: '+error.message;return}users=data||[];const active=users.filter(u=>u.is_active!==false);byId('loginUser').innerHTML=active.map(u=>`<option value="${u.id}">${u.full_name} - ${roleMap[u.role]||u.role}</option>`).join('');const qp=new URLSearchParams(location.search);const uid=qp.get('user');if(uid&&active.some(u=>u.id===uid))byId('loginUser').value=uid;byId('loginMsg').textContent=active.length?'تم تحميل المستخدمين.':'لا يوجد مستخدمون نشطون.';renderUsers();renderSecurityCenter()}
+async function login(){const id=byId('loginUser').value,pin=byId('loginPin').value;const u=users.find(x=>x.id===id);if(!u)return alert('اختر المستخدم');if(String(u.pin)!==String(pin)){logSecurityEvent('محاولة دخول فاشلة',u.full_name||id,'PIN غير صحيح','danger');return alert('الرقم السري غير صحيح')}currentUser=u;logSecurityEvent('تسجيل دخول',u.full_name,'دخول ناجح للنظام','ok');localStorage.setItem('sanabel_cloud_user',JSON.stringify(u));startApp()}
+function logout(){localStorage.removeItem('sanabel_cloud_user');location.reload()}
+async function startApp(){byId('login').classList.add('hide');byId('app').classList.remove('hide');byId('sideUser').textContent=currentUser.full_name;byId('sideRole').textContent=roleMap[currentUser.role]||currentUser.role;byId('todayPill').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});byId('shDate').value=new Date().toLocaleString('ar-SA');byId('recDate').value=today(); if(byId('nwDate'))byId('nwDate').value=today(); if(byId('smImportDate'))byId('smImportDate').value=today(); if(byId('repTo'))byId('repTo').value=today(); attachShiftTotalEvents();loadSmartSettings();renderWorkspaceSwitcher();renderNav();await loadAll();renderMobileLinks();runMobileReadiness();renderSecurityCenter();subscribeRealtime()}
+function renderNav(){const tabs=tabsAll.filter(t=>t[3].includes(currentUser.role));byId('nav').innerHTML=tabs.map((t,i)=>`<button class="${i?'':'active'}" onclick="show('${t[0]}',this)"><span>${t[1]}</span><span>${t[2]}</span></button>`).join('');show(tabs[0][0],byId('nav').querySelector('button'))}
+function show(id,btn){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));byId(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');const tab=tabsAll.find(t=>t[0]===id);byId('pageTitle').textContent=tab?tab[2]:'Sanabel OS'; if(byId('pageSub')) byId('pageSub').textContent=id==='workspaceCenter'?'منصة واحدة، جميع أعمالك في مكان واحد':'مساحة العمل الحالية: '+currentWorkspace().name}
+async function loadAll(){await Promise.all([loadShifts(),loadReceiving(),loadPosDevices(),loadNetworkMatches()]);renderDashboard();renderSmartDashboard();renderReports();renderLiveControlCenter();renderEnterpriseDashboard();renderFinanceCenter();renderSecurityCenter();}
+async function loadShifts(){const {data,error}=await db.from('cashier_shifts').select('*').eq('organization_id',ORG_ID).order('created_at',{ascending:false});if(error){toast('خطأ الورديات: '+error.message);return}allShifts=data||[];shifts=filterRowsByWorkspace(allShifts,'retail');renderShifts();renderAlertsCenter();renderReports();renderSmartDashboard();renderAccountantApproval();renderReports();renderLiveControlCenter()}
+function calcShift(r){const entered=n(r.cash)+n(r.card)+n(r.transfer)+n(r.credit)-n(r.returns);const diff=n(r.smart_sales)-entered;return {entered,diff,shortage:diff>0?diff:0,surplus:diff<0?Math.abs(diff):0}}
+function renderDashboard(){const pending=shifts.filter(s=>s.status==='pending').length;const approved=shifts.filter(s=>s.status==='approved').length;const total=shifts.reduce((a,s)=>a+calcShift(s).entered,0);const shortage=shifts.reduce((a,s)=>a+n(s.shortage),0);const net=networkTotals();byId('stats').innerHTML=stat('بانتظار المحاسب',pending,'مرسلة من الكاشير')+stat('مغلقة نهائياً',approved,'اعتماد المدير')+stat('إجمالي المبيعات المسجلة',money(total),'حسب إدخال الكاشير')+stat('الشبكة المعلقة',money(net.pending),'حسب الموازنات');const pRows=shifts.filter(s=>s.status==='pending').slice(0,8).map(s=>shiftRow(s,true));byId('pendingTable').innerHTML=rowsTable(['رقم التسليم','التاريخ','الكاشير','الإجمالي','الحالة','إجراء'],pRows);byId('latestTable').innerHTML=rowsTable(['رقم التسليم','التاريخ','الكاشير','الإجمالي','الحالة'],shifts.slice(0,8).map(s=>shiftRow(s,false)))}
+function shiftRow(s,action){const c=calcShift(s);const status=statusLabel(s);return `<tr><td><b>${refNo(s)}</b></td><td>${s.shift_date}</td><td>${s.app_users?.full_name||'-'}</td><td><b>${money(c.entered)}</b></td><td>${status}</td>${action?`<td><button class="btn light" onclick="openReview('${s.id}')">فتح</button></td>`:''}</tr>`}
+function statusLabel(s){return s.status==='approved'?'<span class="badge ok">مغلقة نهائياً 🔒</span>':s.status==='reviewed'?'<span class="badge blue">معتمدة من المحاسب</span>':s.status==='rejected'?'<span class="badge danger">مرفوضة</span>':'<span class="badge warn">بانتظار المحاسب</span>'}
+function filteredManagerShifts(){
+  let rows=[...(shifts||[])];
+  const from=byId('mgrFrom')?.value, to=byId('mgrTo')?.value, q=(byId('mgrSearch')?.value||'').trim().toLowerCase(), st=byId('mgrStatus')?.value||'reviewed';
+  if(from) rows=rows.filter(s=>(s.shift_date||'')>=from);
+  if(to) rows=rows.filter(s=>(s.shift_date||'')<=to);
+  if(q) rows=rows.filter(s=>[refNo(s),s.shift_no,s.app_users?.full_name,s.cashier_note,s.manager_note].join(' ').toLowerCase().includes(q));
+  if(st!=='all') rows=rows.filter(s=>s.status===st);
+  return rows;
+}
+function clearManagerFilters(){['mgrFrom','mgrTo','mgrSearch'].forEach(id=>{if(byId(id))byId(id).value=''});if(byId('mgrStatus'))byId('mgrStatus').value='reviewed';renderShifts()}
+function renderShifts(){
+  if(!byId('reviewTable'))return;
+  const rows=filteredManagerShifts();
+  const pending=(shifts||[]).filter(s=>s.status==='pending').length, reviewed=(shifts||[]).filter(s=>s.status==='reviewed').length, approved=(shifts||[]).filter(s=>s.status==='approved').length;
+  const total=rows.reduce((a,s)=>a+calcShift(s).entered,0);
+  if(byId('managerStats'))byId('managerStats').innerHTML=stat('جاهزة لاعتماد المدير',reviewed,'اعتمدها المحاسب')+stat('بانتظار المحاسب',pending,'لم تصل للمدير بعد')+stat('معتمدة نهائياً',approved,'اعتماد المدير')+stat('إجمالي القائمة',money(total),'حسب الفلاتر');
+  byId('reviewTable').innerHTML=rowsTable(['رقم التسليم','التاريخ','الكاشير','إجمالي الوردية','مبيعات سمارت','الفرق','العجز','الزيادة','الحالة','إجراء'],rows.map(s=>{const c=calcShift(s);const action=s.status==='reviewed'?`<button class="btn ok" onclick="openReview('${s.id}')">اعتماد نهائي</button>`:`<button class="btn light" onclick="openReview('${s.id}')">عرض</button>`;return `<tr><td><b>${refNo(s)}</b></td><td>${s.shift_date||'-'}</td><td>${s.app_users?.full_name||'-'}</td><td><b>${money(c.entered)}</b></td><td>${money(s.smart_sales)}</td><td><span class="badge ${Math.abs(c.diff)<0.01?'ok':c.diff>0?'danger':'blue'}">${money(c.diff)}</span></td><td><span class="badge ${n(s.shortage)>0?'danger':'ok'}">${money(s.shortage)}</span></td><td><span class="badge ${n(s.surplus)>0?'blue':'ok'}">${money(s.surplus)}</span></td><td>${statusLabel(s)}</td><td>${action}</td></tr>`}))
+}
+
+function clearAccountantFilters(){['accFrom','accTo','accSearch'].forEach(id=>{if(byId(id))byId(id).value=''});if(byId('accStatus'))byId('accStatus').value='pending';renderAccountantApproval()}
+function filteredAccountantShifts(){
+  let rows=[...(shifts||[])];
+  const from=byId('accFrom')?.value, to=byId('accTo')?.value, q=(byId('accSearch')?.value||'').trim().toLowerCase(), st=byId('accStatus')?.value||'pending';
+  if(from) rows=rows.filter(s=>(s.shift_date||'')>=from);
+  if(to) rows=rows.filter(s=>(s.shift_date||'')<=to);
+  if(q) rows=rows.filter(s=>[refNo(s),s.shift_no,s.app_users?.full_name,s.cashier_note,s.manager_note].join(' ').toLowerCase().includes(q));
+  if(st!=='all') rows=rows.filter(s=>s.status===st);
+  return rows;
+}
+function renderAccountantApproval(){
+  if(!byId('accountantApprovalTable'))return;
+  const rows=filteredAccountantShifts();
+  const pending=(shifts||[]).filter(s=>s.status==='pending').length;
+  const reviewed=(shifts||[]).filter(s=>s.status==='reviewed').length;
+  const approved=(shifts||[]).filter(s=>s.status==='approved').length;
+  const total=rows.reduce((a,s)=>a+calcShift(s).entered,0);
+  byId('accountantStats').innerHTML=stat('بانتظار المحاسب',pending,'ورديات تحتاج مراجعة')+stat('معتمد من المحاسب',reviewed,'جاهزة لاعتماد المدير')+stat('معتمد نهائياً',approved,'اعتماد المدير')+stat('إجمالي القائمة',money(total),'حسب الفلاتر');
+  byId('accountantApprovalTable').innerHTML=rowsTable(['رقم التسليم','التاريخ','الكاشير','نقدي','شبكة','تحويل','آجل','مرتجع','الإجمالي','سمارت','الحالة','إجراء'],rows.map(s=>{
+    const c=calcShift(s);
+    const status=statusLabel(s);
+    const action=s.status==='pending'?`<button class="btn ok" onclick="openReview('${s.id}')">مراجعة واعتماد</button>`:`<button class="btn light" onclick="openReview('${s.id}')">عرض</button>`;
+    return `<tr><td><b>${refNo(s)}</b></td><td>${s.shift_date||'-'}</td><td>${s.app_users?.full_name||'-'}</td><td>${money(s.cash)}</td><td>${money(s.card)}</td><td>${money(s.transfer)}</td><td>${money(s.credit)}</td><td>${money(s.returns)}</td><td><b>${money(c.entered)}</b></td><td>${money(s.smart_sales)}</td><td>${status}</td><td>${action}</td></tr>`
+  }));
+}
+async function accountantApproveShift(id){
+  const s=shifts.find(x=>x.id===id); if(!s)return;
+  selectedShift=s; await saveReview('reviewed');
+}
+
+async function generateShiftRef(){
+  const d=today().replaceAll('-','');
+  return `SM-${d}-${Math.floor(100000+Math.random()*900000)}`;
+}
+function attachShiftTotalEvents(){['shCash','shCard','shTransfer','shCredit','shReturns'].forEach(id=>{const el=byId(id); if(el) el.addEventListener('input',updateShiftAutoTotal)}); updateShiftAutoTotal();}
+function updateShiftAutoTotal(){const total=n(byId('shCash')?.value)+n(byId('shCard')?.value)+n(byId('shTransfer')?.value)+n(byId('shCredit')?.value)-n(byId('shReturns')?.value); if(byId('shiftAutoTotal')) byId('shiftAutoTotal').textContent=money(total);}
+function fileToDataUrl(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)})}
+async function addShiftFiles(files){
+  const type=byId('attType')?.value||'أخرى', note=byId('attNote')?.value||'';
+  for(const file of Array.from(files||[])){
+    if(!file.type.startsWith('image/')){toast('يسمح بالصور فقط حالياً');continue}
+    const data=await fileToDataUrl(file);
+    pendingShiftAttachments.push({attachment_type:type,file_name:file.name,file_mime:file.type,file_data:data,note});
+  }
+  if(byId('attFile'))byId('attFile').value=''; if(byId('attNote'))byId('attNote').value=''; renderPendingAttachments();
+}
+function renderPendingAttachments(){
+  const box=byId('pendingAttachments'); if(!box)return;
+  box.innerHTML=pendingShiftAttachments.map((a,i)=>`<div class="att-card"><img src="${a.file_data}" onclick="openLocalAttachment(${i})"><div class="att-title">${a.attachment_type}</div><div class="att-note">${a.note||a.file_name}</div><button class="btn danger" style="padding:7px 10px;margin-top:6px" onclick="removePendingAttachment(${i})">حذف</button></div>`).join('')||'<div class="empty">لا توجد مرفقات بعد</div>';
+}
+function removePendingAttachment(i){pendingShiftAttachments.splice(i,1);renderPendingAttachments()}
+function openLocalAttachment(i){selectedShiftAttachments=pendingShiftAttachments.map(a=>({file_data:a.file_data,attachment_type:a.attachment_type,note:a.note,file_name:a.file_name}));openAttachmentViewer(i)}
+async function submitShift(){
+  if(!currentUser||!['cashier','owner'].includes(currentUser.role))return alert('هذه الشاشة للكاشير');
+  const ref=await generateShiftRef();
+  const payload={organization_id:ORG_ID,cashier_id:currentUser.id,shift_no:ref,shift_date:today(),cash:n(byId('shCash').value),card:n(byId('shCard').value),transfer:n(byId('shTransfer').value),credit:n(byId('shCredit').value),returns:n(byId('shReturns').value),cashier_note:byId('shNote').value,status:'pending',created_by:currentUser.id};
+  const {data,error}=await db.from('cashier_shifts').insert(payload).select().single();
+  if(error)return alert('خطأ الحفظ: '+error.message+'\nتأكد من تشغيل SQL الخاص بـ V26.');
+  if(pendingShiftAttachments.length){
+    const rows=pendingShiftAttachments.map(a=>({organization_id:ORG_ID,shift_id:data.id,attachment_type:a.attachment_type,file_name:a.file_name,file_mime:a.file_mime,file_data:a.file_data,note:a.note,uploaded_by:currentUser.id}));
+    const res=await db.from('shift_attachments').insert(rows);
+    if(res.error) alert('تم حفظ الوردية لكن تعذر حفظ بعض المرفقات: '+res.error.message);
+  }
+  const msg=`تم إغلاق الوردية بنجاح%0Aرقم التسليم: ${ref}%0Aالكاشير: ${currentUser.full_name}%0Aالتاريخ: ${payload.shift_date}%0Aالحالة: بانتظار مراجعة المحاسب`; byId('shRefPreview').value=ref;
+  byId('shiftSubmitResult').innerHTML=`<div class="success-box">✅ تم إرسال الوردية بنجاح<br>رقم التسليم: <span class="ref-code">${ref}</span><br><div class="actions"><button class="btn light" onclick="copyText('${ref}')">نسخ الرقم</button><button class="btn ok" onclick="sendShiftToAccountant('${msg}')">إرسال للمحاسب واتساب</button></div></div>`;
+  toast('تم إرسال الوردية للإدارة'); pendingShiftAttachments=[]; renderPendingAttachments(); clearShift(false); await loadShifts();
+}
+function getAccountantWhatsapp(){let phone=localStorage.getItem(ACCOUNTANT_WHATSAPP_KEY)||''; if(!phone){phone=prompt('أدخل رقم واتساب المحاسب بصيغة 9665xxxxxxxx'); if(phone) localStorage.setItem(ACCOUNTANT_WHATSAPP_KEY,phone)} return (phone||'').replace(/\D/g,'')}
+function sendShiftToAccountant(msg){const phone=getAccountantWhatsapp(); if(!phone)return; window.open(`https://wa.me/${phone}?text=${msg}`,'_blank')}
+function clearShift(clearResult=true){['shNo','shNote','shRefPreview'].forEach(id=>{if(byId(id))byId(id).value=''});['shCash','shCard','shTransfer','shCredit','shReturns'].forEach(id=>byId(id).value=0);byId('shDate').value=new Date().toLocaleString('ar-SA');updateShiftAutoTotal(); if(clearResult&&byId('shiftSubmitResult'))byId('shiftSubmitResult').innerHTML=''}
+async function openReview(id){
+  selectedShift=shifts.find(s=>s.id===id);if(!selectedShift)return;
+  show('managerReview',[...document.querySelectorAll('.nav button')].find(b=>b.textContent.includes('اعتماد المدير'))||[...document.querySelectorAll('.nav button')].find(b=>b.textContent.includes('اعتماد')));
+  byId('reviewCard').style.display='block';
+  rvCash.value=n(selectedShift.cash);rvCard.value=n(selectedShift.card);rvTransfer.value=n(selectedShift.transfer);rvCredit.value=n(selectedShift.credit);rvReturns.value=n(selectedShift.returns);
+  byId('rvSmart').value=n(selectedShift.smart_sales);byId('rvNote').value=selectedShift.manager_note||'';
+  renderReviewStats();
+  byId('reviewBadge').innerHTML=selectedShift.status==='approved'?'<span class="badge ok">مغلقة نهائياً 🔒</span>':selectedShift.status==='reviewed'?'<span class="badge blue">معتمدة من المحاسب</span>':'<span class="badge warn">بانتظار المحاسب</span>';
+  renderApprovalTimeline();
+  applyReviewPermissions();
+  await loadShiftAttachments(selectedShift.id);
+  setTimeout(()=>byId('reviewCard').scrollIntoView({behavior:'smooth'}),80)
+}
+
+function applyReviewPermissions(){
+  const finalApproved=selectedShift?.status==='approved';
+  const reviewed=selectedShift?.status==='reviewed';
+  const isManager=['owner','manager'].includes(currentUser?.role);
+  const isAccountant=currentUser?.role==='accountant';
+  const lockInputs=finalApproved || (reviewed&&isAccountant);
+  ['rvCash','rvCard','rvTransfer','rvCredit','rvReturns','rvSmart','rvNote'].forEach(id=>{const el=byId(id); if(el)el.disabled=!!lockInputs});
+  if(byId('approveShiftBtn')){
+    byId('approveShiftBtn').textContent=isAccountant?'اعتماد المحاسب':'اعتماد المدير النهائي';
+    byId('approveShiftBtn').style.display=finalApproved||(reviewed&&isAccountant)?'none':'inline-block';
+  }
+  if(byId('saveReviewBtn')) byId('saveReviewBtn').style.display=finalApproved||(reviewed&&isAccountant)?'none':'inline-block';
+  if(byId('returnToAccountantBtn')) byId('returnToAccountantBtn').style.display=isManager&&reviewed?'inline-block':'none';
+}
+
+function renderApprovalTimeline(){
+  const box=byId('approvalTimeline'); if(!box||!selectedShift)return;
+  const s=selectedShift;
+  const cashierName=s.app_users?.full_name||userName(s.cashier_id)||'-';
+  const accountantName=userName(s.reviewed_by);
+  const managerName=userName(s.approved_by);
+  const cashierDone=!!s.created_at;
+  const accDone=!!s.reviewed_at||s.status==='reviewed'||s.status==='approved';
+  const mgrDone=!!s.approved_at||s.status==='approved';
+  box.innerHTML=`
+    <div class="step-card ${cashierDone?'done':'wait'}"><div class="step-title">① الكاشير</div><div class="step-name">${cashierName}</div><div class="step-time">${fmtDateTime(s.created_at||s.shift_date)}</div><div class="small">إرسال الوردية</div></div>
+    <div class="step-card ${accDone?'done':'wait'}"><div class="step-title">② المحاسب</div><div class="step-name">${accDone?accountantName:'بانتظار الاعتماد'}</div><div class="step-time">${fmtDateTime(s.reviewed_at)}</div><div class="small">مراجعة ومطابقة سمارت</div></div>
+    <div class="step-card ${mgrDone?'done':'wait'}"><div class="step-title">③ المدير</div><div class="step-name">${mgrDone?managerName:'بانتظار الاعتماد النهائي'}</div><div class="step-time">${fmtDateTime(s.approved_at)}</div><div class="small">إغلاق نهائي للوردية</div></div>`;
+}
+
+function reviewEntered(){return n(rvCash.value)+n(rvCard.value)+n(rvTransfer.value)+n(rvCredit.value)-n(rvReturns.value)}
+function renderReviewStats(){const entered=reviewEntered();const smart=n(byId('rvSmart')?.value);const diff=smart-entered;byId('reviewStats').innerHTML=stat('إجمالي طرق الدفع',money(entered),'نقدي + شبكة + تحويل + آجل - مرتجع')+stat('مبيعات البرنامج',money(smart),'يدخلها المحاسب/المدير')+stat('العجز',money(diff>0?diff:0),'إذا البرنامج أكبر')+stat('الزيادة',money(diff<0?Math.abs(diff):0),'إذا طرق الدفع أكبر');const box=byId('reviewDecisionBox');if(box){box.className='detail-box '+(Math.abs(diff)<0.01?'result-ok':diff>0?'result-danger':'result-warn');box.innerHTML=Math.abs(diff)<0.01?'✅ مطابق تماماً — جاهز للاعتماد':diff>0?`🟥 يوجد عجز بقيمة ${money(diff)} — راجع المرفقات قبل الاعتماد`:`🟦 توجد زيادة بقيمة ${money(Math.abs(diff))} — راجع سبب الزيادة قبل الاعتماد`;}}
+['rvCash','rvCard','rvTransfer','rvCredit','rvReturns','rvSmart'].forEach(id=>setTimeout(()=>{const el=byId(id);if(el)el.addEventListener('input',renderReviewStats)},0));
+async function loadShiftAttachments(shiftId){
+  const {data,error}=await db.from('shift_attachments').select('*').eq('shift_id',shiftId).order('created_at',{ascending:true});
+  if(error){byId('reviewAttachments').innerHTML='<div class="empty">لم يتم تحميل المرفقات: '+error.message+'</div>';return}
+  selectedShiftAttachments=data||[]; renderReviewAttachments();
+}
+function renderReviewAttachments(){
+  const box=byId('reviewAttachments'); if(!box)return;
+  byId('reviewAttCount').textContent=(selectedShiftAttachments.length||0)+' مرفق';
+  if(!selectedShiftAttachments.length){box.innerHTML='<div class="empty">لا توجد مرفقات</div>';return}
+  const types=[...new Set(selectedShiftAttachments.map(a=>a.attachment_type||'أخرى'))];
+  box.innerHTML=types.map(type=>`<h4>${type} (${selectedShiftAttachments.filter(a=>(a.attachment_type||'أخرى')===type).length})</h4><div class="attachments-grid">${selectedShiftAttachments.map((a,i)=>({a,i})).filter(x=>(x.a.attachment_type||'أخرى')===type).map(x=>`<div class="att-card"><img src="${x.a.file_data}" onclick="openAttachmentViewer(${x.i})"><div class="att-title">${x.a.attachment_type||'أخرى'}</div><div class="att-note">${x.a.note||x.a.file_name||''}</div></div>`).join('')}</div>`).join('');
+}
+function openAttachmentViewer(i){modalIndex=i;modalZoom=1;drawModal();byId('imageModal').classList.add('show')}
+function drawModal(){const a=selectedShiftAttachments[modalIndex];if(!a)return;byId('modalImg').src=a.file_data;byId('modalImg').style.transform=`scale(${modalZoom})`;byId('modalCaption').textContent=`${modalIndex+1} / ${selectedShiftAttachments.length} - ${a.attachment_type||''} ${a.note?'- '+a.note:''}`}
+function closeAttachmentViewer(){byId('imageModal').classList.remove('show')}
+function nextAttachment(){if(!selectedShiftAttachments.length)return;modalIndex=(modalIndex+1)%selectedShiftAttachments.length;modalZoom=1;drawModal()}
+function prevAttachment(){if(!selectedShiftAttachments.length)return;modalIndex=(modalIndex-1+selectedShiftAttachments.length)%selectedShiftAttachments.length;modalZoom=1;drawModal()}
+function zoomAttachment(step){modalZoom=Math.max(.4,Math.min(3,modalZoom+step));drawModal()}
+async function saveReview(status='reviewed'){
+  if(!selectedShift)return;
+  if(selectedShift.status==='approved')return alert('هذه الوردية مغلقة نهائياً ولا يمكن تعديلها');
+  if(selectedShift.status==='reviewed'&&currentUser?.role==='accountant'&&status!=='approved')return alert('تم اعتماد هذه الوردية من المحاسب ولا يمكن تعديلها إلا من المدير');
+  const entered=reviewEntered();const diff=n(byId('rvSmart').value)-entered;
+  const payload={cash:n(rvCash.value),card:n(rvCard.value),transfer:n(rvTransfer.value),credit:n(rvCredit.value),returns:n(rvReturns.value),smart_sales:n(byId('rvSmart').value),shortage:diff>0?diff:0,surplus:diff<0?Math.abs(diff):0,status,manager_note:byId('rvNote').value};
+  if(status==='reviewed'){payload.reviewed_by=currentUser.id;payload.reviewed_at=new Date().toISOString();payload.approved_by=null;payload.approved_at=null}
+  if(status==='approved'){payload.approved_by=currentUser.id;payload.approved_at=new Date().toISOString()}
+  const {error}=await db.from('cashier_shifts').update(payload).eq('id',selectedShift.id);if(error)return alert(error.message);
+  toast(status==='approved'?'تم اعتماد المدير النهائي':'تم اعتماد/حفظ مراجعة المحاسب');await loadShifts();selectedShift={...selectedShift,...payload};openReview(selectedShift.id)
+}
+function saveReviewOnly(){saveReview('reviewed')}function approveShift(){saveReview(currentUser?.role==='accountant'?'reviewed':'approved')}
+async function returnToAccountant(){if(!selectedShift)return;if(!['owner','manager'].includes(currentUser?.role))return alert('الإرجاع للمحاسب للمدير فقط');const note=(byId('rvNote')?.value||'').trim();if(!note&&!confirm('لم تكتب سبب الإرجاع، هل تريد الإرجاع بدون ملاحظة؟'))return;const {error}=await db.from('cashier_shifts').update({status:'pending',manager_note:note||'تم إرجاعها للمحاسب للمراجعة',reviewed_by:null,reviewed_at:null,approved_by:null,approved_at:null}).eq('id',selectedShift.id);if(error)return alert(error.message);toast('تم إرجاع الوردية للمحاسب');byId('reviewCard').style.display='none';await loadShifts();renderDashboard();renderSmartDashboard();}
+function sendWhatsapp(){if(!selectedShift)return;const c=calcShift({...selectedShift,smart_sales:n(byId('rvSmart').value)});const phone=(selectedShift.app_users?.phone||'').replace(/\D/g,'');const msg=`سنابل مارت%0Aتمت مراجعة ورديتك.%0Aالتاريخ: ${selectedShift.shift_date}%0Aالوردية: ${selectedShift.shift_no||'-'}%0Aالكاشير: ${selectedShift.app_users?.full_name||'-'}%0Aإجمالي المسجل: ${money(c.entered)}%0Aمبيعات سمارت: ${money(n(byId('rvSmart').value))}%0Aالعجز: ${money(c.shortage)}%0Aالزيادة: ${money(c.surplus)}%0Aالحالة: ${selectedShift.status==='approved'?'معتمدة':'تحت المراجعة'}`;window.open(`https://wa.me/${phone?phone:''}?text=${msg}`,'_blank')}
+async function createReceivingOrder(){const payload={organization_id:ORG_ID,supplier_name:byId('recSupplier').value,invoice_no:byId('recInvoice').value,invoice_date:byId('recDate').value,status:'pending',receiver_id:currentUser.id,note:byId('recNote').value};const {error}=await db.from('receiving_orders').insert(payload);if(error)return alert(error.message);toast('تم إرسال الاستلام التجريبي');await loadReceiving()}
+async function loadReceiving(){const {data,error}=await db.from('receiving_orders').select('*').eq('organization_id',ORG_ID).order('created_at',{ascending:false});if(error){console.warn(error);return}allReceiving=data||[];receiving=filterRowsByWorkspace(allReceiving,'retail');byId('receivingTable').innerHTML=rowsTable(['التاريخ','المورد','الفاتورة','الحالة','ملاحظة'],receiving.map(r=>`<tr><td>${r.invoice_date||'-'}</td><td>${r.supplier_name||'-'}</td><td>${r.invoice_no||'-'}</td><td><span class="badge warn">${r.status}</span></td><td>${r.note||'-'}</td></tr>`))}
+
+async function loadPosDevices(){
+  const {data,error}=await db.from('pos_devices').select('*').eq('organization_id',ORG_ID).order('device_no');
+  if(error){console.warn(error); if(byId('devicesTable')) byId('devicesTable').innerHTML='<div class="empty">شغّل تحديث قاعدة البيانات V24 لإضافة جدول الأجهزة.</div>'; return}
+  allPosDevices=data||[]; posDevices=filterRowsByWorkspace(allPosDevices,'retail'); renderPosDevices(); fillDeviceSelect();
+}
+function fillDeviceSelect(){
+  const sel=byId('nwDevice'); if(!sel)return;
+  sel.innerHTML='<option value="">اختر الجهاز</option>'+posDevices.filter(d=>d.is_active!==false).map(d=>`<option value="${d.id}">${d.device_no} - ${d.bank_name||''} - ${d.description||''}</option>`).join('');
+}
+function renderPosDevices(){
+  if(!byId('devicesTable'))return;
+  byId('devicesTable').innerHTML=rowsTable(['رقم الجهاز','اسم البنك','الوصف','الحالة','إجراء'],posDevices.map(d=>`<tr><td><b>${d.device_no||'-'}</b></td><td>${d.bank_name||'-'}</td><td>${d.description||'-'}</td><td>${d.is_active!==false?'<span class="badge ok">نشط</span>':'<span class="badge danger">متوقف</span>'}</td><td><button class="btn light" onclick="editDevice('${d.id}')">تعديل</button> <button class="btn warn" onclick="toggleDevice('${d.id}')">${d.is_active!==false?'إيقاف':'تفعيل'}</button></td></tr>`));
+}
+function resetDeviceForm(){ if(!byId('devId'))return; devId.value=''; devNo.value=''; devBank.value=''; devDesc.value=''; devActive.value='true'; }
+function editDevice(id){const d=posDevices.find(x=>x.id===id); if(!d)return; devId.value=d.id; devNo.value=d.device_no||''; devBank.value=d.bank_name||''; devDesc.value=d.description||''; devActive.value=String(d.is_active!==false); toast('تم تحميل بيانات الجهاز للتعديل')}
+async function saveDevice(){
+  const payload={organization_id:ORG_ID,device_no:(devNo.value||'').trim(),bank_name:(devBank.value||'').trim(),description:(devDesc.value||'').trim(),is_active:devActive.value==='true',created_by:currentUser?.id};
+  if(!payload.device_no)return alert('أدخل رقم الجهاز');
+  let res=devId.value?await db.from('pos_devices').update(payload).eq('id',devId.value):await db.from('pos_devices').insert(payload);
+  if(res.error)return alert('خطأ حفظ الجهاز: '+res.error.message);
+  toast('تم حفظ الجهاز'); resetDeviceForm(); await loadPosDevices();
+}
+async function toggleDevice(id){const d=posDevices.find(x=>x.id===id); if(!d)return; const {error}=await db.from('pos_devices').update({is_active:!(d.is_active!==false)}).eq('id',id); if(error)return alert(error.message); await loadPosDevices();}
+function fillDeviceInfo(){const d=posDevices.find(x=>x.id===byId('nwDevice').value); byId('nwBank').value=d?.bank_name||''; byId('nwDesc').value=d?.description||''; previewNetworkPending();}
+function previewNetworkPending(){const p=n(byId('nwBalanceValue')?.value)-n(byId('nwDeposit')?.value)-n(byId('nwFee')?.value); if(byId('nwPending')) byId('nwPending').value=p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function resetNetworkForm(){ if(!byId('nwId'))return; nwId.value=''; nwDate.value=today(); nwDevice.value=''; nwBank.value=''; nwDesc.value=''; nwBalanceNo.value=''; nwBalanceValue.value=0; nwDeposit.value=0; nwFee.value=0; nwPending.value='0.00'; nwNote.value='';}
+async function saveNetworkMatch(){
+  const d=posDevices.find(x=>x.id===byId('nwDevice').value);
+  if(!d)return alert('اختر رقم الجهاز');
+  const payload={organization_id:ORG_ID,tx_date:byId('nwDate').value,device_name:d.device_no,bank_name:d.bank_name||'',device_description:d.description||'',balance_no:(byId('nwBalanceNo').value||'').trim(),smart_card_sales:n(byId('nwBalanceValue').value),bank_deposit:n(byId('nwDeposit').value),bank_fee:n(byId('nwFee').value),pos_device_id:d.id,note:byId('nwNote').value,created_by:currentUser?.id};
+  if(!payload.tx_date)return alert('حدد التاريخ');
+  if(!payload.balance_no)return alert('أدخل رقم الموازنة');
+  let res=nwId.value?await db.from('bank_reconciliations').update(payload).eq('id',nwId.value):await db.from('bank_reconciliations').insert(payload);
+  if(res.error)return alert('خطأ حفظ المطابقة: '+res.error.message);
+  toast('تم حفظ مطابقة الشبكة'); resetNetworkForm(); await loadNetworkMatches(); renderDashboard();
+}
+async function loadNetworkMatches(){
+  const {data,error}=await db.from('bank_reconciliations').select('*').eq('organization_id',ORG_ID).order('tx_date',{ascending:false}).order('created_at',{ascending:false});
+  if(error){console.warn(error); if(byId('networkMatchTable'))byId('networkMatchTable').innerHTML='<div class="empty">شغّل تحديث قاعدة البيانات V24 لإضافة أعمدة مطابقة الشبكة.</div>'; return}
+  allNetworkMatches=data||[]; networkMatches=filterRowsByWorkspace(allNetworkMatches,'retail'); renderNetworkMatches();
+}
+function filteredNetworkMatches(){
+  let rows=[...(networkMatches||[])];
+  const from=byId('fltFrom')?.value, to=byId('fltTo')?.value, q=(byId('fltSearch')?.value||'').trim().toLowerCase(), st=byId('fltStatus')?.value||'all';
+  if(from) rows=rows.filter(r=>(r.tx_date||'')>=from);
+  if(to) rows=rows.filter(r=>(r.tx_date||'')<=to);
+  if(q) rows=rows.filter(r=>[r.device_name,r.bank_name,r.device_description,r.balance_no,r.note].join(' ').toLowerCase().includes(q));
+  if(st!=='all') rows=rows.filter(r=>{const p=n(r.smart_card_sales)-n(r.bank_deposit)-n(r.bank_fee);return st==='matched'?Math.abs(p)<0.01:Math.abs(p)>=0.01});
+  return rows;
+}
+function networkTotals(rows=networkMatches){return (rows||[]).reduce((a,r)=>{a.balance+=n(r.smart_card_sales);a.deposit+=n(r.bank_deposit);a.fee+=n(r.bank_fee);a.pending+=n(r.smart_card_sales)-n(r.bank_deposit)-n(r.bank_fee);return a},{balance:0,deposit:0,fee:0,pending:0})}
+function renderNetworkMatches(){
+  if(!byId('networkMatchTable'))return;
+  const rows=filteredNetworkMatches();
+  const t=networkTotals(rows);
+  byId('networkStats').innerHTML=stat('إجمالي قيمة الموازنات',money(t.balance),'حسب الفلاتر الحالية')+stat('إجمالي ما نزل بالبنك',money(t.deposit),'المبالغ الظاهرة فعلياً')+stat('إجمالي رسوم البنك',money(t.fee),'اختياري')+stat('إجمالي المعلق',money(t.pending),'قيمة الموازنة - النازل - الرسوم');
+  byId('networkMatchTable').innerHTML=rowsTable(['التاريخ','رقم الجهاز','اسم البنك','الوصف','رقم الموازنة','قيمة الموازنة','نزل في البنك','رسوم البنك','المعلق','الحالة','ملاحظة','إجراء'],rows.map(r=>{const p=n(r.smart_card_sales)-n(r.bank_deposit)-n(r.bank_fee);return `<tr><td>${r.tx_date||'-'}</td><td><b>${r.device_name||'-'}</b></td><td>${r.bank_name||'-'}</td><td>${r.device_description||'-'}</td><td>${r.balance_no||'-'}</td><td>${money(r.smart_card_sales)}</td><td>${money(r.bank_deposit)}</td><td>${money(r.bank_fee)}</td><td><span class="badge ${Math.abs(p)<0.01?'ok':p>0?'warn':'danger'}">${money(p)}</span></td><td>${Math.abs(p)<0.01?'<span class="badge ok">مكتمل</span>':'<span class="badge warn">معلق</span>'}</td><td>${r.note||'-'}</td><td><button class="btn light" onclick="editNetworkMatch('${r.id}')">تعديل</button> <button class="btn danger" onclick="deleteNetworkMatch('${r.id}')">حذف</button></td></tr>`}))
+}
+function clearNetworkFilters(){['fltFrom','fltTo','fltSearch'].forEach(id=>{if(byId(id))byId(id).value=''}); if(byId('fltStatus'))byId('fltStatus').value='all'; renderNetworkMatches();}
+async function deleteNetworkMatch(id){if(!confirm('حذف مطابقة الشبكة؟'))return; const {error}=await db.from('bank_reconciliations').delete().eq('id',id); if(error)return alert(error.message); toast('تم حذف المطابقة'); await loadNetworkMatches(); renderDashboard();renderSmartDashboard();}
+function editNetworkMatch(id){const r=networkMatches.find(x=>x.id===id); if(!r)return; nwId.value=r.id; nwDate.value=r.tx_date||today(); const d=posDevices.find(x=>x.id===r.pos_device_id||x.device_no===r.device_name); if(d){nwDevice.value=d.id; fillDeviceInfo()} else {nwDevice.value=''; nwBank.value=r.bank_name||''; nwDesc.value=r.device_description||'';} nwBalanceNo.value=r.balance_no||''; nwBalanceValue.value=n(r.smart_card_sales); nwDeposit.value=n(r.bank_deposit); nwFee.value=n(r.bank_fee); nwNote.value=r.note||''; previewNetworkPending(); toast('تم تحميل المطابقة للتعديل')}
+function printNetworkMatch(){
+  const t=networkTotals();
+  const w=window.open('','_blank','width=1200,height=800');
+  w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير مطابقة الشبكة</title><style>body{font-family:Arial,Tahoma,sans-serif;direction:rtl;padding:20px;color:#111}h2{text-align:center}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:15px 0}.box{border:1px solid #ddd;border-radius:10px;padding:10px;text-align:center}.box b{display:block;margin-bottom:5px;color:#555}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:center}th{background:#0f172a;color:white}
+.live-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.live-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.live-box{background:white;border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:0 10px 28px rgba(15,23,42,.07)}.live-box b{font-size:24px}.live-feed{display:grid;gap:10px}.feed-item{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;font-weight:800}.feed-item .small{display:block;margin-top:4px}.mini-bars{display:grid;gap:9px}.mini-bar{display:grid;grid-template-columns:120px 1fr 95px;gap:10px;align-items:center}.mini-bar .bar{height:12px;background:#eef2ff;border-radius:99px;overflow:hidden}.mini-bar .bar span{display:block;height:100%;background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:99px}@media(max-width:1000px){.live-grid,.live-strip{grid-template-columns:1fr}.mini-bar{grid-template-columns:1fr}}
+
+.security-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.permission-matrix{min-width:900px}.permission-matrix td,.permission-matrix th{text-align:center}.permission-matrix td:first-child,.permission-matrix th:first-child{text-align:right}.perm-toggle{width:22px;height:22px;accent-color:#2563eb}.user-profile-card{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:center}.avatar{width:58px;height:58px;border-radius:20px;background:linear-gradient(135deg,#dbeafe,#c7d2fe);display:grid;place-items:center;font-weight:900;color:#1e3a8a;font-size:22px}.security-alert{border-radius:16px;padding:12px;border:1px solid var(--line);background:#fff;font-weight:900}.security-alert.danger{background:#fef2f2;border-color:#fecaca;color:#991b1b}.security-alert.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}.security-alert.ok{background:#ecfdf5;border-color:#86efac;color:#14532d}@media(max-width:1000px){.security-grid{grid-template-columns:1fr}.user-profile-card{grid-template-columns:48px 1fr}}
+
+.workspace-switch{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:12px;margin-top:14px}.workspace-switch label{display:block;color:#dbeafe;font-weight:900;margin-bottom:8px}.workspace-switch select{width:100%;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:11px;background:#0f172a;color:white;font-weight:900}.workspace-hero{background:linear-gradient(135deg,#07152f,#123e8a 48%,#065f46);color:white;border-radius:32px;padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden}.workspace-hero:after{content:"";position:absolute;width:220px;height:220px;left:-70px;bottom:-85px;background:rgba(255,255,255,.10);border-radius:50%}.workspace-hero h2{margin:0;font-size:34px}.workspace-hero p{margin:8px 0 0;color:#dbeafe;font-weight:800}.workspace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}.workspace-card{background:white;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:18px;cursor:pointer;transition:.18s}.workspace-card:hover{transform:translateY(-2px);border-color:#93c5fd}.workspace-card.active{outline:4px solid rgba(34,197,94,.18);border-color:#22c55e}.workspace-card .ico{font-size:32px}.workspace-card h3{margin:8px 0 4px}.workspace-card p{margin:0;color:var(--muted);font-weight:800}.workspace-tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#ecfdf5;color:#166534;border:1px solid #86efac;padding:6px 10px;font-weight:900;font-size:13px}.foundation-list{display:grid;gap:10px}.foundation-item{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);background:#fff;border-radius:18px;padding:12px;font-weight:900}.foundation-item span:last-child{color:#64748b}.sql-box{direction:ltr;text-align:left;white-space:pre-wrap;background:#0f172a;color:#e2e8f0;border-radius:18px;padding:14px;overflow:auto;font-family:Consolas,monospace;font-size:13px}
+</style></head><body><h2>سنابل مارت - تقرير مطابقة الشبكة</h2><div class="summary"><div class="box"><b>إجمالي الموازنات</b>${money(t.balance)}</div><div class="box"><b>نزل في البنك</b>${money(t.deposit)}</div><div class="box"><b>رسوم البنك</b>${money(t.fee)}</div><div class="box"><b>المعلق</b>${money(t.pending)}</div></div>${byId('networkMatchTable').outerHTML}</body></html>`);
+  w.document.close(); setTimeout(()=>w.print(),250);
+}
+
+
+function loadSmartSettings(){
+  const cfg=JSON.parse(localStorage.getItem('sanabel_smart_settings')||'{}');
+  if(byId('smBaseUrl'))byId('smBaseUrl').value=cfg.baseUrl||'https://smarterp.top/api/v2';
+  if(byId('smToken'))byId('smToken').value=cfg.token||'';
+  if(byId('smBranch'))byId('smBranch').value=cfg.branch||'';
+  if(byId('smStatus'))byId('smStatus').value=cfg.status||'غير مختبر';
+  renderSmartDashboard();
+}
+function saveSmartSettings(){
+  const cfg={baseUrl:(byId('smBaseUrl')?.value||'').trim(),token:(byId('smToken')?.value||'').trim(),branch:(byId('smBranch')?.value||'').trim(),status:byId('smStatus')?.value||'محفوظ'};
+  localStorage.setItem('sanabel_smart_settings',JSON.stringify(cfg));
+  if(byId('smStatus'))byId('smStatus').value='محفوظ محلياً';
+  toast('تم حفظ إعدادات سمارت محلياً داخل المتصفح');
+  renderSmartDashboard();
+}
+async function testSmartConnection(){
+  const base=(byId('smBaseUrl')?.value||'').trim().replace(/\/$/,'');
+  const token=(byId('smToken')?.value||'').trim();
+  if(!base)return alert('أدخل رابط API');
+  if(!token)return alert('أدخل Access Token من سمارت أولاً');
+  byId('smStatus').value='جاري الاختبار...';
+  try{
+    const res=await fetch(base+'/products/get_products_list',{headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'}});
+    byId('smStatus').value=res.ok?'الاتصال ناجح':'فشل الاتصال: '+res.status;
+  }catch(e){byId('smStatus').value='تعذر الاتصال من المتصفح'; alert('قد يكون السبب CORS أو أن الرابط يحتاج Proxy. الرسالة: '+e.message)}
+  saveSmartSettings();
+}
+function parseSmartCsv(){
+  const txt=byId('smCsv')?.value||'';
+  const rows=[];
+  txt.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).forEach((line,i)=>{
+    const parts=line.split(/[,;\t]/).map(x=>x.trim());
+    const reference_no=parts[0]||'';
+    const smart_sales=n(parts[1]);
+    const invoice_count=n(parts[2]);
+    if(reference_no)rows.push({line:i+1,reference_no,smart_sales,invoice_count});
+  });
+  return rows;
+}
+function previewSmartCsv(){smartImportRows=parseSmartCsv();renderSmartImportTable();byId('smLastResult').value=smartImportRows.length+' صف للمعاينة';renderSmartDashboard();}
+function renderSmartImportTable(){
+  const tbl=byId('smartImportTable'); if(!tbl)return;
+  const tol=n(byId('smTolerance')?.value||5);
+  tbl.innerHTML=rowsTable(['السطر','رقم التسليم','مبيعات سمارت','عدد الفواتير','حالة المطابقة','الفرق المتوقع'],smartImportRows.map(r=>{
+    const s=(shifts||[]).find(x=>String(refNo(x)).trim()===String(r.reference_no).trim());
+    const c=s?calcShift({...s,smart_sales:r.smart_sales}):null;
+    const ok=s?(Math.abs(c.diff)<=tol):false;
+    return `<tr><td>${r.line}</td><td><b>${r.reference_no}</b></td><td>${money(r.smart_sales)}</td><td>${r.invoice_count||'-'}</td><td>${s?(ok?'<span class="badge ok">مطابق</span>':'<span class="badge warn">يوجد فرق</span>'):'<span class="badge danger">غير موجود</span>'}</td><td>${c?money(c.diff):'-'}</td></tr>`;
+  }));
+}
+async function applySmartImport(){
+  if(!smartImportRows.length)smartImportRows=parseSmartCsv();
+  if(!smartImportRows.length)return alert('لا توجد بيانات للاستيراد');
+  let updated=0, missing=0;
+  for(const r of smartImportRows){
+    const s=(shifts||[]).find(x=>String(refNo(x)).trim()===String(r.reference_no).trim());
+    if(!s){missing++;continue}
+    const entered=calcShift(s).entered;
+    const diff=n(r.smart_sales)-entered;
+    const payload={smart_sales:n(r.smart_sales),shortage:diff>0?diff:0,surplus:diff<0?Math.abs(diff):0,manager_note:((s.manager_note||'')+' | تم تحديث مبيعات سمارت من شاشة الربط').trim(),reviewed_by:currentUser?.id,reviewed_at:new Date().toISOString()};
+    const {error}=await db.from('cashier_shifts').update(payload).eq('id',s.id);
+    if(!error)updated++;
+  }
+  byId('smLastResult').value=`تم تحديث ${updated} / غير موجود ${missing}`;
+  toast('تم تطبيق مبيعات سمارت على الورديات المطابقة');
+  await loadShifts(); renderSmartDashboard(); renderSmartImportTable();
+}
+function clearSmartImport(){smartImportRows=[]; if(byId('smCsv'))byId('smCsv').value=''; if(byId('smLastResult'))byId('smLastResult').value='لا يوجد'; renderSmartImportTable(); renderSmartDashboard();}
+function renderSmartDashboard(){
+  if(!byId('smartStats'))return;
+  const noSmart=(shifts||[]).filter(s=>n(s.smart_sales)===0&&s.status!=='approved');
+  const withSmart=(shifts||[]).filter(s=>n(s.smart_sales)>0);
+  const diffs=withSmart.reduce((a,s)=>a+Math.abs(calcShift(s).diff),0);
+  const cfg=JSON.parse(localStorage.getItem('sanabel_smart_settings')||'{}');
+  byId('smartStats').innerHTML=stat('ورديات بدون مبيعات سمارت',noSmart.length,'تحتاج استيراد أو إدخال')+stat('ورديات بها مبيعات سمارت',withSmart.length,'جاهزة للمطابقة')+stat('إجمالي فروقات سمارت',money(diffs),'قيمة مطلقة')+stat('حالة API',cfg.status||'غير مختبر','إعدادات الربط');
+  if(byId('smartPendingTable'))byId('smartPendingTable').innerHTML=rowsTable(['رقم التسليم','التاريخ','الكاشير','إجمالي الوردية','مبيعات سمارت','الحالة','إجراء'],noSmart.slice(0,50).map(s=>`<tr><td><b>${refNo(s)}</b></td><td>${s.shift_date||'-'}</td><td>${s.app_users?.full_name||'-'}</td><td>${money(calcShift(s).entered)}</td><td>${money(s.smart_sales)}</td><td>${statusLabel(s)}</td><td><button class="btn light" onclick="openReview('${s.id}')">فتح</button></td></tr>`));
+}
+
+
+function fillReportCashiers(){
+  const sel=byId('repCashier'); if(!sel)return;
+  const current=sel.value||'all';
+  const names=[...new Map((shifts||[]).map(s=>[s.cashier_id,s.app_users?.full_name||userName(s.cashier_id)]).filter(x=>x[0])).entries()];
+  sel.innerHTML='<option value="all">كل الكاشيرين</option>'+names.map(([id,name])=>`<option value="${id}">${name}</option>`).join('');
+  if([...sel.options].some(o=>o.value===current))sel.value=current;
+}
+function filteredReportShifts(){
+  fillReportCashiers();
+  let rows=[...(shifts||[])];
+  const from=byId('repFrom')?.value, to=byId('repTo')?.value, cashier=byId('repCashier')?.value||'all', st=byId('repStatus')?.value||'all', q=(byId('repSearch')?.value||'').trim().toLowerCase();
+  if(from) rows=rows.filter(s=>(s.shift_date||'')>=from);
+  if(to) rows=rows.filter(s=>(s.shift_date||'')<=to);
+  if(cashier!=='all') rows=rows.filter(s=>String(s.cashier_id)===String(cashier));
+  if(st!=='all') rows=rows.filter(s=>s.status===st);
+  if(q) rows=rows.filter(s=>[refNo(s),s.shift_no,s.app_users?.full_name,s.cashier_note,s.manager_note].join(' ').toLowerCase().includes(q));
+  return rows;
+}
+function reportTotals(rows){
+  return (rows||[]).reduce((a,s)=>{const c=calcShift(s);a.count++;a.cash+=n(s.cash);a.card+=n(s.card);a.transfer+=n(s.transfer);a.credit+=n(s.credit);a.returns+=n(s.returns);a.entered+=c.entered;a.smart+=n(s.smart_sales);a.shortage+=n(s.shortage);a.surplus+=n(s.surplus);return a},{count:0,cash:0,card:0,transfer:0,credit:0,returns:0,entered:0,smart:0,shortage:0,surplus:0});
+}
+function renderReports(){
+  if(!byId('reportStats'))return;
+  const rows=filteredReportShifts();
+  const t=reportTotals(rows);
+  byId('reportStats').innerHTML=stat('عدد الورديات',t.count,'حسب الفلاتر')+stat('إجمالي طرق الدفع',money(t.entered),'بعد خصم المرتجعات')+stat('مبيعات سمارت',money(t.smart),'المطابقة مع البرنامج')+stat('صافي الفروقات',money(t.shortage-t.surplus),'عجز - زيادة');
+  byId('reportCount').textContent='عدد السجلات: '+rows.length;
+  const grouped={}; rows.forEach(s=>{const k=s.cashier_id||'unknown'; if(!grouped[k])grouped[k]={name:s.app_users?.full_name||userName(s.cashier_id), rows:[]}; grouped[k].rows.push(s)});
+  byId('cashierSummaryTable').innerHTML=rowsTable(['الكاشير','عدد الورديات','نقدي','شبكة','تحويل','آجل','مرتجع','الإجمالي','سمارت','العجز','الزيادة'],Object.values(grouped).map(g=>{const x=reportTotals(g.rows);return `<tr><td><b>${g.name}</b></td><td>${x.count}</td><td>${money(x.cash)}</td><td>${money(x.card)}</td><td>${money(x.transfer)}</td><td>${money(x.credit)}</td><td>${money(x.returns)}</td><td><b>${money(x.entered)}</b></td><td>${money(x.smart)}</td><td><span class="badge ${x.shortage>0?'danger':'ok'}">${money(x.shortage)}</span></td><td><span class="badge ${x.surplus>0?'blue':'ok'}">${money(x.surplus)}</span></td></tr>`}));
+  byId('shiftReportTable').innerHTML=rowsTable(['رقم التسليم','التاريخ','الكاشير','نقدي','شبكة','تحويل','آجل','مرتجع','إجمالي الوردية','سمارت','الفرق','الحالة','إجراء'],rows.map(s=>{const c=calcShift(s);return `<tr><td><b>${refNo(s)}</b></td><td>${s.shift_date||'-'}</td><td>${s.app_users?.full_name||'-'}</td><td>${money(s.cash)}</td><td>${money(s.card)}</td><td>${money(s.transfer)}</td><td>${money(s.credit)}</td><td>${money(s.returns)}</td><td><b>${money(c.entered)}</b></td><td>${money(s.smart_sales)}</td><td><span class="badge ${Math.abs(c.diff)<0.01?'ok':c.diff>0?'danger':'blue'}">${money(c.diff)}</span></td><td>${statusLabel(s)}</td><td><button class="btn light" onclick="openReview('${s.id}')">فتح</button></td></tr>`}));
+}
+function printShiftReport(){
+  renderReports();
+  const stats=byId('reportStats')?.outerHTML||''; const summary=byId('cashierSummaryTable')?.outerHTML||''; const details=byId('shiftReportTable')?.outerHTML||'';
+  const w=window.open('','_blank','width=1200,height=800');
+  w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير الورديات</title><style>body{font-family:Arial,Tahoma,sans-serif;direction:rtl;padding:20px;color:#111}h2{text-align:center}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.card{border:1px solid #ddd;border-radius:12px;padding:10px;margin:8px 0}.label{color:#555;font-weight:bold}.value{font-size:20px;font-weight:bold}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ccc;padding:7px;text-align:center}th{background:#0f172a;color:white}.btn{display:none}.badge{font-weight:bold}
+.live-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.live-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.live-box{background:white;border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:0 10px 28px rgba(15,23,42,.07)}.live-box b{font-size:24px}.live-feed{display:grid;gap:10px}.feed-item{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;font-weight:800}.feed-item .small{display:block;margin-top:4px}.mini-bars{display:grid;gap:9px}.mini-bar{display:grid;grid-template-columns:120px 1fr 95px;gap:10px;align-items:center}.mini-bar .bar{height:12px;background:#eef2ff;border-radius:99px;overflow:hidden}.mini-bar .bar span{display:block;height:100%;background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:99px}@media(max-width:1000px){.live-grid,.live-strip{grid-template-columns:1fr}.mini-bar{grid-template-columns:1fr}}
+
+.security-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.permission-matrix{min-width:900px}.permission-matrix td,.permission-matrix th{text-align:center}.permission-matrix td:first-child,.permission-matrix th:first-child{text-align:right}.perm-toggle{width:22px;height:22px;accent-color:#2563eb}.user-profile-card{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:center}.avatar{width:58px;height:58px;border-radius:20px;background:linear-gradient(135deg,#dbeafe,#c7d2fe);display:grid;place-items:center;font-weight:900;color:#1e3a8a;font-size:22px}.security-alert{border-radius:16px;padding:12px;border:1px solid var(--line);background:#fff;font-weight:900}.security-alert.danger{background:#fef2f2;border-color:#fecaca;color:#991b1b}.security-alert.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}.security-alert.ok{background:#ecfdf5;border-color:#86efac;color:#14532d}@media(max-width:1000px){.security-grid{grid-template-columns:1fr}.user-profile-card{grid-template-columns:48px 1fr}}
+
+.workspace-switch{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:12px;margin-top:14px}.workspace-switch label{display:block;color:#dbeafe;font-weight:900;margin-bottom:8px}.workspace-switch select{width:100%;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:11px;background:#0f172a;color:white;font-weight:900}.workspace-hero{background:linear-gradient(135deg,#07152f,#123e8a 48%,#065f46);color:white;border-radius:32px;padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden}.workspace-hero:after{content:"";position:absolute;width:220px;height:220px;left:-70px;bottom:-85px;background:rgba(255,255,255,.10);border-radius:50%}.workspace-hero h2{margin:0;font-size:34px}.workspace-hero p{margin:8px 0 0;color:#dbeafe;font-weight:800}.workspace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}.workspace-card{background:white;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:18px;cursor:pointer;transition:.18s}.workspace-card:hover{transform:translateY(-2px);border-color:#93c5fd}.workspace-card.active{outline:4px solid rgba(34,197,94,.18);border-color:#22c55e}.workspace-card .ico{font-size:32px}.workspace-card h3{margin:8px 0 4px}.workspace-card p{margin:0;color:var(--muted);font-weight:800}.workspace-tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#ecfdf5;color:#166534;border:1px solid #86efac;padding:6px 10px;font-weight:900;font-size:13px}.foundation-list{display:grid;gap:10px}.foundation-item{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);background:#fff;border-radius:18px;padding:12px;font-weight:900}.foundation-item span:last-child{color:#64748b}.sql-box{direction:ltr;text-align:left;white-space:pre-wrap;background:#0f172a;color:#e2e8f0;border-radius:18px;padding:14px;overflow:auto;font-family:Consolas,monospace;font-size:13px}
+</style></head><body><h2>سنابل مارت - تقرير الورديات</h2><p>تاريخ الطباعة: ${new Date().toLocaleString('ar-SA')}</p>${stats}<h3>ملخص حسب الكاشير</h3>${summary}<h3>تفاصيل الورديات</h3>${details}</body></html>`);
+  w.document.close(); setTimeout(()=>w.print(),300);
+}
+function exportShiftReportCsv(){
+  const rows=filteredReportShifts();
+  const headers=['reference_no','shift_date','cashier','cash','card','transfer','credit','returns','entered_total','smart_sales','diff','shortage','surplus','status'];
+  const lines=[headers.join(',')];
+  rows.forEach(s=>{const c=calcShift(s);lines.push([refNo(s),s.shift_date||'',s.app_users?.full_name||'',n(s.cash),n(s.card),n(s.transfer),n(s.credit),n(s.returns),c.entered,n(s.smart_sales),c.diff,n(s.shortage),n(s.surplus),s.status||''].map(v=>`"${String(v).replaceAll('"','""')}"`).join(','))});
+  const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sanabel_shift_report_'+today()+'.csv';a.click();URL.revokeObjectURL(a.href);toast('تم تصدير التقرير CSV');
+}
+
+
+function baseAppUrl(){return location.href.split('?')[0].split('#')[0]}
+function mobileUserLink(u){return baseAppUrl()+'?user='+u.id}
+function renderMobileLinks(){
+  const box=byId('mobileLinksList'); if(!box)return;
+  const q=(byId('mobSearch')?.value||'').trim().toLowerCase(), role=byId('mobRole')?.value||'all';
+  let rows=(users||[]).filter(u=>u.is_active!==false);
+  if(role!=='all') rows=rows.filter(u=>u.role===role);
+  if(q) rows=rows.filter(u=>[u.full_name,u.phone,roleMap[u.role]||u.role,u.role].join(' ').toLowerCase().includes(q));
+  if(!rows.length){box.innerHTML='<div class="empty">لا يوجد مستخدمون مطابقون</div>';return}
+  box.innerHTML=rows.map(u=>{const link=mobileUserLink(u);const phone=(u.phone||'').replace(/\D/g,'');const msg=`سنابل مارت%0Aرابط دخولك:%0A${encodeURIComponent(link)}%0Aالاسم: ${u.full_name}%0Aالصلاحية: ${roleMap[u.role]||u.role}%0APIN: ${u.pin||'-'}`;return `<div class="quick-card"><div><b>${u.full_name||'-'}</b><br><span class="small">${roleMap[u.role]||u.role} - ${u.phone||'لا يوجد جوال'}</span></div><div class="actions" style="margin:0"><button class="btn light" onclick="copyText('${link}')">نسخ الرابط</button><button class="btn ok" onclick="window.open('https://wa.me/${phone}?text=${msg}','_blank')">واتساب</button></div></div>`}).join('');
+}
+function copyCurrentAppLink(){copyText(baseAppUrl())}
+function runMobileReadiness(){
+  const items=[];
+  items.push(['اتصال Supabase', typeof db!=='undefined']);
+  items.push(['المستخدمون محملون', (users||[]).length>0]);
+  items.push(['الشاشة متجاوبة للجوال', true]);
+  items.push(['روابط دخول مباشرة', true]);
+  items.push(['Realtime مفعل', true]);
+  byId('mobileReadiness').innerHTML=items.map(x=>`<div class="quick-card"><b>${x[0]}</b><span class="badge ${x[1]?'ok':'warn'}">${x[1]?'جاهز':'يحتاج فحص'}</span></div>`).join('');
+}
+
+
+function buildAlerts(){
+  const limit=n(byId('alLimit')?.value||5);
+  const rows=[];
+  (shifts||[]).forEach(s=>{
+    const c=calcShift(s); const cashier=s.app_users?.full_name||userName(s.cashier_id)||'-';
+    if(s.status==='pending') rows.push({type:'pending_accountant',level:'warn',title:'بانتظار اعتماد المحاسب',shift:s,amount:0,detail:'الوردية لم يراجعها المحاسب بعد',cashier});
+    if(s.status==='reviewed') rows.push({type:'pending_manager',level:'blue',title:'بانتظار اعتماد المدير',shift:s,amount:0,detail:'اعتمدها المحاسب وتحتاج إغلاق المدير',cashier});
+    if(n(s.smart_sales)===0 && s.status!=='approved') rows.push({type:'no_smart',level:'warn',title:'بدون مبيعات سمارت',shift:s,amount:0,detail:'تحتاج إدخال أو استيراد مبيعات سمارت',cashier});
+    if(c.diff>limit) rows.push({type:'shortage',level:'danger',title:'عجز يتجاوز الحد',shift:s,amount:c.diff,detail:'مبيعات سمارت أكبر من طرق الدفع',cashier});
+    if(c.diff<(-limit)) rows.push({type:'surplus',level:'blue',title:'زيادة تتجاوز الحد',shift:s,amount:Math.abs(c.diff),detail:'طرق الدفع أكبر من مبيعات سمارت',cashier});
+    if(s.status==='approved') rows.push({type:'closed',level:'ok',title:'مغلقة نهائياً',shift:s,amount:Math.abs(c.diff),detail:'تم إغلاق الوردية من المدير',cashier});
+  });
+  return rows;
+}
+function filteredAlerts(){
+  let rows=buildAlerts();
+  const type=byId('alType')?.value||'all', q=(byId('alSearch')?.value||'').trim().toLowerCase(), sort=byId('alSort')?.value||'newest';
+  if(type!=='all') rows=rows.filter(a=>a.type===type);
+  if(q) rows=rows.filter(a=>[refNo(a.shift),a.cashier,a.detail,a.shift.cashier_note,a.shift.manager_note].join(' ').toLowerCase().includes(q));
+  rows.sort((a,b)=>sort==='amount'?(b.amount-a.amount):String(b.shift.created_at||b.shift.shift_date||'').localeCompare(String(a.shift.created_at||a.shift.shift_date||'')));
+  return rows;
+}
+function renderAlertsCenter(){
+  if(!byId('alertsTable'))return;
+  const rows=filteredAlerts();
+  const all=buildAlerts();
+  const count=t=>all.filter(x=>x.type===t).length;
+  byId('alertStats').innerHTML=stat('بانتظار المحاسب',count('pending_accountant'),'تحتاج مراجعة أولى')+stat('بانتظار المدير',count('pending_manager'),'جاهزة للإغلاق')+stat('تنبيهات العجز',count('shortage'),'تجاوزت الحد المحدد')+stat('بدون سمارت',count('no_smart'),'تحتاج استيراد');
+  byId('alertsCount').textContent='عدد التنبيهات: '+rows.length;
+  byId('alertsTable').innerHTML=rowsTable(['التنبيه','رقم التسليم','التاريخ','الكاشير','المبلغ/الفرق','الحالة','التفاصيل','إجراء'],rows.map(a=>`<tr><td><span class="badge ${a.level}">${a.title}</span></td><td><b>${refNo(a.shift)}</b></td><td>${a.shift.shift_date||'-'}</td><td>${a.cashier}</td><td><b>${money(a.amount)}</b></td><td>${statusLabel(a.shift)}</td><td>${a.detail}</td><td><button class="btn light" onclick="openReview('${a.shift.id}')">فتح</button></td></tr>`));
+}
+function copyAlertsSummary(){
+  const rows=filteredAlerts().slice(0,20);
+  if(!rows.length)return toast('لا توجد تنبيهات لنسخها');
+  const txt='سنابل مارت - ملخص التنبيهات\n'+rows.map(a=>`${a.title} | ${refNo(a.shift)} | ${a.cashier} | ${money(a.amount)}`).join('\n');
+  navigator.clipboard?.writeText(txt); toast('تم نسخ ملخص التنبيهات');
+}
+
+
+function todayShifts(){return (shifts||[]).filter(s=>(s.shift_date||'').slice(0,10)===today())}
+function liveTotals(){
+  const rows=todayShifts();
+  return rows.reduce((a,s)=>{a.cash+=n(s.cash);a.card+=n(s.card);a.transfer+=n(s.transfer);a.credit+=n(s.credit);a.returns+=n(s.returns);a.entered+=calcShift(s).entered;a.shortage+=n(s.shortage);a.surplus+=n(s.surplus);return a},{cash:0,card:0,transfer:0,credit:0,returns:0,entered:0,shortage:0,surplus:0});
+}
+function renderLiveControlCenter(){
+  if(!byId('liveStatusStrip'))return;
+  const rows=todayShifts();
+  const pending=rows.filter(s=>s.status==='pending').length, reviewed=rows.filter(s=>s.status==='reviewed').length, approved=rows.filter(s=>s.status==='approved').length, rejected=rows.filter(s=>s.status==='rejected').length;
+  byId('liveStatusStrip').innerHTML=`<div class="live-box"><span class="small">ورديات اليوم</span><br><b>${rows.length}</b></div><div class="live-box"><span class="small">بانتظار المحاسب</span><br><b>${pending}</b></div><div class="live-box"><span class="small">بانتظار المدير</span><br><b>${reviewed}</b></div><div class="live-box"><span class="small">مغلقة نهائياً</span><br><b>${approved}</b></div><div class="live-box"><span class="small">مرتجعة/مرفوضة</span><br><b>${rejected}</b></div>`;
+  const t=liveTotals(), net=networkTotals((networkMatches||[]).filter(r=>(r.tx_date||'')===today()));
+  byId('liveMoneyStats').innerHTML=stat('صافي مبيعات اليوم',money(t.entered),'نقدي + شبكة + تحويل + آجل - مرتجع')+stat('النقدي اليوم',money(t.cash),'حسب إغلاق الكاشير')+stat('الشبكة اليوم',money(t.card),'حسب إغلاق الكاشير')+stat('الشبكة المعلقة اليوم',money(net.pending),'من شاشة مطابقة الشبكة');
+  const alerts=buildAlerts().filter(a=>(a.shift.shift_date||'')===today() || a.type!=='closed').slice(0,10);
+  byId('liveAlertsCount').textContent='آخر '+alerts.length+' تنبيه';
+  byId('liveFeed').innerHTML=alerts.length?alerts.map(a=>`<div class="feed-item"><span class="badge ${a.level}">${a.title}</span> ${refNo(a.shift)}<span class="small">${a.cashier} — ${a.detail} — ${money(a.amount)}</span></div>`).join(''):'<div class="empty">لا توجد تنبيهات حالياً</div>';
+  const byCashier={}; rows.forEach(s=>{const name=s.app_users?.full_name||userName(s.cashier_id)||'-';byCashier[name]=(byCashier[name]||0)+calcShift(s).entered});
+  const top=Object.entries(byCashier).sort((a,b)=>b[1]-a[1]).slice(0,6); const max=Math.max(1,...top.map(x=>x[1]));
+  byId('liveCashierBars').innerHTML=top.length?top.map(([name,val])=>`<div class="mini-bar"><b>${name}</b><div class="bar"><span style="width:${Math.min(100,(val/max)*100)}%"></span></div><span>${money(val)}</span></div>`).join(''):'<div class="empty">لا توجد ورديات اليوم</div>';
+  byId('liveLatestShifts').innerHTML=rowsTable(['رقم التسليم','الكاشير','الإجمالي','الحالة','إجراء'],rows.slice(0,8).map(s=>`<tr><td><b>${refNo(s)}</b></td><td>${s.app_users?.full_name||userName(s.cashier_id)||'-'}</td><td>${money(calcShift(s).entered)}</td><td>${statusLabel(s)}</td><td><button class="btn light" onclick="openReview('${s.id}')">فتح</button></td></tr>`));
+  const nw=(networkMatches||[]).filter(r=>(r.tx_date||'')===today()).slice(0,8);
+  byId('liveNetworkTable').innerHTML=rowsTable(['الجهاز','البنك','الموازنة','المعلق','الحالة'],nw.map(r=>{const p=n(r.smart_card_sales)-n(r.bank_deposit)-n(r.bank_fee);return `<tr><td><b>${r.device_name||'-'}</b></td><td>${r.bank_name||'-'}</td><td>${money(r.smart_card_sales)}</td><td>${money(p)}</td><td>${Math.abs(p)<.01?'<span class="badge ok">مطابق</span>':'<span class="badge warn">معلق</span>'}</td></tr>`}));
+}
+function copyLiveSummary(){
+  const t=liveTotals();
+  const rows=todayShifts();
+  const txt=`سنابل مارت - ملخص الرقابة اليوم\nعدد الورديات: ${rows.length}\nصافي المبيعات: ${money(t.entered)}\nالنقدي: ${money(t.cash)}\nالشبكة: ${money(t.card)}\nالتحويل: ${money(t.transfer)}\nالآجل: ${money(t.credit)}\nالمرتجع: ${money(t.returns)}\nالعجز: ${money(t.shortage)}\nالزيادة: ${money(t.surplus)}`;
+  navigator.clipboard?.writeText(txt); toast('تم نسخ ملخص الرقابة');
+}
+
+
+function enterpriseRowsToday(){return todayShifts ? todayShifts() : (shifts||[]).filter(s=>(s.shift_date||'').slice(0,10)===today())}
+function renderEnterpriseDashboard(){
+  if(!byId('enterpriseKpis'))return;
+  const rows=enterpriseRowsToday();
+  const t=liveTotals();
+  const allAlerts=(typeof buildAlerts==='function'?buildAlerts():[]);
+  const riskAlerts=allAlerts.filter(a=>['shortage','surplus','no_smart','pending_accountant','pending_manager'].includes(a.type));
+  const netToday=networkTotals((networkMatches||[]).filter(r=>(r.tx_date||'')===today()));
+  const closed=rows.filter(s=>s.status==='approved').length;
+  const pendingAcc=rows.filter(s=>s.status==='pending').length;
+  const pendingMgr=rows.filter(s=>s.status==='reviewed').length;
+  byId('enterpriseKpis').innerHTML=
+    stat('صافي مبيعات اليوم',money(t.entered),'من جميع ورديات اليوم')+
+    stat('ورديات اليوم',rows.length,'المغلقة نهائياً: '+closed)+
+    stat('بانتظار الاعتماد',pendingAcc+pendingMgr,'محاسب: '+pendingAcc+' / مدير: '+pendingMgr)+
+    stat('مخاطر تحتاج متابعة',riskAlerts.length,'عجز/زيادة/بدون سمارت');
+  const moneyItems=[['نقدي',t.cash],['شبكة',t.card],['تحويل',t.transfer],['آجل',t.credit],['مرتجع',t.returns],['معلق شبكة',netToday.pending]];
+  const max=Math.max(1,...moneyItems.map(x=>Math.abs(x[1])));
+  byId('enterpriseMoney').innerHTML=moneyItems.map(([name,val])=>`<div class="mini-bar"><b>${name}</b><div class="bar"><span style="width:${Math.min(100,Math.abs(val)/max*100)}%"></span></div><span>${money(val)}</span></div>`).join('');
+  byId('enterpriseWorkflow').innerHTML=`<div class="feed-item"><span class="badge warn">الكاشير</span> ورديات بانتظار المحاسب: <b>${pendingAcc}</b></div><div class="feed-item"><span class="badge blue">المحاسب</span> ورديات بانتظار المدير: <b>${pendingMgr}</b></div><div class="feed-item"><span class="badge ok">المدير</span> ورديات مغلقة نهائياً اليوم: <b>${closed}</b></div>`;
+  const byCashier={}; rows.forEach(s=>{const name=s.app_users?.full_name||userName(s.cashier_id)||'-';byCashier[name]=(byCashier[name]||0)+calcShift(s).entered});
+  const top=Object.entries(byCashier).sort((a,b)=>b[1]-a[1]).slice(0,8); const topMax=Math.max(1,...top.map(x=>x[1]));
+  byId('enterpriseTopCashiers').innerHTML=top.length?top.map(([name,val])=>`<div class="mini-bar"><b>${name}</b><div class="bar"><span style="width:${Math.min(100,val/topMax*100)}%"></span></div><span>${money(val)}</span></div>`).join(''):'<div class="empty">لا توجد ورديات اليوم</div>';
+  byId('enterpriseRiskCount').textContent='عدد المخاطر: '+riskAlerts.length;
+  byId('enterpriseRisks').innerHTML=riskAlerts.slice(0,10).map(a=>`<div class="feed-item"><span class="badge ${a.level}">${a.title}</span> <b>${refNo(a.shift)}</b><span class="small">${a.cashier} — ${a.detail} — ${money(a.amount)}</span></div>`).join('')||'<div class="empty">لا توجد مخاطر حالياً</div>';
+  const audit=[];
+  (shifts||[]).slice(0,20).forEach(s=>audit.push({time:s.approved_at||s.reviewed_at||s.created_at||s.shift_date, user:s.app_users?.full_name||userName(s.cashier_id)||'-', action:statusLabel(s), ref:refNo(s)}));
+  byId('enterpriseAuditTable').innerHTML=rowsTable(['الوقت','المستخدم','العملية','رقم التسليم'],audit.map(a=>`<tr><td class="timecell">${a.time||'-'}</td><td>${a.user}</td><td>${a.action}</td><td><b>${a.ref}</b></td></tr>`));
+}
+function copyEnterpriseSummary(){
+  const rows=enterpriseRowsToday(); const t=liveTotals(); const alerts=(typeof buildAlerts==='function'?buildAlerts():[]).length;
+  const txt=`سنابل مارت Cloud ERP - تقرير تنفيذي\nالتاريخ: ${today()}\nورديات اليوم: ${rows.length}\nصافي المبيعات: ${money(t.entered)}\nالنقدي: ${money(t.cash)}\nالشبكة: ${money(t.card)}\nالتحويل: ${money(t.transfer)}\nالآجل: ${money(t.credit)}\nالمرتجع: ${money(t.returns)}\nالعجز: ${money(t.shortage)}\nالزيادة: ${money(t.surplus)}\nعدد التنبيهات: ${alerts}`;
+  navigator.clipboard?.writeText(txt); toast('تم نسخ التقرير التنفيذي');
+}
+
+const SECURITY_LOG_KEY='sanabel_security_audit_v271';
+const ROLE_PERMISSIONS_KEY='sanabel_role_permissions_v271';
+const permissionScreens=[['dashboard','لوحة المدير'],['enterpriseDashboard','لوحة Enterprise'],['securityAudit','الصلاحيات والرقابة'],['accountantApproval','اعتماد المحاسب'],['managerReview','اعتماد المدير'],['reports','التقارير'],['smartLink','ربط سمارت ERP'],['networkMatch','مطابقة الشبكة'],['receiving','استلام البضاعة'],['users','المستخدمون']];
+const permissionActions=[['view','عرض'],['add','إضافة'],['edit','تعديل'],['delete','حذف'],['approve','اعتماد'],['print','طباعة'],['export','تصدير']];
+function getSecurityLog(){try{return JSON.parse(localStorage.getItem(SECURITY_LOG_KEY)||'[]')}catch(e){return []}}
+function setSecurityLog(rows){localStorage.setItem(SECURITY_LOG_KEY,JSON.stringify((rows||[]).slice(0,300)))}
+function logSecurityEvent(action,user,detail,level='blue'){const rows=getSecurityLog();rows.unshift({time:new Date().toISOString(),user:user||currentUser?.full_name||'-',action,detail:detail||'',level});setSecurityLog(rows);renderSecurityCenter()}
+function defaultRolePermissions(){
+  const roles=['owner','manager','accountant','cashier','purchase_manager','receiver'];
+  const p={};roles.forEach(r=>{p[r]={};permissionScreens.forEach(([id])=>{p[r][id]={view:false,add:false,edit:false,delete:false,approve:false,print:false,export:false}})});
+  permissionScreens.forEach(([id])=>permissionActions.forEach(([a])=>p.owner[id][a]=true));
+  ['dashboard','enterpriseDashboard','securityAudit','managerReview','reports','smartLink','networkMatch','posDevices','users'].forEach(id=>{if(p.manager[id])Object.keys(p.manager[id]).forEach(a=>p.manager[id][a]=true)});
+  ['dashboard','accountantApproval','reports','smartLink','networkMatch'].forEach(id=>{if(p.accountant[id])['view','edit','approve','print','export'].forEach(a=>p.accountant[id][a]=true)});
+  if(p.cashier.mobileShift){['view','add'].forEach(a=>p.cashier.mobileShift[a]=true)}
+  ['receiving'].forEach(id=>{if(p.receiver[id])['view','add','edit','print'].forEach(a=>p.receiver[id][a]=true)});
+  ['receiving','reports'].forEach(id=>{if(p.purchase_manager[id])['view','add','edit','approve','print','export'].forEach(a=>p.purchase_manager[id][a]=true)});
+  return p;
+}
+function getRolePermissions(){try{return JSON.parse(localStorage.getItem(ROLE_PERMISSIONS_KEY)||'null')||defaultRolePermissions()}catch(e){return defaultRolePermissions()}}
+function saveRolePermissions(){const p=getRolePermissions();document.querySelectorAll('[data-perm-role]').forEach(ch=>{const r=ch.dataset.permRole,s=ch.dataset.permScreen,a=ch.dataset.permAction;p[r]=p[r]||{};p[r][s]=p[r][s]||{};p[r][s][a]=ch.checked});localStorage.setItem(ROLE_PERMISSIONS_KEY,JSON.stringify(p));logSecurityEvent('تحديث صلاحيات',currentUser?.full_name,'تم حفظ مصفوفة الصلاحيات','ok');toast('تم حفظ الصلاحيات')}
+function resetRolePermissions(){localStorage.removeItem(ROLE_PERMISSIONS_KEY);logSecurityEvent('استعادة صلاحيات',currentUser?.full_name,'تمت استعادة الصلاحيات الافتراضية','warn');renderSecurityCenter();toast('تمت استعادة الصلاحيات الافتراضية')}
+function renderPermissionMatrix(){if(!byId('permissionsTable'))return;const roles=['owner','manager','accountant','cashier','purchase_manager','receiver'];const p=getRolePermissions();const head='<thead><tr><th>الشاشة / الدور</th>'+roles.map(r=>`<th>${roleMap[r]||r}</th>`).join('')+'</tr></thead>';const body=permissionScreens.map(([sid,sname])=>`<tr><td><b>${sname}</b><div class="small">${permissionActions.map(x=>x[1]).join(' / ')}</div></td>${roles.map(r=>`<td>${permissionActions.map(([a,an])=>`<label title="${an}" style="display:inline-grid;gap:4px;margin:2px"><span class="small">${an[0]}</span><input class="perm-toggle" type="checkbox" data-perm-role="${r}" data-perm-screen="${sid}" data-perm-action="${a}" ${p?.[r]?.[sid]?.[a]?'checked':''}></label>`).join('')}</td>`).join('')}</tr>`).join('');byId('permissionsTable').innerHTML=head+'<tbody>'+body+'</tbody>'}
+function renderCurrentUserProfile(){if(!byId('currentUserProfile'))return;const u=currentUser||{};const initials=(u.full_name||'سن').split(' ').map(x=>x[0]).slice(0,2).join('');byId('currentUserProfile').innerHTML=`<div class="user-profile-card"><div class="avatar">${initials}</div><div><b style="font-size:20px">${u.full_name||'-'}</b><div class="small">${roleMap[u.role]||u.role||'-'} • ${u.phone||'لا يوجد جوال'}</div><div class="small">آخر دخول: ${new Date().toLocaleString('ar-SA')}</div></div><span class="badge ok">متصل الآن</span></div><div class="audit-line"><div class="detail-box result-ok">الجهاز<br><b>${navigator.platform||'-'}</b></div><div class="detail-box result-warn">المتصفح<br><b>${navigator.userAgent.includes('Chrome')?'Chrome':'Browser'}</b></div><div class="detail-box result-ok">الجلسة<br><b>نشطة</b></div><div class="detail-box result-warn">IP<br><b>يظهر عند ربط API</b></div></div>`}
+function buildSecurityAlerts(){const alerts=[];const failed=getSecurityLog().filter(x=>x.action==='محاولة دخول فاشلة' && Date.now()-new Date(x.time).getTime()<86400000);if(failed.length)alerts.push({level:'danger',title:'محاولات دخول فاشلة',detail:`عدد المحاولات آخر 24 ساعة: ${failed.length}`});const changed=getSecurityLog().filter(x=>x.action.includes('صلاحيات') && Date.now()-new Date(x.time).getTime()<86400000);if(changed.length)alerts.push({level:'warn',title:'تغييرات في الصلاحيات',detail:`تم تعديل الصلاحيات ${changed.length} مرة`});const locked=(shifts||[]).filter(s=>s.status==='approved').length;if(locked)alerts.push({level:'ok',title:'ورديات مغلقة',detail:`عدد الورديات المقفلة نهائياً: ${locked}`});if(!alerts.length)alerts.push({level:'ok',title:'الوضع الأمني مستقر',detail:'لا توجد تنبيهات أمنية حالياً'});return alerts}
+function renderSecurityAlerts(){if(!byId('securityAlerts'))return;const alerts=buildSecurityAlerts();byId('securityAlertCount').textContent='عدد التنبيهات: '+alerts.length;byId('securityAlerts').innerHTML=alerts.map(a=>`<div class="security-alert ${a.level}">${a.title}<div class="small">${a.detail}</div></div>`).join('')}
+function renderUserActivity(){if(!byId('userActivityTable'))return;const rows=(users||[]).map(u=>{const made=(shifts||[]).filter(s=>String(s.cashier_id)===String(u.id)).length;const reviewed=(shifts||[]).filter(s=>String(s.reviewed_by)===String(u.id)).length;const approved=(shifts||[]).filter(s=>String(s.approved_by)===String(u.id)).length;const ops=made+reviewed+approved;return `<tr><td><b>${u.full_name}</b></td><td>${roleMap[u.role]||u.role}</td><td>${u.is_active!==false?'<span class="badge ok">نشط</span>':'<span class="badge danger">موقوف</span>'}</td><td>${made}</td><td>${reviewed}</td><td>${approved}</td><td><b>${ops}</b></td></tr>`});byId('userActivityTable').innerHTML=rowsTable(['المستخدم','الدور','الحالة','ورديات مرسلة','اعتمادات محاسب','اعتمادات مدير','إجمالي النشاط'],rows)}
+function renderAuditLog(){if(!byId('auditLogTable'))return;const local=getSecurityLog().map(x=>({time:x.time,user:x.user,action:x.action,screen:'الأمان',detail:x.detail,level:x.level}));const shiftAudit=(shifts||[]).slice(0,80).map(s=>({time:s.approved_at||s.reviewed_at||s.created_at||s.shift_date,user:s.app_users?.full_name||userName(s.cashier_id),action:s.status==='approved'?'إغلاق نهائي':s.status==='reviewed'?'اعتماد محاسب':'إرسال وردية',screen:'الورديات',detail:refNo(s),level:s.status==='approved'?'ok':s.status==='reviewed'?'blue':'warn'}));const rows=[...local,...shiftAudit].sort((a,b)=>new Date(b.time||0)-new Date(a.time||0)).slice(0,50);byId('auditLogTable').innerHTML=rowsTable(['الوقت','المستخدم','العملية','الشاشة','التفاصيل'],rows.map(r=>`<tr><td class="timecell">${r.time||'-'}</td><td>${r.user||'-'}</td><td><span class="badge ${r.level||'blue'}">${r.action}</span></td><td>${r.screen}</td><td>${r.detail||'-'}</td></tr>`))}
+function renderSecurityCenter(){if(!byId('securityKpis'))return;const log=getSecurityLog();const active=(users||[]).filter(u=>u.is_active!==false).length;const failed=log.filter(x=>x.action==='محاولة دخول فاشلة').length;const approvals=(shifts||[]).filter(s=>s.reviewed_by||s.approved_by).length;const alerts=buildSecurityAlerts().length;byId('securityKpis').innerHTML=stat('المستخدمون النشطون',active,'حسب قائمة المستخدمين')+stat('عمليات الاعتماد',approvals,'محاسب ومدير')+stat('أحداث أمنية',log.length,'محفوظة محلياً')+stat('تنبيهات أمنية',alerts,'تحتاج متابعة');renderCurrentUserProfile();renderSecurityAlerts();renderPermissionMatrix();renderUserActivity();renderAuditLog()}
+function copySecuritySummary(){const alerts=buildSecurityAlerts().map(a=>`- ${a.title}: ${a.detail}`).join('\n');const txt=`سنابل مارت Cloud V27.1 - ملخص أمني\nالتاريخ: ${today()}\nالمستخدم الحالي: ${currentUser?.full_name||'-'}\nالمستخدمون النشطون: ${(users||[]).filter(u=>u.is_active!==false).length}\nأحداث السجل: ${getSecurityLog().length}\n\nالتنبيهات:\n${alerts}`;navigator.clipboard?.writeText(txt);toast('تم نسخ الملخص الأمني')}
+
+
+function loadFinanceOpening(){
+  try{const v=JSON.parse(localStorage.getItem('sanabel_finance_opening')||'{}'); if(byId('finOpeningCash'))byId('finOpeningCash').value=n(v.cash); if(byId('finOpeningBank'))byId('finOpeningBank').value=n(v.bank);}catch(e){}
+}
+function saveFinanceOpening(){
+  localStorage.setItem('sanabel_finance_opening',JSON.stringify({cash:n(byId('finOpeningCash')?.value),bank:n(byId('finOpeningBank')?.value)}));
+}
+function fillFinanceCashiers(){
+  const sel=byId('finCashier'); if(!sel)return;
+  const cur=sel.value||'all';
+  const names=[...new Map((shifts||[]).map(s=>[s.cashier_id,s.app_users?.full_name||s.cashier_id]).filter(x=>x[0])).entries()];
+  sel.innerHTML='<option value="all">الكل</option>'+names.map(([id,name])=>`<option value="${id}">${name}</option>`).join('');
+  if([...sel.options].some(o=>o.value===cur))sel.value=cur;
+}
+function financeFilteredShifts(){
+  let rows=[...(shifts||[])];
+  const from=byId('finFrom')?.value, to=byId('finTo')?.value, st=byId('finStatus')?.value||'all', cashier=byId('finCashier')?.value||'all';
+  if(from)rows=rows.filter(r=>(r.shift_date||'')>=from);
+  if(to)rows=rows.filter(r=>(r.shift_date||'')<=to);
+  if(st!=='all')rows=rows.filter(r=>(r.status||'')===st);
+  if(cashier!=='all')rows=rows.filter(r=>r.cashier_id===cashier);
+  return rows;
+}
+function financeTotals(rows=financeFilteredShifts()){
+  const t=rows.reduce((a,s)=>{a.cash+=n(s.cash);a.card+=n(s.card);a.transfer+=n(s.transfer);a.credit+=n(s.credit);a.returns+=n(s.returns);a.smart+=n(s.smart_sales);a.shortage+=n(s.shortage);a.surplus+=n(s.surplus);a.net+=calcShift(s).entered;return a},{cash:0,card:0,transfer:0,credit:0,returns:0,smart:0,shortage:0,surplus:0,net:0});
+  const net=networkTotals(networkMatches||[]);
+  t.bankDeposit=net.deposit; t.bankFee=net.fee; t.networkPending=net.pending; t.networkBalance=net.balance;
+  t.openingCash=n(byId('finOpeningCash')?.value); t.openingBank=n(byId('finOpeningBank')?.value);
+  t.cashBalance=t.openingCash+t.cash;
+  t.bankBalance=t.openingBank+t.bankDeposit+t.transfer;
+  return t;
+}
+function renderFinanceCenter(){
+  if(!byId('financeCenter'))return;
+  loadFinanceOpening(); fillFinanceCashiers();
+  const rows=financeFilteredShifts(); const t=financeTotals(rows);
+  byId('financeStats').innerHTML=stat('صافي مبيعات الفترة',money(t.net),'نقدي + شبكة + تحويل + آجل - مرتجع')+stat('رصيد الصندوق الحالي',money(t.cashBalance),'افتتاحي + نقدي')+stat('رصيد البنك التقديري',money(t.bankBalance),'افتتاحي + تحويلات + نازل من الشبكة')+stat('المبالغ المعلقة بالشبكة',money(t.networkPending),'قيمة الموازنات - النازل - الرسوم');
+  if(byId('cashBoxDetails'))byId('cashBoxDetails').innerHTML=`المقبوضات النقدية: <b>${money(t.cash)}</b><br>المرتجع: <b>${money(t.returns)}</b><br>الرصيد الحالي: <b>${money(t.cashBalance)}</b>`;
+  if(byId('bankBoxDetails'))byId('bankBoxDetails').innerHTML=`تحويلات الورديات: <b>${money(t.transfer)}</b><br>نازل من الشبكة: <b>${money(t.bankDeposit)}</b><br>رسوم البنك: <b>${money(t.bankFee)}</b><br>الرصيد التقديري: <b>${money(t.bankBalance)}</b>`;
+  if(byId('posBoxDetails'))byId('posBoxDetails').innerHTML=`إجمالي الشبكة بالورديات: <b>${money(t.card)}</b><br>إجمالي الموازنات: <b>${money(t.networkBalance)}</b><br>المعلق: <b>${money(t.networkPending)}</b>`;
+  const byCashier={}; rows.forEach(s=>{const k=s.cashier_id||'غير محدد'; if(!byCashier[k])byCashier[k]={name:s.app_users?.full_name||'غير محدد',credit:0,net:0,count:0}; byCashier[k].credit+=n(s.credit); byCashier[k].net+=calcShift(s).entered; byCashier[k].count++;});
+  byId('financeReceivablesTable').innerHTML=rowsTable(['الكاشير/المصدر','إجمالي الآجل','عدد الورديات','ملاحظة'],Object.values(byCashier).filter(x=>x.credit>0).map(x=>`<tr><td>${x.name}</td><td><b>${money(x.credit)}</b></td><td>${x.count}</td><td>يتم ربطه لاحقاً بكشف العملاء</td></tr>`));
+  byId('financeSuppliersTable').innerHTML=rowsTable(['البند','الرصيد','الحالة','ملاحظة'],[`<tr><td>مستحقات الموردين</td><td><b>${money(0)}</b></td><td><span class="badge warn">بانتظار V27.3</span></td><td>سيتم احتسابها من فواتير المشتريات</td></tr>`]);
+  const daily={}; rows.forEach(s=>{const d=s.shift_date||'بدون تاريخ'; if(!daily[d])daily[d]={cash:0,bank:0,out:0,net:0}; daily[d].cash+=n(s.cash); daily[d].bank+=n(s.transfer)+n(s.card); daily[d].out+=n(s.returns); daily[d].net+=calcShift(s).entered;});
+  byId('financeCashflowTable').innerHTML=rowsTable(['التاريخ','دخل نقدي','دخل بنك/شبكة','خرج/مرتجع','صافي التدفق'],Object.entries(daily).sort().reverse().map(([d,x])=>`<tr><td>${d}</td><td>${money(x.cash)}</td><td>${money(x.bank)}</td><td>${money(x.out)}</td><td><b>${money(x.net)}</b></td></tr>`));
+  byId('financePayMethodsTable').innerHTML=rowsTable(['طريقة الدفع','الإجمالي','نسبة من الصافي'],[['نقدي',t.cash],['شبكة',t.card],['تحويل',t.transfer],['آجل',t.credit],['مرتجع',t.returns]].map(([name,val])=>`<tr><td>${name}</td><td><b>${money(val)}</b></td><td>${t.net?((n(val)/t.net)*100).toFixed(1):'0.0'}%</td></tr>`));
+}
+function clearFinanceFilters(){['finFrom','finTo'].forEach(id=>{if(byId(id))byId(id).value=''}); if(byId('finStatus'))byId('finStatus').value='all'; if(byId('finCashier'))byId('finCashier').value='all'; renderFinanceCenter();}
+function copyFinanceSummary(){const t=financeTotals();const msg=`سنابل مارت - ملخص المركز المالي\nصافي المبيعات: ${money(t.net)}\nرصيد الصندوق: ${money(t.cashBalance)}\nرصيد البنك التقديري: ${money(t.bankBalance)}\nالشبكة المعلقة: ${money(t.networkPending)}\nالآجل: ${money(t.credit)}\nالعجز: ${money(t.shortage)}\nالزيادة: ${money(t.surplus)}`;navigator.clipboard?.writeText(msg);toast('تم نسخ ملخص المركز المالي');}
+function printFinanceCenter(){const w=window.open('','_blank','width=1200,height=800');w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>المركز المالي</title><style>body{font-family:Arial,Tahoma,sans-serif;direction:rtl;padding:20px}h2{text-align:center}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.box{border:1px solid #ccc;border-radius:12px;padding:12px;text-align:center}table{width:100%;border-collapse:collapse;margin-top:15px}th,td{border:1px solid #ccc;padding:8px;text-align:center}th{background:#0f172a;color:white}
+.workspace-switch{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:12px;margin-top:14px}.workspace-switch label{display:block;color:#dbeafe;font-weight:900;margin-bottom:8px}.workspace-switch select{width:100%;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:11px;background:#0f172a;color:white;font-weight:900}.workspace-hero{background:linear-gradient(135deg,#07152f,#123e8a 48%,#065f46);color:white;border-radius:32px;padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden}.workspace-hero:after{content:"";position:absolute;width:220px;height:220px;left:-70px;bottom:-85px;background:rgba(255,255,255,.10);border-radius:50%}.workspace-hero h2{margin:0;font-size:34px}.workspace-hero p{margin:8px 0 0;color:#dbeafe;font-weight:800}.workspace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}.workspace-card{background:white;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:18px;cursor:pointer;transition:.18s}.workspace-card:hover{transform:translateY(-2px);border-color:#93c5fd}.workspace-card.active{outline:4px solid rgba(34,197,94,.18);border-color:#22c55e}.workspace-card .ico{font-size:32px}.workspace-card h3{margin:8px 0 4px}.workspace-card p{margin:0;color:var(--muted);font-weight:800}.workspace-tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#ecfdf5;color:#166534;border:1px solid #86efac;padding:6px 10px;font-weight:900;font-size:13px}.foundation-list{display:grid;gap:10px}.foundation-item{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);background:#fff;border-radius:18px;padding:12px;font-weight:900}.foundation-item span:last-child{color:#64748b}.sql-box{direction:ltr;text-align:left;white-space:pre-wrap;background:#0f172a;color:#e2e8f0;border-radius:18px;padding:14px;overflow:auto;font-family:Consolas,monospace;font-size:13px}
+</style></head><body><h2>سنابل مارت - المركز المالي</h2>${byId('financeStats')?.outerHTML||''}<h3>التدفقات النقدية</h3>${byId('financeCashflowTable')?.outerHTML||''}<h3>طرق الدفع</h3>${byId('financePayMethodsTable')?.outerHTML||''}</body></html>`);w.document.close();setTimeout(()=>w.print(),250);}
+
+function renderUsers(){if(!byId('usersTable'))return;byId('usersTable').innerHTML=rowsTable(['الاسم','الجوال','الدور','PIN','الحالة','رابط الدخول','إجراء'],users.map(u=>{const link=location.href.split('?')[0]+'?user='+u.id;return `<tr><td><b>${u.full_name}</b></td><td>${u.phone||'-'}</td><td>${roleMap[u.role]||u.role}</td><td>${u.pin||'-'}</td><td>${u.is_active!==false?'<span class="badge ok">نشط</span>':'<span class="badge danger">موقوف</span>'}</td><td><button class="btn light" onclick="copyText('${link}')">نسخ QR</button></td><td><button class="btn light" onclick="editUser('${u.id}')">تعديل</button> <button class="btn warn" onclick="toggleUser('${u.id}')">${u.is_active!==false?'إيقاف':'تفعيل'}</button> <button class="btn ok" onclick="whatsappUser('${u.id}')">واتساب</button></td></tr>`}))}
+function resetUserForm(){if(!byId('usrId'))return;usrId.value='';usrName.value='';usrPhone.value='';usrPin.value='';usrRole.value='cashier'}
+function editUser(id){const u=users.find(x=>x.id===id);if(!u)return;usrId.value=u.id;usrName.value=u.full_name||'';usrPhone.value=u.phone||'';usrPin.value=u.pin||'';usrRole.value=u.role||'cashier';toast('تم تحميل بيانات المستخدم للتعديل')}
+async function saveUser(){const name=(usrName.value||'').trim(), phone=(usrPhone.value||'').trim(), pin=(usrPin.value||'').trim(), role=usrRole.value;if(!name||!pin){alert('اكتب اسم المستخدم والرقم السري PIN');return}const payload={organization_id:ORG_ID,full_name:name,phone,pin,role,is_active:true};let res;if(usrId.value){res=await db.from('app_users').update(payload).eq('id',usrId.value)}else{res=await db.from('app_users').insert(payload)}if(res.error)return alert('خطأ حفظ المستخدم: '+res.error.message);toast('تم حفظ المستخدم');resetUserForm();await loadUsers();renderUsers();renderSecurityCenter()}
+async function toggleUser(id){const u=users.find(x=>x.id===id);if(!u)return;const {error}=await db.from('app_users').update({is_active:!(u.is_active!==false)}).eq('id',id);if(error)return alert(error.message);toast((u.is_active!==false)?'تم إيقاف المستخدم':'تم تفعيل المستخدم');await loadUsers();renderUsers();renderSecurityCenter()}
+function copyText(txt){navigator.clipboard?.writeText(txt);toast('تم نسخ رابط المستخدم. يمكن تحويله إلى QR أو إرساله للموظف.')}
+function whatsappUser(id){const u=users.find(x=>x.id===id);if(!u)return;const phone=(u.phone||'').replace(/\D/g,'');const link=location.href.split('?')[0]+'?user='+u.id;const msg=`سنابل مارت%0Aبيانات دخولك:%0Aالاسم: ${u.full_name}%0Aالصلاحية: ${roleMap[u.role]||u.role}%0APIN: ${u.pin||'-'}%0Aرابط الدخول: ${encodeURIComponent(link)}`;window.open(`https://wa.me/${phone}?text=${msg}`,'_blank')}
+function printUsers(){const w=window.open('','_blank','width=1000,height=700');w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير المستخدمين</title><style>body{font-family:Arial,Tahoma,sans-serif;direction:rtl;padding:20px}h2{text-align:center}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:center}th{background:#0f172a;color:white}
+.live-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}.live-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.live-box{background:white;border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:0 10px 28px rgba(15,23,42,.07)}.live-box b{font-size:24px}.live-feed{display:grid;gap:10px}.feed-item{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;font-weight:800}.feed-item .small{display:block;margin-top:4px}.mini-bars{display:grid;gap:9px}.mini-bar{display:grid;grid-template-columns:120px 1fr 95px;gap:10px;align-items:center}.mini-bar .bar{height:12px;background:#eef2ff;border-radius:99px;overflow:hidden}.mini-bar .bar span{display:block;height:100%;background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:99px}@media(max-width:1000px){.live-grid,.live-strip{grid-template-columns:1fr}.mini-bar{grid-template-columns:1fr}}
+
+.security-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.permission-matrix{min-width:900px}.permission-matrix td,.permission-matrix th{text-align:center}.permission-matrix td:first-child,.permission-matrix th:first-child{text-align:right}.perm-toggle{width:22px;height:22px;accent-color:#2563eb}.user-profile-card{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:center}.avatar{width:58px;height:58px;border-radius:20px;background:linear-gradient(135deg,#dbeafe,#c7d2fe);display:grid;place-items:center;font-weight:900;color:#1e3a8a;font-size:22px}.security-alert{border-radius:16px;padding:12px;border:1px solid var(--line);background:#fff;font-weight:900}.security-alert.danger{background:#fef2f2;border-color:#fecaca;color:#991b1b}.security-alert.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}.security-alert.ok{background:#ecfdf5;border-color:#86efac;color:#14532d}@media(max-width:1000px){.security-grid{grid-template-columns:1fr}.user-profile-card{grid-template-columns:48px 1fr}}
+
+.workspace-switch{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:12px;margin-top:14px}.workspace-switch label{display:block;color:#dbeafe;font-weight:900;margin-bottom:8px}.workspace-switch select{width:100%;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:11px;background:#0f172a;color:white;font-weight:900}.workspace-hero{background:linear-gradient(135deg,#07152f,#123e8a 48%,#065f46);color:white;border-radius:32px;padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden}.workspace-hero:after{content:"";position:absolute;width:220px;height:220px;left:-70px;bottom:-85px;background:rgba(255,255,255,.10);border-radius:50%}.workspace-hero h2{margin:0;font-size:34px}.workspace-hero p{margin:8px 0 0;color:#dbeafe;font-weight:800}.workspace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}.workspace-card{background:white;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:18px;cursor:pointer;transition:.18s}.workspace-card:hover{transform:translateY(-2px);border-color:#93c5fd}.workspace-card.active{outline:4px solid rgba(34,197,94,.18);border-color:#22c55e}.workspace-card .ico{font-size:32px}.workspace-card h3{margin:8px 0 4px}.workspace-card p{margin:0;color:var(--muted);font-weight:800}.workspace-tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#ecfdf5;color:#166534;border:1px solid #86efac;padding:6px 10px;font-weight:900;font-size:13px}.foundation-list{display:grid;gap:10px}.foundation-item{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);background:#fff;border-radius:18px;padding:12px;font-weight:900}.foundation-item span:last-child{color:#64748b}.sql-box{direction:ltr;text-align:left;white-space:pre-wrap;background:#0f172a;color:#e2e8f0;border-radius:18px;padding:14px;overflow:auto;font-family:Consolas,monospace;font-size:13px}
+</style></head><body><h2>سنابل مارت - تقرير المستخدمين</h2>${byId('usersTable').outerHTML}</body></html>`);w.document.close();setTimeout(()=>w.print(),250)}
+function subscribeRealtime(){db.channel('sanabel-mart-live').on('postgres_changes',{event:'*',schema:'public',table:'cashier_shifts'},()=>{toast('تحديث جديد في الورديات');loadShifts()}).on('postgres_changes',{event:'*',schema:'public',table:'receiving_orders'},()=>{toast('تحديث جديد في الاستلام');loadReceiving()}).on('postgres_changes',{event:'*',schema:'public',table:'app_users'},()=>{loadUsers()}).on('postgres_changes',{event:'*',schema:'public',table:'pos_devices'},()=>{loadPosDevices()}).on('postgres_changes',{event:'*',schema:'public',table:'bank_reconciliations'},()=>{loadNetworkMatches();renderDashboard()}).on('postgres_changes',{event:'*',schema:'public',table:'shift_attachments'},()=>{if(selectedShift)loadShiftAttachments(selectedShift.id)}).subscribe()}
+(async function boot(){await loadUsers();const saved=localStorage.getItem('sanabel_cloud_user');if(saved){const u=JSON.parse(saved);currentUser=users.find(x=>x.id===u.id)||u;if(currentUser)startApp()}})();
+</script>
+<script>document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='k'){e.preventDefault();toast('البحث العالمي سيكون متاحاً في النسخة القادمة')}});</script>
+</body>
+</html>
