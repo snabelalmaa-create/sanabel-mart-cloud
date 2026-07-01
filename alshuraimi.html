@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hasan ERP V13 Financial Vouchers - مؤسسة حسن محمد الشريمي</title>
+<title>نظام مؤسسة حسن محمد الشريمي - V17 Commercial Installments</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -47,15 +47,28 @@ button,input,select,textarea{font-size:14px}.app{grid-template-columns:282px 1fr
 .detail-list{display:grid;gap:10px}.detail-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:12px;background:#fbfdff}.detail-row b{display:block}.detail-row span{color:var(--muted);font-size:13px;font-weight:800}
 @media(max-width:1200px){.command-center{grid-template-columns:1fr}.urgent-grid{grid-template-columns:repeat(2,1fr)}.today-brief{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.urgent-grid,.today-brief{grid-template-columns:1fr}.detail-row{grid-template-columns:1fr}}
 
+
+
+/* ===== V20 UX: ملفات الوحدات وتقليل الأيقونات ===== */
+.unit-card{cursor:pointer;transition:.18s ease}.unit-card:hover{transform:translateY(-2px);box-shadow:0 18px 42px rgba(13,34,66,.13)}
+.unit-card .unit-actions{grid-template-columns:repeat(3,1fr)}
+.unit-card .more-hint{margin-top:10px;border-top:1px dashed #dce6f2;padding-top:9px;color:#64748b;font-weight:900;font-size:12px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.unit-card .more-hint b{color:#1d4ed8}.unit-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.unit-tabs button{border:1px solid #dbeafe;background:#f3f7ff;color:#1d4ed8;border-radius:14px;padding:10px 14px;font-weight:900}.unit-tabs button.active{background:linear-gradient(135deg,#0a2a58,#0c7264);color:white;border:0}.unit-profile-head{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-bottom:12px}.unit-profile-card{background:linear-gradient(135deg,#fff,#f8fbff);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:var(--shadow)}.unit-profile-title{display:flex;align-items:center;justify-content:space-between;gap:12px}.unit-profile-title h3{margin:0;font-size:25px;font-weight:900}.unit-quick-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.unit-quick-actions button{border-radius:12px;padding:9px 12px;font-weight:900;background:#eef5ff;color:#1d4ed8;border:1px solid #dbeafe}.compact-note{background:#f8fbff;border:1px dashed #cbd8e8;border-radius:16px;padding:10px 12px;color:#64748b;font-weight:800}.context-menu{position:fixed;background:white;border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 70px rgba(2,6,23,.18);z-index:2000;padding:8px;min-width:220px;display:none}.context-menu button{display:block;width:100%;text-align:right;background:transparent;border-radius:12px;padding:10px 12px;font-weight:900;color:#0b1736}.context-menu button:hover{background:#f3f7ff;color:#1d4ed8}
+@media(max-width:900px){.unit-profile-head{grid-template-columns:1fr}.unit-card .unit-actions{grid-template-columns:repeat(2,1fr)}}
+
+
+/* ===== V1.0.1 Voucher Actions & Permissions ===== */
+.action-cell{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.action-cell button{padding:7px 9px;border-radius:10px;font-size:12px;font-weight:900;border:1px solid #dbe6f3;background:#f8fbff;color:#1d4ed8}.action-cell .print{background:#eef6ff}.action-cell .edit{background:#ecfdf5;color:#047857;border-color:#bbf7d0}.action-cell .approve{background:#f0fdf4;color:#166534;border-color:#bbf7d0}.action-cell .cancel{background:#fff7ed;color:#b45309;border-color:#fed7aa}.action-cell .delete{background:#fef2f2;color:#b91c1c;border-color:#fecaca}.action-cell button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.3)}.voucher-status{display:inline-block;border-radius:999px;padding:4px 9px;font-weight:900;font-size:12px}.voucher-status.approved{background:#dcfce7;color:#166534}.voucher-status.waiting{background:#fef3c7;color:#92400e}.voucher-status.cancelled{background:#fee2e2;color:#991b1b}.voucher-status.draft{background:#e0f2fe;color:#075985}.permission-note{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:14px;padding:10px 12px;color:#475569;font-weight:800;margin:10px 0}.audit-box{background:#f8fafc;border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:12px}.audit-line{display:flex;gap:10px;justify-content:space-between;border-bottom:1px dashed #dbe4f0;padding:8px 0;font-size:13px}.audit-line:last-child{border-bottom:0}
+
 </style>
 </head>
 <body>
 <div class="app">
 <aside class="sidebar">
-  <div class="brand"><div class="logo">🏢</div><div><h1>Hasan ERP</h1><p>Powered by Sanabel OS</p></div></div>
+  <div class="brand"><div class="logo">🏢</div><div><h1>نظام الشريمي</h1><p>إدارة مؤسسة حسن محمد الشريمي</p></div></div>
   <div class="user-card"><b>مؤسسة حسن محمد الشريمي</b><br><span style="color:#9fb4d2">مقاولات • عقارات • خدمات • مالية</span></div>
   <div class="nav" id="nav"></div>
-  <div class="footer-note">Hasan ERP V2 Executive Dashboard<br>نسخة تشغيل وتجربة داخل المتصفح</div>
+  <div class="footer-note">نظام مؤسسة حسن محمد الشريمي V17<br>نسخة تشغيل وتجربة داخل المتصفح</div>
 </aside>
 <main class="main">
   <div class="topbar">
@@ -65,7 +78,7 @@ button,input,select,textarea{font-size:14px}.app{grid-template-columns:282px 1fr
   </div>
 
   <section id="dashboard" class="section active">
-    <div class="hero"><div><span class="kicker">Hasan ERP V2</span><h1>مرحبًا بك في لوحة المدير</h1><p>مؤشرات يومية، تقارير مالية، متابعة مشاريع، عقارات، مشتريات، خدمات وموارد بشرية من شاشة واحدة.</p></div><div class="health"><span>النظام يعمل بكفاءة</span><b>98%</b><span>صحة النظام</span></div></div>
+    <div class="hero"><div><span class="kicker">نظام الشريمي V17</span><h1>مرحبًا بك في لوحة المدير</h1><p>مؤشرات يومية، تقارير مالية، متابعة مشاريع، عقارات، مشتريات، خدمات وموارد بشرية من شاشة واحدة.</p></div><div class="health"><span>النظام يعمل بكفاءة</span><b>98%</b><span>صحة النظام</span></div></div>
     
     <div class="command-center" id="commandCenter">
       <div class="command-panel">
@@ -107,6 +120,7 @@ button,input,select,textarea{font-size:14px}.app{grid-template-columns:282px 1fr
   <section id="reports" class="section"></section>
   <section id="alerts" class="section"></section>
   <section id="communications" class="section"></section>
+  <section id="settings" class="section"></section>
 </main>
 </div>
 
@@ -125,7 +139,7 @@ button,input,select,textarea{font-size:14px}.app{grid-template-columns:282px 1fr
 <script>
 const LS='hasan_erp_v2_';
 const tabs=[
- ['dashboard','🏠','لوحة المدير','الرئيسية'],['modules','🧩','الوحدات','الرئيسية'],['projects','🏗','المشاريع والمقاولات','الوحدات'],['properties','🏘','العقارات','الوحدات'],['contracts','📄','العقود العقارية','الوحدات'],['payments','💵','سداد العقارات','الوحدات'],['purchases','🛒','المشتريات','الوحدات'],['expenses','💳','المصروفات','الوحدات'],['expenseItems','🧾','بنود الصرف','الوحدات'],['services','⚡','مركز الخدمات','الوحدات'],['equipment','🚜','المعدات','الوحدات'],['hr','👥','الموارد البشرية','الوحدات'],['finance','💰','المالية','المالية'],['tax','🧾','الضريبة','المالية'],['communications','📬','مركز الاتصالات','الإدارة'],['reports','📊','التقارير','الإدارة'],['users','👤','المستخدمون والصلاحيات','الإدارة'],['alerts','🔔','التنبيهات والمهام','الإدارة']
+ ['dashboard','🏠','لوحة المدير','الرئيسية'],['modules','🧩','الوحدات','الرئيسية'],['projects','🏗','المشاريع والمقاولات','الوحدات'],['properties','🏘','العقارات','الوحدات'],['contracts','📄','العقود العقارية','الوحدات'],['payments','💵','سداد العقارات','الوحدات'],['purchases','🛒','المشتريات','الوحدات'],['expenses','💳','المصروفات','الوحدات'],['expenseItems','🧾','بنود الصرف','الوحدات'],['services','⚡','مركز الخدمات','الوحدات'],['equipment','🚜','المعدات','الوحدات'],['hr','👥','الموارد البشرية','الوحدات'],['finance','💰','المالية','المالية'],['tax','🧾','الضريبة','المالية'],['communications','📬','مركز الاتصالات','الإدارة'],['reports','📊','التقارير','الإدارة'],['users','👤','المستخدمون والصلاحيات','الإدارة'],['alerts','🔔','التنبيهات والمهام','الإدارة'],['settings','⚙️','الإعدادات والتهيئة','الإدارة']
 ];
 const modules={
  projects:{icon:'🏗',title:'المشاريع والمقاولات',desc:'مشاريع، عقود، مواقع، مستخلصات، تكاليف',fields:['اسم المشروع','العميل','الموقع','قيمة العقد','الحالة']},
@@ -150,7 +164,7 @@ function load(k){try{return JSON.parse(localStorage.getItem(LS+k)||'[]')}catch(e
 function save(k,v){localStorage.setItem(LS+k,JSON.stringify(v))}
 function seed(){if(!localStorage.getItem(LS+'seed')){save('projects',[{id:1,'اسم المشروع':'مشروع مجمع الحبيب','العميل':'مركز الحبيب','الموقع':'رجال ألمع','قيمة العقد':1750000,'الحالة':'نشط',created:new Date().toISOString()}]);save('properties',[{id:1,'نوع العقار':'محل تجاري','الاسم/الرقم':'محل رقم 12','الموقع':'الحبيل','الإيجار':24000,'الحالة':'مؤجر',created:new Date().toISOString()}]);save('purchases',[{id:1,'المورد':'مواد البناء الحديثة','رقم الفاتورة':'P-4587','المبلغ قبل الضريبة':38000,'الضريبة':5700,'طريقة الدفع':'تحويل',created:new Date().toISOString()}]);save('expenses',[{id:1,'البند':'كهرباء','مركز التكلفة':'عمارة الغربي','المبلغ':12450,'الضريبة':1867.5,'طريقة الدفع':'تحويل',created:new Date().toISOString()}]);save('services',[{id:1,'نوع الخدمة':'كهرباء','رقم الحساب':'3000012456','مركز التكلفة':'عمارة الغربي','قيمة الفاتورة':12450,'الضريبة':1867.5,created:new Date().toISOString()}]);save('equipment',[{id:1,'اسم المعدة':'شيول كاتربلر','رقم الأصل':'EQ-001','المشروع الحالي':'مشروع الحبيب','الحالة':'تعمل','تكلفة التشغيل':8500,created:new Date().toISOString()}]);save('hr',[{id:1,'اسم الموظف':'أحمد محمد','الوظيفة':'مشرف مشروع','الجوال':'05xxxxxxxx','الراتب':6500,'الحالة':'نشط',created:new Date().toISOString()}]);save('expenseItems',[{id:1,'اسم البند':'كهرباء','خاضع للضريبة':'نعم','مركز التكلفة الافتراضي':'حسب الحساب','الحالة':'نشط',created:new Date().toISOString()}]);save('finance',[{id:1,'نوع العملية':'سند صرف','الحساب':'البنك','المبلغ':14317.5,'طريقة الدفع':'تحويل','البيان':'سداد فاتورة كهرباء',created:new Date().toISOString()}]);save('tax',[{id:1,'نوع الفاتورة':'مدخلات','الرقم':'EL-3000012456','المبلغ الخاضع':12450,'الضريبة':1867.5,'الفترة':'2026-07',created:new Date().toISOString()}]);save('users',[{id:1,'اسم المستخدم':'أبو قصي','الجوال':'05xxxxxxxx','الدور':'مالك النظام','الصلاحية':'كامل','الحالة':'نشط',created:new Date().toISOString()}]);localStorage.setItem(LS+'seed','1')}}
 function renderNav(){let html='',grp='';tabs.forEach(t=>{if(t[3]!==grp){grp=t[3];html+=`<div class="nav-title">${grp}</div>`}html+=`<button onclick="show('${t[0]}')" id="nav_${t[0]}"><span>${t[1]} ${t[2]}</span><small>›</small></button>`});byId('nav').innerHTML=html}
-function show(id){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));byId(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));const btn=byId('nav_'+id);if(btn)btn.classList.add('active');const t=tabs.find(x=>x[0]===id);byId('pageTitle').textContent=t?t[2]:'Hasan ERP';byId('pageSub').textContent=id==='dashboard'?'إدارة متكاملة للمؤسسة':'وحدة تشغيل مستقلة داخل المؤسسة';if(id==='properties'){renderProperties()}else if(id==='communications'){renderCommunications()}else if(id!=='dashboard'&&id!=='modules'&&id!=='alerts')renderModuleSection(id)}
+function show(id){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));byId(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));const btn=byId('nav_'+id);if(btn)btn.classList.add('active');const t=tabs.find(x=>x[0]===id);byId('pageTitle').textContent=t?t[2]:'Hasan ERP';byId('pageSub').textContent=id==='dashboard'?'إدارة متكاملة للمؤسسة':'وحدة تشغيل مستقلة داخل المؤسسة';if(id==='properties'){renderProperties()}else if(id==='communications'){renderCommunications()}else if(id==='settings'){renderSystemSettings()}else if(id!=='dashboard'&&id!=='modules'&&id!=='alerts')renderModuleSection(id)}
 function total(key,field){return load(key).reduce((a,r)=>a+n(r[field]),0)}
 function renderDashboard(){const purchases=total('purchases','المبلغ قبل الضريبة')+total('purchases','الضريبة'),expenses=total('expenses','المبلغ')+total('expenses','الضريبة'),tax=total('tax','الضريبة'),rev=total('projects','قيمة العقد')+total('properties','الإيجار');const profit=rev-expenses-purchases;byId('metrics').innerHTML=[['الرصيد النقدي',2458750,'في جميع الحسابات','💼','blue'],['صافي الربح',profit,'حسب البيانات الحالية','📈','green'],['إجمالي الإيرادات',rev,'مشاريع + عقارات','💵','green'],['إجمالي المشتريات',purchases,'مشتريات وضريبة','🛒','blue'],['إجمالي المصروفات',expenses,'مصروفات وخدمات','💳','red']].map(x=>`<div class="metric"><div><div class="label">${x[0]}</div><div class="value ${x[4]}">${money(x[1])}</div><div class="hint">${x[2]}</div></div><div class="micon">${x[3]}</div></div>`).join('');byId('miniStats').innerHTML=[['المشاريع النشطة',load('projects').length,'🏗'],['العقارات المؤجرة',load('properties').length,'🏠'],['الموظفون',load('hr').length,'👥'],['الموردون',load('purchases').length,'🤝'],['المعدات',load('equipment').length,'🚜']].map(x=>`<div class="mini"><div><span class="hint">${x[0]}</span><br><b>${x[1]}</b></div><div class="micon">${x[2]}</div></div>`).join('');byId('donutTotal').textContent=money(expenses).replace('.00','');byId('expenseDist').innerHTML=[['المشاريع','35%'],['العقارات','25%'],['المشتريات','20%'],['الموظفين','10%'],['المصاريف العامة','10%']].map(x=>`<div class="ditem"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');renderAlerts();renderChart();renderReports()}
 function renderAlerts(){const arr=[['⚡','5 فواتير كهرباء مستحقة','بإجمالي 12,450 ر.س','red'],['📄','3 عقود على وشك الانتهاء','خلال 15 يوم','orange'],['🛠','2 معدات تحتاج صيانة','مراجعة عاجلة','orange'],['🪪','4 إقامات تنتهي','خلال 30 يوم','green'],['🛒','7 فواتير مشتريات غير مسددة','بإجمالي 89,750 ر.س','red']];byId('alertCount').textContent=arr.length;byId('alertsList').innerHTML=arr.map(a=>`<div class="alert"><div class="ai">${a[0]}</div><div><b>${a[1]}</b><span>${a[2]}</span></div><div class="status-dot" style="background:${a[3]==='red'?'#ef4444':a[3]==='orange'?'#f59e0b':'#22c55e'}"></div></div>`).join('');byId('alerts').innerHTML=`<div class="panel"><div class="panel-title"><h3>جميع التنبيهات والمهام</h3><button class="primary" onclick="openModal('مهمة جديدة')">إضافة مهمة</button></div><div class="alerts">${byId('alertsList').innerHTML}</div></div>`}
@@ -337,33 +351,86 @@ function unitAction(id,action){
   if(action==='تجديد') return openRenewForm(u,c);
   if(action==='خروج') return openExitForm(u,c);
 }
-function propHidden(u,c){return `<input type="hidden" id="link_unit_id" value="${u.id}"><input type="hidden" id="link_center_id" value="${u.center_id}"><div class="report-box"><span>مركز التكلفة</span><b>${c.name||'-'}</b></div><div class="report-box"><span>الوحدة</span><b>${u.type} ${u.unit_no}</b></div>`}
+function propHidden(u,c){return `<input type="hidden" id="link_unit_id" value="${u.id}"><input type="hidden" id="link_center_id" value="${u.center_id}"><input type="hidden" id="ct_unit_type" value="${u.type}"><div class="report-box"><span>مركز التكلفة</span><b>${c.name||'-'}</b></div><div class="report-box"><span>الوحدة</span><b>${u.type} ${u.unit_no}</b></div>`}
 function isoDate(d){return new Date(d).toISOString().slice(0,10)}
-function addContractDuration(start,type,count){const d=new Date(start||new Date());const nCount=Math.max(1,Number(count||1));if(type==='سنوي')d.setFullYear(d.getFullYear()+nCount);else if(type==='يومي')d.setDate(d.getDate()+nCount);else d.setMonth(d.getMonth()+nCount);return isoDate(d)}
-function updateContractEnd(){const st=byId('ct_start')?.value||isoDate(new Date()),tp=byId('ct_type')?.value||'شهري',cnt=byId('ct_count')?.value||1;if(byId('ct_end'))byId('ct_end').value=addContractDuration(st,tp,cnt);updateContractTax()}
+function addContractDuration(start,type,count){
+ const d=new Date(start||new Date());
+ const nCount=Math.max(1,Number(count||1));
+ if(type==='سنوي') d.setFullYear(d.getFullYear()+nCount);
+ else if(type==='يومي') d.setDate(d.getDate()+nCount);
+ else d.setMonth(d.getMonth()+nCount);
+ return isoDate(d)
+}
+function calcPeriodEnd(d,type){
+ const end=new Date(d);
+ if(type==='سنوي') end.setFullYear(end.getFullYear()+1);
+ else if(type==='يومي') end.setDate(end.getDate()+1);
+ else end.setMonth(end.getMonth()+1);
+ end.setDate(end.getDate()-1);
+ return isoDate(end)
+}
+function updateContractEnd(){
+ const st=byId('ct_start')?.value||isoDate(new Date());
+ let tp=byId('ct_type')?.value||'شهري';
+ const isShop=(byId('ct_unit_type')?.value||'')==='محل';
+ if(isShop && tp==='يومي'){
+   tp='شهري';
+   if(byId('ct_type')) byId('ct_type').value='شهري';
+ }
+ const cnt=byId('ct_count')?.value||1;
+ if(byId('ct_end')) byId('ct_end').value=addContractDuration(st,tp,cnt);
+ updateContractTax()
+}
 function updateContractTax(){const rent=n(byId('ct_rent')?.value),taxable=(byId('ct_taxable')?.value||'لا')==='نعم',vat=taxable?rent*0.15:0,total=rent+vat;if(byId('ct_vat'))byId('ct_vat').value=vat.toFixed(2);if(byId('ct_total'))byId('ct_total').value=total.toFixed(2)}
-function generateRentInstallments(contract,u,c,rent,count,start,type,openingDue){const rows=linkedLoad('rent_installments');let created=[];let base=new Date(start||new Date());let cnt=Math.max(1,Number(count||1));for(let i=1;i<=cnt;i++){let d=new Date(base);if(type==='سنوي')d.setFullYear(d.getFullYear()+i-1);else if(type==='يومي')d.setDate(d.getDate()+i-1);else d.setMonth(d.getMonth()+i-1);created.push({id:Date.now()+i+Math.floor(Math.random()*999),created:new Date().toISOString(),contract_id:contract.id,unit_id:u.id,center_id:u.center_id,'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'المستأجر':contract['المستأجر'],'رقم الدفعة':i,'تاريخ الاستحقاق':isoDate(d),'المبلغ':rent,'الحالة':'غير مدفوع','البيان':'دفعة إيجار رقم '+i+' - '+u.type+' '+u.unit_no});}
- if(openingDue>0){created.unshift({id:Date.now()+777,created:new Date().toISOString(),contract_id:contract.id,unit_id:u.id,center_id:u.center_id,'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'المستأجر':contract['المستأجر'],'رقم الدفعة':'رصيد سابق','تاريخ الاستحقاق':start,'المبلغ':openingDue,'الحالة':'غير مدفوع','البيان':'رصيد افتتاحي/مستحق سابق'});}
- linkedSave('rent_installments',[...created,...rows]);return created}
+function generateRentInstallments(contract,u,c,rent,count,start,type,openingDue){
+ const rows=linkedLoad('rent_installments');
+ let created=[];
+ let base=new Date(start||new Date());
+ let cnt=Math.max(1,Number(count||1));
+ if(u.type==='محل' && type==='يومي') type='شهري';
+ for(let i=1;i<=cnt;i++){
+   let d=new Date(base);
+   if(type==='سنوي') d.setFullYear(d.getFullYear()+i-1);
+   else if(type==='يومي') d.setDate(d.getDate()+i-1);
+   else d.setMonth(d.getMonth()+i-1);
+   const from=isoDate(d);
+   const to=calcPeriodEnd(d,type);
+   const periodText=from===to?from:(from+' إلى '+to);
+   created.push({
+     id:Date.now()+i+Math.floor(Math.random()*999),created:new Date().toISOString(),contract_id:contract.id,unit_id:u.id,center_id:u.center_id,
+     'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'المستأجر':contract['المستأجر'],'رقم الدفعة':i,'تاريخ الاستحقاق':from,'الفترة من':from,'الفترة إلى':to,
+     'المبلغ':rent,'المدفوع':0,'المتبقي':rent,'الحالة':'غير مدفوع','البيان':'دفعة إيجار رقم '+i+' - '+u.type+' '+u.unit_no+' عن الفترة من '+periodText
+   });
+ }
+ if(openingDue>0){created.unshift({id:Date.now()+777,created:new Date().toISOString(),contract_id:contract.id,unit_id:u.id,center_id:u.center_id,'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'المستأجر':contract['المستأجر'],'رقم الدفعة':'رصيد سابق','تاريخ الاستحقاق':start,'الفترة من':start,'الفترة إلى':start,'المبلغ':openingDue,'المدفوع':0,'المتبقي':openingDue,'الحالة':'غير مدفوع','البيان':'رصيد افتتاحي/مستحق سابق'});}
+ linkedSave('rent_installments',[...created,...rows]);return created
+}
 function installmentPaid(r){return n(r['المدفوع']||0)}
 function installmentRemaining(r){return Math.max(0,n(r['المبلغ'])-installmentPaid(r))}
-function outstandingTotal(unitId){return linkedLoad('rent_installments').filter(r=>String(r.unit_id)===String(unitId)&&r['الحالة']!=='مدفوع').reduce((a,r)=>a+installmentRemaining(r),0)}
+function activeContractForUnit(unitId){
+ const contracts=linkedLoad('contracts').filter(r=>String(r.unit_id)===String(unitId)&&r['نوع العقد']!=='خروج').sort((a,b)=>String(b.created||b.id||'').localeCompare(String(a.created||a.id||'')));
+ return contracts.find(r=>r['الحالة']==='نشط') || contracts[0] || null;
+}
+function activeContractIdForUnit(unitId){const c=activeContractForUnit(unitId);return c?String(c.id):''}
+function contractInstallments(contractId){return linkedLoad('rent_installments').filter(r=>String(r.contract_id)===String(contractId)).sort((a,b)=>String(a['تاريخ الاستحقاق']||'').localeCompare(String(b['تاريخ الاستحقاق']||'')))}
+function activeInstallmentsForUnit(unitId){const cid=activeContractIdForUnit(unitId);return cid?contractInstallments(cid):[]}
+function outstandingTotal(unitId){return activeInstallmentsForUnit(unitId).filter(r=>r['الحالة']!=='مدفوع').reduce((a,r)=>a+installmentRemaining(r),0)}
 function dueUntilToday(unitId){const today=isoDate(new Date());return dueUntilDate(unitId,today)}
-function dueUntilDate(unitId,date){const limit=String(date||isoDate(new Date()));return linkedLoad('rent_installments').filter(r=>String(r.unit_id)===String(unitId)&&!['مدفوع','ملغاة'].includes(r['الحالة'])&&String(r['تاريخ الاستحقاق']||'')<=limit).reduce((a,r)=>a+installmentRemaining(r),0)}
-function futureOutstandingAfter(unitId,date){const limit=String(date||isoDate(new Date()));return linkedLoad('rent_installments').filter(r=>String(r.unit_id)===String(unitId)&&!['مدفوع','ملغاة'].includes(r['الحالة'])&&String(r['تاريخ الاستحقاق']||'')>limit).reduce((a,r)=>a+installmentRemaining(r),0)}
-function openInstallmentsCount(unitId,date,dir){const limit=String(date||isoDate(new Date()));return linkedLoad('rent_installments').filter(r=>String(r.unit_id)===String(unitId)&&!['مدفوع','ملغاة'].includes(r['الحالة'])&&(dir==='future'?String(r['تاريخ الاستحقاق']||'')>limit:String(r['تاريخ الاستحقاق']||'')<=limit)).length}
-function cancelFutureInstallments(unitId,date,reason){const limit=String(date||isoDate(new Date()));let rows=linkedLoad('rent_installments'),cancelled=0,amount=0;rows=rows.map(r=>{if(String(r.unit_id)===String(unitId)&&!['مدفوع','ملغاة'].includes(r['الحالة'])&&String(r['تاريخ الاستحقاق']||'')>limit){cancelled++;amount+=installmentRemaining(r);return {...r,'الحالة':'ملغاة','المتبقي':0,'ملاحظة الإلغاء':reason||'إلغاء دفعات مستقبلية بسبب خروج مبكر','تاريخ الإلغاء':isoDate(new Date())};}return r});linkedSave('rent_installments',rows);return {cancelled,amount}}
-function paymentCoverage(unitId,amount){let rem=n(amount),rows=linkedLoad('rent_installments').filter(r=>String(r.unit_id)===String(unitId)&&r['الحالة']!=='مدفوع').sort((a,b)=>String(a['تاريخ الاستحقاق']).localeCompare(String(b['تاريخ الاستحقاق'])));let applied=[];for(const r of rows){if(rem<=0)break;const need=installmentRemaining(r);if(need<=0)continue;const pay=Math.min(rem,need);applied.push({id:r.id,no:r['رقم الدفعة'],date:r['تاريخ الاستحقاق'],amount:pay,remainingAfter:need-pay});rem-=pay;}return {applied,extra:rem,from:applied[0]?.date||'',to:applied[applied.length-1]?.date||''}}
+function dueUntilDate(unitId,date){const limit=String(date||isoDate(new Date()));return activeInstallmentsForUnit(unitId).filter(r=>!['مدفوع','ملغاة'].includes(r['الحالة'])&&String(r['تاريخ الاستحقاق']||'')<=limit).reduce((a,r)=>a+installmentRemaining(r),0)}
+function futureOutstandingAfter(unitId,date){const limit=String(date||isoDate(new Date()));return activeInstallmentsForUnit(unitId).filter(r=>!['مدفوع','ملغاة'].includes(r['الحالة'])&&String(r['تاريخ الاستحقاق']||'')>limit).reduce((a,r)=>a+installmentRemaining(r),0)}
+function openInstallmentsCount(unitId,date,dir){const limit=String(date||isoDate(new Date()));return activeInstallmentsForUnit(unitId).filter(r=>!['مدفوع','ملغاة'].includes(r['الحالة'])&&(dir==='future'?String(r['تاريخ الاستحقاق']||'')>limit:String(r['تاريخ الاستحقاق']||'')<=limit)).length}
+function cancelFutureInstallments(unitId,date,reason){const limit=String(date||isoDate(new Date()));const cid=activeContractIdForUnit(unitId);let rows=linkedLoad('rent_installments'),cancelled=0,amount=0;rows=rows.map(r=>{if(cid&&String(r.contract_id)===cid&&!['مدفوع','ملغاة'].includes(r['الحالة'])&&String(r['تاريخ الاستحقاق']||'')>limit){cancelled++;amount+=installmentRemaining(r);return {...r,'الحالة':'ملغاة','المتبقي':0,'ملاحظة الإلغاء':reason||'إلغاء دفعات مستقبلية بسبب خروج مبكر','تاريخ الإلغاء':isoDate(new Date())};}return r});linkedSave('rent_installments',rows);return {cancelled,amount}}
+function paymentCoverage(unitId,amount){let rem=n(amount),rows=activeInstallmentsForUnit(unitId).filter(r=>r['الحالة']!=='مدفوع'&&r['الحالة']!=='ملغاة').sort((a,b)=>String(a['تاريخ الاستحقاق']).localeCompare(String(b['تاريخ الاستحقاق'])));let applied=[];for(const r of rows){if(rem<=0)break;const need=installmentRemaining(r);if(need<=0)continue;const pay=Math.min(rem,need);applied.push({id:r.id,no:r['رقم الدفعة'],date:r['تاريخ الاستحقاق'],amount:pay,remainingAfter:need-pay,contract_id:r.contract_id});rem-=pay;}return {applied,extra:rem,from:applied[0]?.date||'',to:applied[applied.length-1]?.date||''}}
 function buildPaymentNote(unitId,amount){const u=getUnit(unitId)||{},cov=paymentCoverage(unitId,amount);if(!cov.applied.length)return `سداد إيجار ${u.type||'وحدة'} ${u.unit_no||''}`;let period=cov.from===cov.to?cov.from:`${cov.from} إلى ${cov.to}`;let nums=cov.applied.map(x=>x.no).join('، ');let extra=cov.extra>0?` مع رصيد مقدم ${moneyProp(cov.extra)} ر.س`:'';return `سداد إيجار الفترة من ${period} - الدفعات (${nums})${extra}`}
 function updatePaymentAutoNote(unitId){const amount=n(byId('pay_amount')?.value||0);if(byId('pay_note'))byId('pay_note').value=buildPaymentNote(unitId,amount);const cov=paymentCoverage(unitId,amount);if(byId('pay_period_hint'))byId('pay_period_hint').innerHTML=cov.applied.length?`سيتم توزيع السداد على الفترة من <b>${cov.from}</b> إلى <b>${cov.to}</b>${cov.extra>0?`، ويوجد رصيد مقدم <b>${moneyProp(cov.extra)} ر.س</b>`:''}`:'لا توجد دفعات مفتوحة للتوزيع';}
 
 function openContractForm(u,c){
  byId('modalTitle').textContent='عقد جديد - '+u.type+' '+u.unit_no;
  const today=isoDate(new Date());
- const isShop=u.type==='محل';const typeOptions=isShop?'<option>شهري</option><option>سنوي</option>':'<option>شهري</option><option>سنوي</option><option>يومي</option>';const businessFields=isShop?`<div class="field"><label>اسم المنشأة/المستأجر</label><input id="ct_tenant" value="${u.tenant||''}" placeholder="اسم المؤسسة أو المستأجر"></div><div class="field"><label>رقم الجوال</label><input id="ct_phone" placeholder="05xxxxxxxx" value="${u.phone||''}"></div><div class="field"><label>رقم السجل التجاري</label><input id="ct_idno" placeholder="رقم السجل التجاري"></div><div class="field"><label>الرقم الضريبي</label><input id="ct_tax_number" placeholder="3xxxxxxxxxxxxxx"></div><div class="field wide"><label>العنوان الوطني</label><input id="ct_national_address" placeholder="المدينة، الحي، الشارع، رقم المبنى، الرمز البريدي"></div><div class="field"><label>النشاط التجاري</label><input id="ct_activity" placeholder="مثال: تموينات، مطعم، مكتب خدمات"></div><div class="field"><label>البريد الإلكتروني</label><input id="ct_email" placeholder="اختياري"></div><div class="field"><label>هل العقد ضريبي؟</label><select id="ct_taxable" onchange="updateContractTax()"><option>لا</option><option>نعم</option></select></div><div class="field"><label>نوع الفاتورة</label><select id="ct_invoice_type"><option>غير ضريبي</option><option>ضريبي</option><option>ضريبي مبسط</option></select></div>`:`<div class="field"><label>اسم المستأجر</label><input id="ct_tenant" value="${u.tenant||''}"></div><div class="field"><label>رقم الجوال</label><input id="ct_phone" placeholder="05xxxxxxxx" value="${u.phone||''}"></div><div class="field"><label>رقم الهوية/السجل</label><input id="ct_idno"></div>`;byId('modalBody').innerHTML=`${propHidden(u,c)}<div class="notice" style="margin-bottom:12px">${isShop?'نموذج محل تجاري: شهري/سنوي فقط، مع بيانات السجل والضريبة والعنوان الوطني للجاهزية للفوترة الضريبية.':'نموذج شقة سكنية: يدعم اليومي/الشهري/السنوي حسب الحاجة.'}</div><div class="form">${businessFields}<div class="field"><label>نوع العقد</label><select id="ct_type" onchange="updateContractEnd()">${typeOptions}</select></div><div class="field"><label>تاريخ البداية</label><input id="ct_start" type="date" value="${today}" onchange="updateContractEnd()"></div><div class="field"><label>عدد الدفعات / مدة العقد</label><input id="ct_count" type="number" min="1" value="${isShop?12:1}" oninput="updateContractEnd()"></div><div class="field"><label>تاريخ النهاية تلقائي</label><input id="ct_end" type="date" readonly></div><div class="field"><label>${isShop?'الإيجار قبل الضريبة لكل دفعة':'الإيجار لكل دفعة'}</label><input id="ct_rent" type="number" step="0.01" value="${u.rent||0}" oninput="updateContractTax()"></div>${isShop?'<div class="field"><label>ضريبة 15%</label><input id="ct_vat" type="number" readonly value="0.00"></div><div class="field"><label>الإجمالي بعد الضريبة</label><input id="ct_total" type="number" readonly value="0.00"></div>':''}<div class="field"><label>رصيد افتتاحي/مستحق سابق</label><input id="ct_due" type="number" step="0.01" value="${u.due||0}"></div><div class="field wide"><label>ملاحظة</label><input id="ct_note"></div></div><div class="notice" style="margin-top:12px">سيتم توليد الدفعات تلقائياً حسب نوع العقد وعدد الدفعات، وربطها بمركز التكلفة والوحدة والتقارير${isShop?'، وترحيل الضريبة تلقائياً عند اختيار عقد ضريبي.':''}</div><div class="actions"><button class="success" onclick="saveContract('${u.id}')">حفظ العقد وتوليد الدفعات</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;
+ const isShop=u.type==='محل';const typeOptions=isShop?'<option>شهري</option><option>سنوي</option>':'<option>شهري</option><option>سنوي</option><option>يومي</option>';const businessFields=isShop?`<div class="field"><label>اسم المنشأة/المستأجر</label><input id="ct_tenant" value="${u.tenant||''}" placeholder="اسم المؤسسة أو المستأجر"></div><div class="field"><label>رقم الجوال</label><input id="ct_phone" placeholder="05xxxxxxxx" value="${u.phone||''}"></div><div class="field"><label>رقم السجل التجاري</label><input id="ct_idno" placeholder="رقم السجل التجاري"></div><div class="field"><label>الرقم الضريبي</label><input id="ct_tax_number" placeholder="3xxxxxxxxxxxxxx"></div><div class="field wide"><label>العنوان الوطني</label><input id="ct_national_address" placeholder="المدينة، الحي، الشارع، رقم المبنى، الرمز البريدي"></div><div class="field"><label>النشاط التجاري</label><input id="ct_activity" placeholder="مثال: تموينات، مطعم، مكتب خدمات"></div><div class="field"><label>البريد الإلكتروني</label><input id="ct_email" placeholder="اختياري"></div><div class="field"><label>هل العقد ضريبي؟</label><select id="ct_taxable" onchange="updateContractTax()"><option>لا</option><option>نعم</option></select></div><div class="field"><label>نوع الفاتورة</label><select id="ct_invoice_type"><option>غير ضريبي</option><option>ضريبي</option><option>ضريبي مبسط</option></select></div>`:`<div class="field"><label>اسم المستأجر</label><input id="ct_tenant" value="${u.tenant||''}"></div><div class="field"><label>رقم الجوال</label><input id="ct_phone" placeholder="05xxxxxxxx" value="${u.phone||''}"></div><div class="field"><label>رقم الهوية/السجل</label><input id="ct_idno"></div>`;byId('modalBody').innerHTML=`${propHidden(u,c)}<div class="notice" style="margin-bottom:12px">${isShop?'نموذج محل تجاري: شهري أو سنوي فقط. لا يسمح بالتأجير اليومي للمحلات، وسيتم توليد جدول الدفعات تلقائيًا حسب مدة العقد.':'نموذج شقة سكنية: يدعم اليومي/الشهري/السنوي حسب الحاجة.'}</div><div class="form">${businessFields}<div class="field"><label>نوع العقد</label><select id="ct_type" onchange="updateContractEnd()">${typeOptions}</select></div><div class="field"><label>تاريخ البداية</label><input id="ct_start" type="date" value="${today}" onchange="updateContractEnd()"></div><div class="field"><label>عدد الدفعات / مدة العقد</label><input id="ct_count" type="number" min="1" value="${isShop?12:1}" oninput="updateContractEnd()"></div><div class="field"><label>تاريخ النهاية تلقائي</label><input id="ct_end" type="date" readonly></div><div class="field"><label>${isShop?'الإيجار قبل الضريبة لكل دفعة':'الإيجار لكل دفعة'}</label><input id="ct_rent" type="number" step="0.01" value="${u.rent||0}" oninput="updateContractTax()"></div>${isShop?'<div class="field"><label>ضريبة 15%</label><input id="ct_vat" type="number" readonly value="0.00"></div><div class="field"><label>الإجمالي بعد الضريبة</label><input id="ct_total" type="number" readonly value="0.00"></div>':''}<div class="field"><label>رصيد افتتاحي/مستحق سابق</label><input id="ct_due" type="number" step="0.01" value="${u.due||0}"></div><div class="field wide"><label>ملاحظة</label><input id="ct_note"></div></div><div class="notice" style="margin-top:12px">سيتم توليد الدفعات تلقائياً حسب نوع العقد وعدد الدفعات، وربطها بمركز التكلفة والوحدة والتقارير${isShop?'، وترحيل الضريبة تلقائياً عند اختيار عقد ضريبي.':''}</div><div class="actions"><button class="success" onclick="saveContract('${u.id}')">حفظ العقد وتوليد الدفعات</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;
  byId('modal').classList.add('show'); updateContractEnd();
 }
-function saveContract(unitId){const u=getUnit(unitId),c=getCenter(u.center_id)||{};const isShop=u.type==='محل';const tenant=byId('ct_tenant').value.trim();if(!tenant)return alert('أدخل اسم المستأجر');const rent=n(byId('ct_rent').value),openingDue=n(byId('ct_due').value),count=Number(byId('ct_count').value||1),phone=byId('ct_phone').value.trim(),taxable=isShop&&((byId('ct_taxable')?.value||'لا')==='نعم'),vatPer=taxable?rent*0.15:0,totalPer=rent+vatPer;const contract=pushLinked('contracts',{'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'نوع الوحدة':u.type,'المستأجر':tenant,'الجوال':phone,'رقم الهوية/السجل':byId('ct_idno').value,'نوع العقد':byId('ct_type').value,'تاريخ البداية':byId('ct_start').value,'تاريخ النهاية':byId('ct_end').value,'عدد الدفعات':count,'الإيجار':rent,'الرصيد/المستحق':openingDue,'الحالة':'نشط','ملاحظة':byId('ct_note').value,unit_id:unitId,center_id:u.center_id,'نوع الفاتورة':isShop?(byId('ct_invoice_type')?.value||'غير ضريبي'):'غير ضريبي','عقد ضريبي':taxable?'نعم':'لا','الضريبة لكل دفعة':vatPer,'الإجمالي لكل دفعة':totalPer,'الرقم الضريبي':isShop?(byId('ct_tax_number')?.value||''):'','العنوان الوطني':isShop?(byId('ct_national_address')?.value||''):'','النشاط التجاري':isShop?(byId('ct_activity')?.value||''):'','البريد الإلكتروني':isShop?(byId('ct_email')?.value||''):''});const installments=generateRentInstallments(contract,u,c,totalPer,count,byId('ct_start').value,byId('ct_type').value,openingDue);if(taxable){pushLinked('tax',{'نوع الفاتورة':'مخرجات','الرقم':'RENT-'+contract.id,'المبلغ الخاضع':rent*count,'الضريبة':vatPer*count,'الفترة':(byId('ct_start').value||'').slice(0,7),'مركز التكلفة':c.name||'','الوحدة':u.unit_no,unit_id:unitId,center_id:u.center_id,contract_id:contract.id,'البيان':'ضريبة عقد إيجار محل تجاري'});}updateUnit(unitId,{status:'مؤجر',tenant,phone,rent:totalPer,due:dueUntilToday(unitId),contract_id:contract.id,contract_end:byId('ct_end').value});renderProperties();renderDashboard();byId('modalTitle').textContent='تم حفظ العقد - '+u.type+' '+u.unit_no;byId('modalBody').innerHTML=`${propHidden(u,c)}<div class="success-box" style="background:#ecfdf5;border:1px solid #86efac;color:#14532d;border-radius:18px;padding:16px;font-weight:900">✅ تم حفظ العقد وربطه وتوليد ${installments.length} دفعة تلقائية${taxable?' مع ترحيل الضريبة لمركز الضريبة.':''}</div><div class="grid row3" style="margin-top:12px"><div class="report-box"><span>المستأجر</span><b>${tenant}</b></div><div class="report-box"><span>الجوال</span><b>${phone||'-'}</b></div><div class="report-box"><span>نهاية العقد</span><b>${contract['تاريخ النهاية']}</b></div>${isShop?`<div class="report-box"><span>نوع الفاتورة</span><b>${contract['نوع الفاتورة']}</b></div><div class="report-box"><span>ضريبة الدفعة</span><b>${moneyProp(vatPer)} ر.س</b></div><div class="report-box"><span>الإجمالي بعد الضريبة</span><b>${moneyProp(totalPer)} ر.س</b></div>`:''}</div><div class="actions"><button class="primary" onclick="printContract('${contract.id}')">طباعة العقد الرسمي</button><button class="soft-btn" onclick="openUnitReport('${unitId}', getCenter('${u.center_id}'))">تقرير الوحدة</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`;}
+function saveContract(unitId){const u=getUnit(unitId),c=getCenter(u.center_id)||{};const isShop=u.type==='محل';const tenant=byId('ct_tenant').value.trim();if(!tenant)return alert('أدخل اسم المستأجر');let contractType=byId('ct_type').value;if(isShop&&contractType==='يومي')return alert('المحل التجاري لا يقبل عقد يومي. اختر شهري أو سنوي فقط.');const rent=n(byId('ct_rent').value),openingDue=n(byId('ct_due').value),count=Number(byId('ct_count').value||1),phone=byId('ct_phone').value.trim(),taxable=isShop&&((byId('ct_taxable')?.value||'لا')==='نعم'),vatPer=taxable?rent*0.15:0,totalPer=rent+vatPer;const contract=pushLinked('contracts',{'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'نوع الوحدة':u.type,'المستأجر':tenant,'الجوال':phone,'رقم الهوية/السجل':byId('ct_idno').value,'نوع العقد':contractType,'تاريخ البداية':byId('ct_start').value,'تاريخ النهاية':byId('ct_end').value,'عدد الدفعات':count,'الإيجار':rent,'الرصيد/المستحق':openingDue,'الحالة':'نشط','ملاحظة':byId('ct_note').value,unit_id:unitId,center_id:u.center_id,'نوع الفاتورة':isShop?(byId('ct_invoice_type')?.value||'غير ضريبي'):'غير ضريبي','عقد ضريبي':taxable?'نعم':'لا','الضريبة لكل دفعة':vatPer,'الإجمالي لكل دفعة':totalPer,'الرقم الضريبي':isShop?(byId('ct_tax_number')?.value||''):'','العنوان الوطني':isShop?(byId('ct_national_address')?.value||''):'','النشاط التجاري':isShop?(byId('ct_activity')?.value||''):'','البريد الإلكتروني':isShop?(byId('ct_email')?.value||''):''});const installments=generateRentInstallments(contract,u,c,totalPer,count,byId('ct_start').value,contractType,openingDue);if(taxable){pushLinked('tax',{'نوع الفاتورة':'مخرجات','الرقم':'RENT-'+contract.id,'المبلغ الخاضع':rent*count,'الضريبة':vatPer*count,'الفترة':(byId('ct_start').value||'').slice(0,7),'مركز التكلفة':c.name||'','الوحدة':u.unit_no,unit_id:unitId,center_id:u.center_id,contract_id:contract.id,'البيان':'ضريبة عقد إيجار محل تجاري'});}updateUnit(unitId,{status:'مؤجر',tenant,phone,rent:totalPer,due:dueUntilToday(unitId),contract_id:contract.id,contract_end:byId('ct_end').value});renderProperties();renderDashboard();byId('modalTitle').textContent='تم حفظ العقد - '+u.type+' '+u.unit_no;byId('modalBody').innerHTML=`${propHidden(u,c)}<div class="success-box" style="background:#ecfdf5;border:1px solid #86efac;color:#14532d;border-radius:18px;padding:16px;font-weight:900">✅ تم حفظ العقد وربطه وتوليد ${installments.length} دفعة تلقائية${taxable?' مع ترحيل الضريبة لمركز الضريبة.':''}</div><div class="grid row3" style="margin-top:12px"><div class="report-box"><span>المستأجر</span><b>${tenant}</b></div><div class="report-box"><span>الجوال</span><b>${phone||'-'}</b></div><div class="report-box"><span>نهاية العقد</span><b>${contract['تاريخ النهاية']}</b></div>${isShop?`<div class="report-box"><span>نوع الفاتورة</span><b>${contract['نوع الفاتورة']}</b></div><div class="report-box"><span>ضريبة الدفعة</span><b>${moneyProp(vatPer)} ر.س</b></div><div class="report-box"><span>الإجمالي بعد الضريبة</span><b>${moneyProp(totalPer)} ر.س</b></div>`:''}</div><div class="actions"><button class="primary" onclick="printContract('${contract.id}')">طباعة العقد الرسمي</button><button class="soft-btn" onclick="openUnitReport('${unitId}', getCenter('${u.center_id}'))">تقرير الوحدة</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`;}
 function printContract(contractId){
  const ct=linkedLoad('contracts').find(x=>String(x.id)===String(contractId));
  if(!ct)return alert('العقد غير موجود');
@@ -397,28 +464,28 @@ function printContract(contractId){
  <div class="section-title">بيانات العقد</div><div class="meta-grid"><div class="info"><span class="lab">نوع العقد</span><span class="val">${ct['نوع العقد']||'-'}</span></div><div class="info"><span class="lab">الوحدة</span><span class="val">${ct['نوع الوحدة']||''} ${ct['الوحدة']||''}</span></div><div class="info"><span class="lab">تاريخ البداية</span><span class="val">${ct['تاريخ البداية']||'-'}</span></div><div class="info"><span class="lab">تاريخ النهاية</span><span class="val">${ct['تاريخ النهاية']||'-'}</span></div><div class="info gold"><span class="lab">الإيجار قبل الضريبة لكل دفعة</span><span class="val">${moneyProp(ct['الإيجار'])} ر.س</span></div><div class="info gold"><span class="lab">عدد الدفعات</span><span class="val">${ct['عدد الدفعات']||'-'}</span></div>${ct['نوع الوحدة']==='محل'?`<div class="info"><span class="lab">نوع الفاتورة</span><span class="val">${ct['نوع الفاتورة']||'غير ضريبي'}</span></div><div class="info"><span class="lab">الضريبة لكل دفعة</span><span class="val">${moneyProp(ct['الضريبة لكل دفعة'])} ر.س</span></div><div class="info gold"><span class="lab">الإجمالي بعد الضريبة</span><span class="val">${moneyProp(ct['الإجمالي لكل دفعة']||ct['الإيجار'])} ر.س</span></div>`:''}</div>
  <div class="section-title">أطراف العقد</div><div class="party"><div class="party-card"><h3>الطرف الأول: المؤجر</h3><div class="party-line"><span>الاسم</span><b>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</b></div><div class="party-line"><span>الصفة</span><b>مالك/مؤجر</b></div><div class="party-line"><span>النظام</span><b>Hasan ERP</b></div></div><div class="party-card"><h3>الطرف الثاني: المستأجر</h3><div class="party-line"><span>الاسم</span><b>${ct['المستأجر']||'-'}</b></div><div class="party-line"><span>الجوال</span><b>${ct['الجوال']||'-'}</b></div><div class="party-line"><span>${ct['نوع الوحدة']==='محل'?'السجل التجاري':'الهوية/السجل'}</span><b>${ct['رقم الهوية/السجل']||'-'}</b></div>${ct['نوع الوحدة']==='محل'?`<div class="party-line"><span>الرقم الضريبي</span><b>${ct['الرقم الضريبي']||'-'}</b></div><div class="party-line"><span>النشاط التجاري</span><b>${ct['النشاط التجاري']||'-'}</b></div><div class="party-line"><span>العنوان الوطني</span><b>${ct['العنوان الوطني']||'-'}</b></div><div class="party-line"><span>البريد الإلكتروني</span><b>${ct['البريد الإلكتروني']||'-'}</b></div>`:''}</div></div>
  <div class="section-title">بنود العقد</div><div class="terms"><ol><li>يلتزم المستأجر بسداد الدفعات في مواعيدها حسب جدول الدفعات الموضح في هذا العقد.</li><li>يلتزم المستأجر بالمحافظة على الوحدة وعدم استخدامها في غير الغرض المتفق عليه.</li><li>أي خدمات أو مصروفات أو فواتير كهرباء مرتبطة بالوحدة تُسجل على مركز التكلفة والوحدة في النظام.</li><li>لا يحق للمستأجر التنازل عن الوحدة أو تأجيرها للغير إلا بموافقة خطية من المؤجر.</li><li>تعد بيانات هذا العقد وجدول الدفعات جزءًا لا يتجزأ من العقد.</li></ol></div>
- <div class="section-title">جدول الدفعات</div><table><thead><tr><th>رقم الدفعة</th><th>تاريخ الاستحقاق</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>${inst.map(r=>`<tr><td>${r['رقم الدفعة']}</td><td>${r['تاريخ الاستحقاق']||'-'}</td><td>${moneyProp(r['المبلغ'])} ر.س</td><td class="${r['الحالة']==='مدفوع'?'status-paid':'status-unpaid'}">${r['الحالة']}</td></tr>`).join('')||'<tr><td colspan="6">لا توجد دفعات</td></tr>'}</tbody></table><div class="summary"><div class="sum"><span>إجمالي الدفعات</span><b>${moneyProp(totalRent)} ر.س</b></div><div class="sum"><span>عدد الدفعات</span><b>${inst.length}</b></div><div class="sum"><span>المدفوع</span><b>${inst.filter(x=>x['الحالة']==='مدفوع').length}</b></div></div><div class="signatures"><div class="sig"><b>توقيع المؤجر</b><span>الاسم والتوقيع والختم</span></div><div class="sig"><b>توقيع المستأجر</b><span>الاسم والتوقيع</span></div></div><div class="seal">ختم المؤسسة</div><div class="footer"><span>تم إنشاء العقد آلياً من Hasan ERP</span><span>${contractNo}</span></div></main></body></html>`);
+ <div class="section-title">جدول الدفعات</div><table><thead><tr><th>رقم الدفعة</th><th>تاريخ الاستحقاق</th><th>الفترة</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>${inst.map(r=>`<tr><td>${r['رقم الدفعة']}</td><td>${r['تاريخ الاستحقاق']||'-'}</td><td>${(r['الفترة من']||r['تاريخ الاستحقاق']||'-')+(r['الفترة إلى']&&r['الفترة إلى']!==r['الفترة من']?' إلى '+r['الفترة إلى']:'')}</td><td>${moneyProp(r['المبلغ'])} ر.س</td><td class="${r['الحالة']==='مدفوع'?'status-paid':'status-unpaid'}">${r['الحالة']}</td></tr>`).join('')||'<tr><td colspan="7">لا توجد دفعات</td></tr>'}</tbody></table><div class="summary"><div class="sum"><span>إجمالي الدفعات</span><b>${moneyProp(totalRent)} ر.س</b></div><div class="sum"><span>عدد الدفعات</span><b>${inst.length}</b></div><div class="sum"><span>المدفوع</span><b>${inst.filter(x=>x['الحالة']==='مدفوع').length}</b></div></div><div class="signatures"><div class="sig"><b>توقيع المؤجر</b><span>الاسم والتوقيع والختم</span></div><div class="sig"><b>توقيع المستأجر</b><span>الاسم والتوقيع</span></div></div><div class="seal">ختم المؤسسة</div><div class="footer"><span>تم إنشاء العقد آلياً من Hasan ERP</span><span>${contractNo}</span></div></main></body></html>`);
  w.document.close();
  setTimeout(()=>w.print(),300)
 }
 function openPaymentForm(u,c){
  const totalOutstanding=outstandingTotal(u.id),dueNow=dueUntilToday(u.id),suggest=dueNow||totalOutstanding||u.rent||0;
- const next=linkedLoad('rent_installments').filter(r=>String(r.unit_id)===String(u.id)&&r['الحالة']!=='مدفوع').sort((a,b)=>String(a['تاريخ الاستحقاق']).localeCompare(String(b['تاريخ الاستحقاق'])))[0];
+ const next=activeInstallmentsForUnit(u.id).filter(r=>r['الحالة']!=='مدفوع'&&r['الحالة']!=='ملغاة').sort((a,b)=>String(a['تاريخ الاستحقاق']).localeCompare(String(b['تاريخ الاستحقاق'])))[0];
  byId('modalTitle').textContent='سداد إيجار - '+u.type+' '+u.unit_no;
  byId('modalBody').innerHTML=`${propHidden(u,c)}<div class="grid row3" style="margin-bottom:12px"><div class="report-box"><span>المستحق حتى اليوم</span><b>${moneyProp(dueNow)} ر.س</b></div><div class="report-box"><span>إجمالي المتبقي على العقد</span><b>${moneyProp(totalOutstanding)} ر.س</b></div><div class="report-box"><span>أقرب استحقاق</span><b>${next?next['تاريخ الاستحقاق']:'-'}</b></div></div><div class="notice" style="margin-bottom:12px">يمكن قبول سداد أقل أو أكثر من قيمة الدفعة. النظام يوزع المبلغ تلقائيًا على أقدم الدفعات، ويظهر البيان بالفترة من/إلى.</div><div class="form"><div class="field"><label>المستأجر</label><input id="pay_tenant" value="${u.tenant||''}"></div><div class="field"><label>المبلغ المسدد</label><input id="pay_amount" type="number" step="0.01" value="${suggest}" oninput="updatePaymentAutoNote('${u.id}')"></div><div class="field"><label>طريقة الدفع</label><select id="pay_method"><option>نقدي</option><option>تحويل</option><option>شبكة</option><option>شيك</option></select></div><div class="field"><label>تاريخ السداد</label><input id="pay_date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field wide"><label>البيان</label><input id="pay_note"></div></div><div id="pay_period_hint" class="notice" style="margin-top:12px"></div><div class="actions"><button class="success" onclick="savePayment('${u.id}')">حفظ السداد وربطه بالمالية</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;
  byId('modal').classList.add('show');updatePaymentAutoNote(u.id)
 }
 function savePayment(unitId){
- const u=getUnit(unitId),c=getCenter(u.center_id)||{},amount=n(byId('pay_amount').value);if(amount<=0)return alert('أدخل مبلغ السداد');
+ const u=getUnit(unitId),c=getCenter(u.center_id)||{},amount=n(byId('pay_amount').value),activeCt=activeContractForUnit(unitId);if(amount<=0)return alert('أدخل مبلغ السداد');
  const payDate=byId('pay_date').value, method=byId('pay_method').value, tenant=byId('pay_tenant').value, note=byId('pay_note').value;
  const cov=paymentCoverage(unitId,amount);
  let inst=linkedLoad('rent_installments').sort((a,b)=>String(a['تاريخ الاستحقاق']).localeCompare(String(b['تاريخ الاستحقاق'])));
  let appliedMap={};cov.applied.forEach(x=>appliedMap[x.id]=x.amount);
- inst=inst.map(r=>{if(String(r.unit_id)===String(unitId)&&appliedMap[r.id]){const paidBefore=installmentPaid(r),paidNow=appliedMap[r.id],newPaid=paidBefore+paidNow,remaining=Math.max(0,n(r['المبلغ'])-newPaid);return {...r,'المدفوع':newPaid,'المتبقي':remaining,'الحالة':remaining<=0?'مدفوع':'جزئي','تاريخ السداد':payDate,'آخر سداد':paidNow};}return r});
- if(cov.extra>0){inst.unshift({id:Date.now()+999,created:new Date().toISOString(),unit_id:unitId,center_id:u.center_id,'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'المستأجر':tenant,'رقم الدفعة':'رصيد مقدم','تاريخ الاستحقاق':payDate,'المبلغ':cov.extra,'المدفوع':cov.extra,'المتبقي':0,'الحالة':'مدفوع','البيان':'رصيد مقدم من سند قبض'});}
+ inst=inst.map(r=>{if(activeCt&&String(r.contract_id)===String(activeCt.id)&&appliedMap[r.id]){const paidBefore=installmentPaid(r),paidNow=appliedMap[r.id],newPaid=paidBefore+paidNow,remaining=Math.max(0,n(r['المبلغ'])-newPaid);return {...r,'المدفوع':newPaid,'المتبقي':remaining,'الحالة':remaining<=0?'مدفوع':'جزئي','تاريخ السداد':payDate,'آخر سداد':paidNow};}return r});
+ if(cov.extra>0){inst.unshift({id:Date.now()+999,created:new Date().toISOString(),unit_id:unitId,center_id:u.center_id,'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'المستأجر':tenant,'رقم الدفعة':'رصيد مقدم','تاريخ الاستحقاق':payDate,'المبلغ':cov.extra,'المدفوع':cov.extra,'المتبقي':0,'الحالة':'مدفوع','البيان':'رصيد مقدم من سند قبض',contract_id:activeCt?activeCt.id:''});}
  linkedSave('rent_installments',inst);
- const receipt=pushLinked('payments',{'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'المستأجر':tenant,'المبلغ':amount,'طريقة الدفع':method,'تاريخ السداد':payDate,'البيان':note,'الفترة من':cov.from,'الفترة إلى':cov.to,'دفعات مسددة':cov.applied.map(x=>x.no).join('، '),'رصيد مقدم':cov.extra,unit_id:unitId,center_id:u.center_id});
- pushLinked('finance',{'نوع العملية':'سند قبض','الحساب':method==='نقدي'?'الصندوق':'البنك','المبلغ':amount,'طريقة الدفع':method,'البيان':note,'مركز التكلفة':c.name||'','الوحدة':u.unit_no,unit_id:unitId,center_id:u.center_id,payment_id:receipt.id});
+ const receipt=pushLinked('payments',{'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'المستأجر':tenant,'المبلغ':amount,'طريقة الدفع':method,'تاريخ السداد':payDate,'البيان':note,'الفترة من':cov.from,'الفترة إلى':cov.to,'دفعات مسددة':cov.applied.map(x=>x.no).join('، '),'رصيد مقدم':cov.extra,unit_id:unitId,center_id:u.center_id,contract_id:activeCt?activeCt.id:''});
+ pushLinked('finance',{'نوع العملية':'سند قبض','الحساب':method==='نقدي'?'الصندوق':'البنك','المبلغ':amount,'طريقة الدفع':method,'البيان':note,'مركز التكلفة':c.name||'','الوحدة':u.unit_no,unit_id:unitId,center_id:u.center_id,contract_id:activeCt?activeCt.id:'',payment_id:receipt.id});
  const newDue=dueUntilToday(unitId),allRemaining=outstandingTotal(unitId);updateUnit(unitId,{due:newDue,last_payment:payDate,total_remaining:allRemaining});
  closeModal();renderProperties();renderDashboard();
 }
@@ -457,13 +524,36 @@ function saveExit(unitId){
  let cancelled={cancelled:0,amount:0};
  if(mode==='early')cancelled=cancelFutureInstallments(unitId,exitDate,'إنهاء مبكر وخروج بتاريخ '+exitDate);
  if(mode==='manual'&&total>0&&!confirm('يوجد متبقي '+moneyProp(total)+' ر.س. سيتم تسجيل خروج بتسوية يدوية ومسؤولية المدير. هل تؤكد؟'))return;
- pushLinked('contracts',{'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'نوع الوحدة':u.type,'المستأجر':u.tenant||'','نوع العقد':'خروج','تاريخ الخروج':exitDate,'الإيجار':u.rent||0,'المستحق حتى الخروج':dueNow,'دفعات مستقبلية ملغاة':cancelled.amount||0,'عدد الدفعات الملغاة':cancelled.cancelled||0,'الرصيد/المستحق':mode==='manual'?total:0,'حالة التسوية':mode==='full'?'سداد كامل':(mode==='early'?'إنهاء مبكر':'تسوية يدوية'),'الحالة':'منتهي','ملاحظة':note,unit_id:unitId,center_id:u.center_id});
+ const activeCt=activeContractForUnit(unitId);
+ if(activeCt){const contracts=linkedLoad('contracts').map(ct=>String(ct.id)===String(activeCt.id)?{...ct,'الحالة':'منتهي','تاريخ الخروج':exitDate,'حالة التسوية':mode==='full'?'سداد كامل':(mode==='early'?'إنهاء مبكر':'تسوية يدوية'),'ملاحظة الخروج':note,'دفعات مستقبلية ملغاة':cancelled.amount||0,'عدد الدفعات الملغاة':cancelled.cancelled||0}:ct);linkedSave('contracts',contracts);}
+ pushLinked('contracts',{'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'نوع الوحدة':u.type,'المستأجر':u.tenant||'','نوع العقد':'خروج','تاريخ الخروج':exitDate,'الإيجار':u.rent||0,'المستحق حتى الخروج':dueNow,'دفعات مستقبلية ملغاة':cancelled.amount||0,'عدد الدفعات الملغاة':cancelled.cancelled||0,'الرصيد/المستحق':mode==='manual'?total:0,'حالة التسوية':mode==='full'?'سداد كامل':(mode==='early'?'إنهاء مبكر':'تسوية يدوية'),'الحالة':'منتهي','ملاحظة':note,unit_id:unitId,center_id:u.center_id,contract_id:activeCt?activeCt.id:''});
  updateUnit(unitId,{status:'متاح',tenant:'',due:0,total_remaining:0,last_payment:'-',rent:u.rent||0,contract_id:'',contract_end:''});
  closeModal();renderProperties();renderDashboard();
  alert('تم خروج المستأجر وإتاحة الوحدة. '+(cancelled.cancelled?('تم إلغاء '+cancelled.cancelled+' دفعة مستقبلية بمبلغ '+moneyProp(cancelled.amount)+' ر.س.'):'') );
 }
-function openUnitReport(u,c){const contracts=linkedLoad('contracts').filter(r=>String(r.unit_id)===String(u.id)),payments=linkedLoad('payments').filter(r=>String(r.unit_id)===String(u.id)),expenses=linkedLoad('expenses').filter(r=>String(r.unit_id)===String(u.id)),services=linkedLoad('services').filter(r=>String(r.unit_id)===String(u.id)),tax=linkedLoad('tax').filter(r=>String(r.unit_id)===String(u.id)),inst=linkedLoad('rent_installments').filter(r=>String(r.unit_id)===String(u.id));const paid=payments.reduce((a,r)=>a+n(r['المبلغ']),0),exp=expenses.reduce((a,r)=>a+n(r['المبلغ'])+n(r['الضريبة']),0),svc=services.reduce((a,r)=>a+n(r['الإجمالي']||r['قيمة الفاتورة'])+n(!r['الإجمالي']?r['الضريبة']:0),0),tx=tax.reduce((a,r)=>a+n(r['الضريبة']),0);byId('modalTitle').textContent='تقرير الوحدة - '+u.type+' '+u.unit_no;byId('modalBody').innerHTML=`${propHidden(u,c)}<div class="grid row3"><div class="report-box"><span>إجمالي السداد</span><b>${moneyProp(paid)} ر.س</b></div><div class="report-box"><span>المصروفات</span><b>${moneyProp(exp)} ر.س</b></div><div class="report-box"><span>فواتير الخدمات</span><b>${moneyProp(svc)} ر.س</b></div><div class="report-box"><span>ضريبة مرتبطة</span><b>${moneyProp(tx)} ر.س</b></div><div class="report-box"><span>العقود</span><b>${contracts.length}</b></div><div class="report-box"><span>الدفعات غير المدفوعة</span><b>${inst.filter(x=>x['الحالة']!=='مدفوع').length}</b></div><div class="report-box"><span>صافي تقريبي</span><b>${moneyProp(paid-exp)} ر.س</b></div></div><div class="panel" style="margin-top:12px"><div class="panel-title"><h3>جدول الدفعات</h3></div><div class="table-wrap"><table><thead><tr><th>الدفعة</th><th>الاستحقاق</th><th>المبلغ</th><th>المدفوع</th><th>المتبقي</th><th>الحالة</th></tr></thead><tbody>${inst.slice(0,18).map(r=>`<tr><td>${r['رقم الدفعة']}</td><td>${r['تاريخ الاستحقاق']||'-'}</td><td>${moneyProp(r['المبلغ'])}</td><td>${moneyProp(installmentPaid(r))}</td><td>${moneyProp(installmentRemaining(r))}</td><td><span class="badge ${r['الحالة']==='مدفوع'?'ok':(r['الحالة']==='جزئي'?'info':'warn')}">${r['الحالة']}</span></td></tr>`).join('')||'<tr><td colspan="6">لا توجد دفعات</td></tr>'}</tbody></table></div></div><div class="panel" style="margin-top:12px"><div class="panel-title"><h3>آخر الحركات المرتبطة</h3></div><div class="table-wrap"><table><thead><tr><th>النوع</th><th>البيان</th><th>المبلغ</th></tr></thead><tbody>${[...payments.map(r=>['سداد',r['البيان'],r['المبلغ']]),...expenses.map(r=>['مصروف',r['البيان']||r['البند'],n(r['المبلغ'])+n(r['الضريبة'])]),...services.map(r=>['كهرباء',r['رقم الفاتورة'],r['الإجمالي']||n(r['قيمة الفاتورة'])+n(r['الضريبة'])])].slice(0,12).map(r=>`<tr><td>${r[0]}</td><td>${r[1]||'-'}</td><td>${moneyProp(r[2])}</td></tr>`).join('')||'<tr><td colspan="3">لا توجد حركات</td></tr>'}</tbody></table></div></div><div class="actions">${contracts[0]?`<button class="primary" onclick="printContract('${contracts[0].id}')">طباعة العقد الرسمي</button>`:''}<button class="primary" onclick="printPage()">طباعة التقرير</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`;byId('modal').classList.add('show')}
-
+function openUnitReport(u,c){
+ const allContracts=linkedLoad('contracts').filter(r=>String(r.unit_id)===String(u.id)&&r['نوع العقد']!=='خروج').sort((a,b)=>String(b.created||b.id||'').localeCompare(String(a.created||a.id||'')));
+ const active=activeContractForUnit(u.id);
+ const oldContracts=allContracts.filter(ct=>!active||String(ct.id)!==String(active.id));
+ const payments=linkedLoad('payments').filter(r=>String(r.unit_id)===String(u.id));
+ const expenses=linkedLoad('expenses').filter(r=>String(r.unit_id)===String(u.id)),services=linkedLoad('services').filter(r=>String(r.unit_id)===String(u.id)),tax=linkedLoad('tax').filter(r=>String(r.unit_id)===String(u.id));
+ const inst=active?contractInstallments(active.id):[];
+ const paid=inst.reduce((a,r)=>a+installmentPaid(r),0),remaining=inst.reduce((a,r)=>a+installmentRemaining(r),0),exp=expenses.reduce((a,r)=>a+n(r['المبلغ'])+n(r['الضريبة']),0),svc=services.reduce((a,r)=>a+n(r['الإجمالي']||r['قيمة الفاتورة'])+n(!r['الإجمالي']?r['الضريبة']:0),0),tx=tax.reduce((a,r)=>a+n(r['الضريبة']),0);
+ byId('modalTitle').textContent='تقرير الوحدة - '+u.type+' '+u.unit_no;
+ byId('modalBody').innerHTML=`${propHidden(u,c)}<div class="notice" style="margin-bottom:12px">يعرض هذا التقرير <b>العقد الحالي فقط</b> في جدول الدفعات. العقود السابقة محفوظة في الأرشيف ولا تختلط مع دفعات العقد الحالي.</div>
+ <div class="panel" style="margin-bottom:12px"><div class="panel-title"><h3>العقد الحالي</h3>${active?`<button class="primary" onclick="printContract('${active.id}')">طباعة العقد</button>`:''}</div><div class="grid row3"><div class="report-box"><span>رقم العقد</span><b>${active?('HAS-'+String(active.id).slice(-6)):'-'}</b></div><div class="report-box"><span>المستأجر</span><b>${active?active['المستأجر']||'-':'-'}</b></div><div class="report-box"><span>الفترة</span><b>${active?(active['تاريخ البداية']||'-')+' إلى '+(active['تاريخ النهاية']||'-'):'-'}</b></div><div class="report-box"><span>إجمالي الدفعات</span><b>${moneyProp(inst.reduce((a,r)=>a+n(r['المبلغ']),0))} ر.س</b></div><div class="report-box"><span>المدفوع</span><b>${moneyProp(paid)} ر.س</b></div><div class="report-box"><span>المتبقي على العقد الحالي</span><b>${moneyProp(remaining)} ر.س</b></div></div></div>
+ <div class="grid row3"><div class="report-box"><span>المصروفات</span><b>${moneyProp(exp)} ر.س</b></div><div class="report-box"><span>فواتير الخدمات</span><b>${moneyProp(svc)} ر.س</b></div><div class="report-box"><span>ضريبة مرتبطة</span><b>${moneyProp(tx)} ر.س</b></div></div>
+ <div class="panel" style="margin-top:12px"><div class="panel-title"><h3>جدول دفعات العقد الحالي</h3></div><div class="table-wrap"><table><thead><tr><th>الدفعة</th><th>الاستحقاق</th><th>الفترة</th><th>المبلغ</th><th>المدفوع</th><th>المتبقي</th><th>الحالة</th></tr></thead><tbody>${inst.map(r=>`<tr><td>${r['رقم الدفعة']}</td><td>${r['تاريخ الاستحقاق']||'-'}</td><td>${(r['الفترة من']||r['تاريخ الاستحقاق']||'-')+(r['الفترة إلى']&&r['الفترة إلى']!==r['الفترة من']?' إلى '+r['الفترة إلى']:'')}</td><td>${moneyProp(r['المبلغ'])}</td><td>${moneyProp(installmentPaid(r))}</td><td>${moneyProp(installmentRemaining(r))}</td><td><span class="badge ${r['الحالة']==='مدفوع'?'ok':(r['الحالة']==='جزئي'?'info':(r['الحالة']==='ملغاة'?'bad':'warn'))}">${r['الحالة']}</span></td></tr>`).join('')||'<tr><td colspan="7">لا توجد دفعات للعقد الحالي</td></tr>'}</tbody></table></div></div>
+ <div class="panel" style="margin-top:12px"><div class="panel-title"><h3>أرشيف العقود السابقة</h3></div><div class="table-wrap"><table><thead><tr><th>رقم العقد</th><th>المستأجر</th><th>الفترة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${oldContracts.map(ct=>`<tr><td>HAS-${String(ct.id).slice(-6)}</td><td>${ct['المستأجر']||'-'}</td><td>${ct['تاريخ البداية']||'-'} إلى ${ct['تاريخ النهاية']||'-'}</td><td><span class="badge warn">${ct['الحالة']||'منتهي'}</span></td><td><button class="soft-btn" onclick="openContractArchive('${ct.id}')">عرض الدفعات</button></td></tr>`).join('')||'<tr><td colspan="5">لا توجد عقود سابقة</td></tr>'}</tbody></table></div></div>
+ <div class="panel" style="margin-top:12px"><div class="panel-title"><h3>آخر الحركات المرتبطة بالوحدة</h3></div><div class="table-wrap"><table><thead><tr><th>النوع</th><th>البيان</th><th>المبلغ</th></tr></thead><tbody>${[...payments.map(r=>['سداد',r['البيان'],r['المبلغ']]),...expenses.map(r=>['مصروف',r['البيان']||r['البند'],n(r['المبلغ'])+n(r['الضريبة'])]),...services.map(r=>['كهرباء',r['رقم الفاتورة'],r['الإجمالي']||n(r['قيمة الفاتورة'])+n(r['الضريبة'])])].slice(0,12).map(r=>`<tr><td>${r[0]}</td><td>${r[1]||'-'}</td><td>${moneyProp(r[2])}</td></tr>`).join('')||'<tr><td colspan="3">لا توجد حركات</td></tr>'}</tbody></table></div></div><div class="actions"><button class="primary" onclick="printPage()">طباعة التقرير</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`;
+ byId('modal').classList.add('show')
+}
+function openContractArchive(contractId){
+ const ct=linkedLoad('contracts').find(x=>String(x.id)===String(contractId));if(!ct)return alert('العقد غير موجود');
+ const inst=contractInstallments(contractId),paid=inst.reduce((a,r)=>a+installmentPaid(r),0),remaining=inst.reduce((a,r)=>a+installmentRemaining(r),0);
+ byId('modalTitle').textContent='أرشيف عقد - HAS-'+String(ct.id).slice(-6);
+ byId('modalBody').innerHTML=`<div class="notice">هذا عقد سابق محفوظ للأرشيف فقط، ولا يختلط مع العقد الحالي للوحدة.</div><div class="grid row3" style="margin:12px 0"><div class="report-box"><span>المستأجر</span><b>${ct['المستأجر']||'-'}</b></div><div class="report-box"><span>الفترة</span><b>${ct['تاريخ البداية']||'-'} إلى ${ct['تاريخ النهاية']||'-'}</b></div><div class="report-box"><span>الحالة</span><b>${ct['الحالة']||'منتهي'}</b></div><div class="report-box"><span>المدفوع</span><b>${moneyProp(paid)} ر.س</b></div><div class="report-box"><span>المتبقي</span><b>${moneyProp(remaining)} ر.س</b></div><div class="report-box"><span>عدد الدفعات</span><b>${inst.length}</b></div></div><div class="table-wrap"><table><thead><tr><th>الدفعة</th><th>الاستحقاق</th><th>الفترة</th><th>المبلغ</th><th>المدفوع</th><th>المتبقي</th><th>الحالة</th></tr></thead><tbody>${inst.map(r=>`<tr><td>${r['رقم الدفعة']}</td><td>${r['تاريخ الاستحقاق']||'-'}</td><td>${(r['الفترة من']||r['تاريخ الاستحقاق']||'-')+(r['الفترة إلى']&&r['الفترة إلى']!==r['الفترة من']?' إلى '+r['الفترة إلى']:'')}</td><td>${moneyProp(r['المبلغ'])}</td><td>${moneyProp(installmentPaid(r))}</td><td>${moneyProp(installmentRemaining(r))}</td><td><span class="badge ${r['الحالة']==='مدفوع'?'ok':(r['الحالة']==='جزئي'?'info':(r['الحالة']==='ملغاة'?'bad':'warn'))}">${r['الحالة']}</span></td></tr>`).join('')||'<tr><td colspan="7">لا توجد دفعات</td></tr>'}</tbody></table></div><div class="actions"><button class="primary" onclick="printContract('${contractId}')">طباعة العقد السابق</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`;
+}
 function exportPropertyCSV(){const centers=propLoad(PROP_CENTERS_KEY),units=propLoad(PROP_UNITS_KEY).filter(u=>u.center_id===currentPropertyCenter);let csv='\ufeffمركز التكلفة,النوع,رقم الوحدة,الحالة,المستأجر,الإيجار,المستحق,آخر سداد,حساب الكهرباء\n';const c=centers.find(x=>x.id===currentPropertyCenter);csv+=units.map(u=>`"${c?.name||''}","${u.type}","${u.unit_no}","${u.status}","${u.tenant||''}","${u.rent||0}","${u.due||0}","${u.last_payment||''}","${u.electric_account||''}"`).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='property_units.csv';a.click()}
 
 const COMM_KEY='communication_logs';
@@ -724,6 +814,532 @@ function startWorkDay(){
 }
 const _oldRenderDashboardV14=renderDashboard;
 renderDashboard=function(){_oldRenderDashboardV14();renderCommandCenter();};
+
+
+
+// ===== V19 Professional Contract Management =====
+(function(){
+  const v19Style=document.createElement('style');
+  v19Style.textContent=`
+  .contract-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;margin:12px 0}
+  .contract-summary-grid .report-box{min-height:72px;background:linear-gradient(135deg,#fff,#f8fbff)}
+  .contract-summary-grid .report-box b{font-size:18px}
+  .timeline{position:relative;display:grid;gap:10px;margin:12px 0;padding-right:8px}
+  .timeline-item{display:grid;grid-template-columns:42px 1fr;gap:10px;align-items:start;background:#fff;border:1px solid var(--line);border-radius:16px;padding:11px;box-shadow:0 10px 22px rgba(13,34,66,.045)}
+  .timeline-ico{width:42px;height:42px;border-radius:14px;background:#eef5ff;display:grid;place-items:center;font-size:20px}
+  .timeline-item b{display:block;color:#0b1736}.timeline-item span{display:block;color:var(--muted);font-size:12px;font-weight:800;margin-top:2px}.timeline-item small{color:#64748b;font-weight:800}
+  .contract-header-chip{display:inline-flex;align-items:center;gap:8px;background:#071a34;color:white;border-radius:999px;padding:7px 12px;font-weight:900;font-size:13px}
+  .contract-actions-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  .badge.info{background:#dbeafe;color:#1e40af}
+  .settlement-box{border:1px solid #fed7aa;background:#fff7ed;border-radius:18px;padding:14px;margin:12px 0;color:#7c2d12;font-weight:900}
+  @media(max-width:900px){.contract-summary-grid{grid-template-columns:1fr 1fr}}@media(max-width:600px){.contract-summary-grid{grid-template-columns:1fr}}
+  `;
+  document.head.appendChild(v19Style);
+})();
+function formalContractNo(ct){
+  if(!ct) return '-';
+  if(ct['رقم العقد']) return ct['رقم العقد'];
+  const raw=String(ct.id||Date.now()).replace(/\D/g,'').slice(-6).padStart(6,'0');
+  const year=(ct['تاريخ البداية']||ct.created||new Date().toISOString()).slice(0,4)||new Date().getFullYear();
+  return `SHR-RE-${year}-${raw}`;
+}
+function ensureContractNo(contractId){
+  let changed=false; const rows=linkedLoad('contracts').map(ct=>{
+    if(String(ct.id)===String(contractId) && !ct['رقم العقد']){changed=true;return {...ct,'رقم العقد':formalContractNo(ct)}}
+    return ct;
+  });
+  if(changed) linkedSave('contracts',rows);
+  return (rows.find(x=>String(x.id)===String(contractId))||{} )['رقم العقد'] || formalContractNo(rows.find(x=>String(x.id)===String(contractId)));
+}
+function contractTimeline(contractId){return linkedLoad('contract_timeline').filter(x=>String(x.contract_id)===String(contractId)).sort((a,b)=>String(b.created||'').localeCompare(String(a.created||'')))}
+function addContractTimeline(contractId,icon,title,details,user){
+  if(!contractId) return;
+  pushLinked('contract_timeline',{contract_id:contractId,icon:icon||'🕒',title:title||'عملية على العقد',details:details||'',user:user||'النظام'});
+}
+function contractFinancialSummary(contractId){
+  const inst=contractInstallments(contractId);
+  const total=inst.reduce((a,r)=>a+n(r['المبلغ']),0);
+  const paid=inst.reduce((a,r)=>a+installmentPaid(r),0);
+  const remaining=inst.reduce((a,r)=>a+installmentRemaining(r),0);
+  const paidCount=inst.filter(r=>r['الحالة']==='مدفوع').length;
+  const partialCount=inst.filter(r=>r['الحالة']==='جزئي').length;
+  const today=isoDate(new Date());
+  const lateCount=inst.filter(r=>!['مدفوع','ملغاة'].includes(r['الحالة']) && String(r['تاريخ الاستحقاق']||'')<today).length;
+  const lastPaid=inst.filter(r=>r['تاريخ السداد']).sort((a,b)=>String(b['تاريخ السداد']).localeCompare(String(a['تاريخ السداد'])))[0]?.['تاريخ السداد']||'-';
+  return {inst,total,paid,remaining,paidCount,partialCount,lateCount,lastPaid};
+}
+function renderContractTimelineHTML(contractId){
+  const rows=contractTimeline(contractId);
+  return `<div class="timeline">${rows.map(r=>`<div class="timeline-item"><div class="timeline-ico">${r.icon||'🕒'}</div><div><b>${r.title||'-'}</b><small>${new Date(r.created||Date.now()).toLocaleString('ar-SA')} — ${r.user||'النظام'}</small><span>${r.details||''}</span></div></div>`).join('')||'<div class="empty">لا توجد عمليات مسجلة بعد</div>'}</div>`;
+}
+function v19UpdateUnitCardContractNos(){
+  const rows=linkedLoad('contracts'); let changed=false;
+  const next=rows.map(ct=>{if(ct['نوع العقد']!=='خروج' && !ct['رقم العقد']){changed=true;return {...ct,'رقم العقد':formalContractNo(ct)}} return ct});
+  if(changed) linkedSave('contracts',next);
+}
+const _v19_oldSaveContract=saveContract;
+saveContract=function(unitId){
+  const beforeIds=new Set(linkedLoad('contracts').map(x=>String(x.id)));
+  _v19_oldSaveContract(unitId);
+  const created=linkedLoad('contracts').find(x=>!beforeIds.has(String(x.id)) && String(x.unit_id)===String(unitId) && x['نوع العقد']!=='خروج');
+  if(created){
+    const no=ensureContractNo(created.id);
+    addContractTimeline(created.id,'📄','تم إنشاء العقد',`تم إنشاء العقد رقم ${no} للمستأجر ${created['المستأجر']||'-'} على الوحدة ${created['الوحدة']||'-'}.`,'النظام');
+    addContractTimeline(created.id,'📆','تم توليد جدول الدفعات',`عدد الدفعات: ${created['عدد الدفعات']||'-'} — من ${created['تاريخ البداية']||'-'} إلى ${created['تاريخ النهاية']||'-'}.`,'النظام');
+    const box=document.createElement('div');
+    box.className='report-box';box.innerHTML=`<span>رقم العقد الرسمي</span><b>${no}</b>`;
+    const mb=byId('modalBody'); if(mb) mb.insertBefore(box, mb.children[1]||null);
+  }
+};
+const _v19_oldSavePayment=savePayment;
+savePayment=function(unitId){
+  const ct=activeContractForUnit(unitId); const before=linkedLoad('payments').length;
+  _v19_oldSavePayment(unitId);
+  if(ct){
+    ensureContractNo(ct.id);
+    const latest=linkedLoad('payments').filter(x=>String(x.contract_id)===String(ct.id)).sort((a,b)=>String(b.created||'').localeCompare(String(a.created||'')))[0];
+    if(latest && linkedLoad('payments').length>=before){
+      addContractTimeline(ct.id,'💵','تم تسجيل سند قبض',`تم استلام ${moneyProp(latest['المبلغ'])} ر.س. البيان: ${latest['البيان']||'-'}.`,'النظام');
+      const finance=linkedLoad('finance');let changed=false;
+      linkedSave('finance',finance.map(f=>{if(String(f.payment_id)===String(latest.id)){changed=true;return {...f,'رقم العقد':formalContractNo(ct),'رقم السند':f['رقم السند']||('RCPT-'+String(f.id).slice(-6))}}return f;}));
+    }
+  }
+};
+const _v19_oldPrintContract=printContract;
+printContract=function(contractId){ensureContractNo(contractId);addContractTimeline(contractId,'🖨️','طباعة العقد','تم تجهيز/طباعة العقد الرسمي بصيغة PDF/طباعة.','النظام');return _v19_oldPrintContract(contractId)};
+const _v19_oldSaveExit=saveExit;
+saveExit=function(unitId){
+  const ct=activeContractForUnit(unitId); const exitDate=byId('exit_date')?.value||isoDate(new Date());
+  _v19_oldSaveExit(unitId);
+  if(ct){addContractTimeline(ct.id,'🚪','تم إنهاء العقد وخروج المستأجر',`تاريخ الخروج: ${exitDate}. تم نقل العقد إلى أرشيف العقود السابقة.`,'النظام');}
+};
+function openFinalSettlement(unitId){
+  const u=getUnit(unitId), c=getCenter(u.center_id)||{}, ct=activeContractForUnit(unitId);
+  if(!u||!ct) return alert('لا يوجد عقد نشط لهذه الوحدة');
+  const fs=contractFinancialSummary(ct.id);
+  const services=linkedLoad('services').filter(r=>String(r.unit_id)===String(unitId)&&((r['حالة السداد']||'')!=='مسدد')).reduce((a,r)=>a+n(r['الإجمالي']||n(r['قيمة الفاتورة'])+n(r['الضريبة'])),0);
+  byId('modalTitle').textContent='التسوية النهائية - '+u.type+' '+u.unit_no;
+  byId('modalBody').innerHTML=`${propHidden(u,c)}<div class="settlement-box">هذه شاشة مراجعة قبل خروج المستأجر. تحسب المتبقي على العقد والخدمات، ثم تساعدك على إصدار مخالصة أو سند قبض/صرف حسب النتيجة.</div><div class="contract-summary-grid"><div class="report-box"><span>رقم العقد</span><b>${formalContractNo(ct)}</b></div><div class="report-box"><span>المتبقي على العقد</span><b class="red">${moneyProp(fs.remaining)} ر.س</b></div><div class="report-box"><span>فواتير خدمات غير مسددة</span><b class="orange">${moneyProp(services)} ر.س</b></div><div class="report-box"><span>الإجمالي المطلوب قبل الخروج</span><b class="red">${moneyProp(fs.remaining+services)} ر.س</b></div></div><div class="form"><div class="field"><label>تأمين مسترد للمستأجر</label><input id="sett_deposit" type="number" value="0" oninput="calcSettlementNet(${fs.remaining+services})"></div><div class="field"><label>خصومات/تسويات</label><input id="sett_discount" type="number" value="0" oninput="calcSettlementNet(${fs.remaining+services})"></div><div class="field"><label>أضرار أو مبالغ إضافية</label><input id="sett_damage" type="number" value="0" oninput="calcSettlementNet(${fs.remaining+services})"></div><div class="field"><label>صافي التسوية</label><input id="sett_net" readonly value="${moneyProp(fs.remaining+services)}"></div><div class="field wide"><label>ملاحظة التسوية</label><input id="sett_note" value="تسوية نهائية لعقد ${formalContractNo(ct)}"></div></div><div class="actions"><button class="primary" onclick="printFinalSettlement('${unitId}')">طباعة مخالصة/تسوية</button><button class="success" onclick="closeModal();openPaymentForm('${unitId}')">سداد المتبقي</button><button class="soft-btn" onclick="closeModal();openExitForm('${unitId}', getCenter('${u.center_id}'))">متابعة الخروج</button></div>`;
+  byId('modal').classList.add('show');
+}
+function calcSettlementNet(base){const net=n(base)+n(byId('sett_damage')?.value)-n(byId('sett_deposit')?.value)-n(byId('sett_discount')?.value);if(byId('sett_net'))byId('sett_net').value=moneyProp(net)}
+function printFinalSettlement(unitId){
+  const u=getUnit(unitId),ct=activeContractForUnit(unitId);if(!u||!ct)return;
+  addContractTimeline(ct.id,'📑','تم تجهيز التسوية النهائية',byId('sett_note')?.value||'تسوية نهائية','النظام');
+  const w=window.open('','_blank','width=900,height=900');
+  w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}td,th{border:1px solid #ccc;padding:10px}.sign{display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:80px}.sign div{border-top:1px solid #111;text-align:center;padding-top:10px}</style></head><body><h1>مخالصة وتسوية نهائية</h1><p><b>رقم العقد:</b> ${formalContractNo(ct)}</p><p><b>الوحدة:</b> ${u.type} ${u.unit_no}</p><p><b>المستأجر:</b> ${ct['المستأجر']||'-'}</p><table><tr><th>البند</th><th>المبلغ</th></tr><tr><td>صافي التسوية</td><td>${byId('sett_net')?.value||'-'} ر.س</td></tr><tr><td>البيان</td><td>${byId('sett_note')?.value||''}</td></tr></table><div class="sign"><div>توقيع المؤجر</div><div>توقيع المستأجر</div></div></body></html>`);w.document.close();setTimeout(()=>w.print(),250);
+}
+openUnitReport=function(u,c){
+  if(typeof u==='string'||typeof u==='number')u=getUnit(u); if(!u)return alert('لم يتم العثور على الوحدة'); c=c||getCenter(u.center_id)||{};
+  v19UpdateUnitCardContractNos();
+  const allContracts=linkedLoad('contracts').filter(r=>String(r.unit_id)===String(u.id)&&r['نوع العقد']!=='خروج').sort((a,b)=>String(b.created||b.id||'').localeCompare(String(a.created||a.id||'')));
+  const active=activeContractForUnit(u.id); if(active) ensureContractNo(active.id);
+  const oldContracts=active?allContracts.filter(ct=>String(ct.id)!==String(active.id)):allContracts;
+  const fs=active?contractFinancialSummary(active.id):{inst:[],total:0,paid:0,remaining:0,paidCount:0,partialCount:0,lateCount:0,lastPaid:'-'};
+  const expenses=linkedLoad('expenses').filter(r=>String(r.unit_id)===String(u.id));
+  const services=linkedLoad('services').filter(r=>String(r.unit_id)===String(u.id));
+  const payments=linkedLoad('payments').filter(r=>String(r.unit_id)===String(u.id)&&(!active||String(r.contract_id)===String(active.id)));
+  byId('modalTitle').textContent='ملف الوحدة - '+u.type+' '+u.unit_no;
+  byId('modalBody').innerHTML=`${propHidden(u,c)}<div class="notice" style="margin-bottom:12px">يعرض جدول الدفعات للعقد الحالي فقط. العقود السابقة محفوظة في الأرشيف مع دفعاتها وسنداتها وسجل عملياتها.</div>${active?`<div class="contract-actions-row"><span class="contract-header-chip">📄 ${formalContractNo(active)}</span><button class="primary" onclick="printContract('${active.id}')">طباعة العقد</button><button class="soft-btn" onclick="openFinalSettlement('${u.id}')">التسوية النهائية</button><button class="soft-btn" onclick="openTenantMessage('${u.id}','عقد')">إرسال واتساب</button></div><div class="contract-summary-grid"><div class="report-box"><span>قيمة العقد</span><b>${moneyProp(fs.total)} ر.س</b></div><div class="report-box"><span>المسدد</span><b class="green">${moneyProp(fs.paid)} ر.س</b></div><div class="report-box"><span>المتبقي</span><b class="red">${moneyProp(fs.remaining)} ر.س</b></div><div class="report-box"><span>عدد الدفعات</span><b>${fs.inst.length}</b></div><div class="report-box"><span>مدفوعة</span><b class="green">${fs.paidCount}</b></div><div class="report-box"><span>جزئية</span><b class="blue">${fs.partialCount}</b></div><div class="report-box"><span>متأخرة</span><b class="red">${fs.lateCount}</b></div><div class="report-box"><span>آخر سداد</span><b>${fs.lastPaid}</b></div></div><div class="panel" style="margin-top:12px"><div class="panel-title"><h3>جدول دفعات العقد الحالي</h3></div><div class="table-wrap"><table><thead><tr><th>الدفعة</th><th>الاستحقاق</th><th>الفترة</th><th>المبلغ</th><th>المدفوع</th><th>المتبقي</th><th>الحالة</th></tr></thead><tbody>${fs.inst.map(r=>`<tr><td>${r['رقم الدفعة']}</td><td>${r['تاريخ الاستحقاق']||'-'}</td><td>${(r['الفترة من']||r['تاريخ الاستحقاق']||'-')+(r['الفترة إلى']&&r['الفترة إلى']!==r['الفترة من']?' إلى '+r['الفترة إلى']:'')}</td><td>${moneyProp(r['المبلغ'])}</td><td>${moneyProp(installmentPaid(r))}</td><td>${moneyProp(installmentRemaining(r))}</td><td><span class="badge ${r['الحالة']==='مدفوع'?'ok':(r['الحالة']==='جزئي'?'info':(r['الحالة']==='ملغاة'?'bad':'warn'))}">${r['الحالة']}</span></td></tr>`).join('')||'<tr><td colspan="7">لا توجد دفعات للعقد الحالي</td></tr>'}</tbody></table></div></div><div class="panel" style="margin-top:12px"><div class="panel-title"><h3>سجل عمليات العقد الحالي</h3></div>${renderContractTimelineHTML(active.id)}</div>`:'<div class="empty">لا يوجد عقد نشط لهذه الوحدة</div>'}<div class="panel" style="margin-top:12px"><div class="panel-title"><h3>أرشيف العقود السابقة</h3></div><div class="table-wrap"><table><thead><tr><th>رقم العقد</th><th>المستأجر</th><th>الفترة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${oldContracts.map(ct=>`<tr><td>${formalContractNo(ct)}</td><td>${ct['المستأجر']||'-'}</td><td>${ct['تاريخ البداية']||'-'} إلى ${ct['تاريخ النهاية']||'-'}</td><td><span class="badge warn">${ct['الحالة']||'منتهي'}</span></td><td><button class="soft-btn" onclick="openContractArchive('${ct.id}')">عرض الأرشيف</button></td></tr>`).join('')||'<tr><td colspan="5">لا توجد عقود سابقة</td></tr>'}</tbody></table></div></div><div class="panel" style="margin-top:12px"><div class="panel-title"><h3>آخر الحركات المرتبطة بالعقد/الوحدة</h3></div><div class="table-wrap"><table><thead><tr><th>النوع</th><th>البيان</th><th>المبلغ</th></tr></thead><tbody>${[...payments.map(r=>['سداد',r['البيان'],r['المبلغ']]),...expenses.map(r=>['مصروف',r['البيان']||r['البند'],n(r['المبلغ'])+n(r['الضريبة'])]),...services.map(r=>['خدمة',r['رقم الفاتورة'],r['الإجمالي']||n(r['قيمة الفاتورة'])+n(r['الضريبة'])])].slice(0,12).map(r=>`<tr><td>${r[0]}</td><td>${r[1]||'-'}</td><td>${moneyProp(r[2])}</td></tr>`).join('')||'<tr><td colspan="3">لا توجد حركات</td></tr>'}</tbody></table></div></div><div class="actions"><button class="primary" onclick="printPage()">طباعة التقرير</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`;
+  byId('modal').classList.add('show');
+};
+openContractArchive=function(contractId){
+  let ct=linkedLoad('contracts').find(x=>String(x.id)===String(contractId)); if(!ct)return alert('العقد غير موجود'); ensureContractNo(ct.id); ct=linkedLoad('contracts').find(x=>String(x.id)===String(contractId));
+  const fs=contractFinancialSummary(contractId);
+  byId('modalTitle').textContent='أرشيف عقد - '+formalContractNo(ct);
+  byId('modalBody').innerHTML=`<div class="notice">هذا عقد سابق محفوظ للأرشيف فقط، ولا يختلط مع العقد الحالي للوحدة.</div><div class="contract-summary-grid"><div class="report-box"><span>رقم العقد</span><b>${formalContractNo(ct)}</b></div><div class="report-box"><span>المستأجر</span><b>${ct['المستأجر']||'-'}</b></div><div class="report-box"><span>الفترة</span><b>${ct['تاريخ البداية']||'-'} إلى ${ct['تاريخ النهاية']||'-'}</b></div><div class="report-box"><span>الحالة</span><b>${ct['الحالة']||'منتهي'}</b></div><div class="report-box"><span>قيمة العقد</span><b>${moneyProp(fs.total)} ر.س</b></div><div class="report-box"><span>المدفوع</span><b class="green">${moneyProp(fs.paid)} ر.س</b></div><div class="report-box"><span>المتبقي</span><b class="red">${moneyProp(fs.remaining)} ر.س</b></div><div class="report-box"><span>عدد الدفعات</span><b>${fs.inst.length}</b></div></div><div class="panel" style="margin-top:12px"><div class="panel-title"><h3>دفعات العقد المؤرشف</h3></div><div class="table-wrap"><table><thead><tr><th>الدفعة</th><th>الاستحقاق</th><th>الفترة</th><th>المبلغ</th><th>المدفوع</th><th>المتبقي</th><th>الحالة</th></tr></thead><tbody>${fs.inst.map(r=>`<tr><td>${r['رقم الدفعة']}</td><td>${r['تاريخ الاستحقاق']||'-'}</td><td>${(r['الفترة من']||r['تاريخ الاستحقاق']||'-')+(r['الفترة إلى']&&r['الفترة إلى']!==r['الفترة من']?' إلى '+r['الفترة إلى']:'')}</td><td>${moneyProp(r['المبلغ'])}</td><td>${moneyProp(installmentPaid(r))}</td><td>${moneyProp(installmentRemaining(r))}</td><td><span class="badge ${r['الحالة']==='مدفوع'?'ok':(r['الحالة']==='جزئي'?'info':(r['الحالة']==='ملغاة'?'bad':'warn'))}">${r['الحالة']}</span></td></tr>`).join('')||'<tr><td colspan="7">لا توجد دفعات</td></tr>'}</tbody></table></div></div><div class="panel" style="margin-top:12px"><div class="panel-title"><h3>سجل عمليات العقد</h3></div>${renderContractTimelineHTML(contractId)}</div><div class="actions"><button class="primary" onclick="printContract('${contractId}')">طباعة العقد السابق</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`;
+};
+
+
+
+// ===== V20: ملفات الوحدات وتقليل الأيقونات =====
+(function(){
+  const oldUnitCard = unitCard;
+  window.unitCard = function(u){
+    const isRented = u.status === 'مؤجر';
+    const active = activeContractForUnit(u.id);
+    const fs = active ? contractFinancialSummary(active.id) : null;
+    const extra = active ? `<div class="unit-row"><span>رقم العقد</span><b>${formalContractNo(active)}</b></div><div class="unit-row"><span>المتبقي على العقد</span><b class="${fs.remaining>0?'red':''}">${moneyProp(fs.remaining)} ر.س</b></div>` : '';
+    return `<div class="unit-card ${statusClass(u.status)}" data-type="${u.type}" data-status="${u.status}" data-search="${(u.unit_no+' '+u.tenant).toLowerCase()}" onclick="openUnitProfile('${u.id}')" oncontextmenu="openUnitContextMenu(event,'${u.id}');return false;">
+      <div class="unit-head"><div><div class="unit-title">${u.type==='محل'?'🏢':'🏠'} ${u.unit_no}</div>${statusBadge(u.status)}</div><div class="unit-type">${u.type==='محل'?'🏢':'🏠'}</div></div>
+      <div class="unit-info">
+        <div class="unit-row"><span>المستأجر</span><b>${u.tenant||'-'}</b></div>
+        <div class="unit-row"><span>الإيجار</span><b>${moneyProp(u.rent)} ر.س</b></div>
+        <div class="unit-row"><span>المستحق</span><b class="${Number(u.due)>0?'red':''}">${moneyProp(u.due)} ر.س</b></div>
+        ${extra}
+      </div>
+      <div class="unit-actions" onclick="event.stopPropagation()">${isRented?`<button class="primary-mini" onclick="unitAction('${u.id}','سداد')">سداد</button><button onclick="openUnitProfile('${u.id}','contracts')">العقد</button><button onclick="unitAction('${u.id}','خروج')">خروج</button>`:`<button class="primary-mini" onclick="unitAction('${u.id}','عقد')">عقد</button><button onclick="openUnitProfile('${u.id}','finance')">المالية</button><button onclick="openUnitProfile('${u.id}','services')">الخدمات</button>`}</div>
+      <div class="more-hint"><span>اضغط الكرت لفتح ملف الوحدة الكامل</span><b>فتح الملف ›</b></div>
+    </div>`;
+  };
+})();
+function ensureContextMenu(){let m=document.getElementById('unitContextMenu');if(!m){m=document.createElement('div');m.id='unitContextMenu';m.className='context-menu';document.body.appendChild(m);document.addEventListener('click',()=>m.style.display='none')}return m}
+function openUnitContextMenu(e,unitId){e.preventDefault();const u=getUnit(unitId);if(!u)return;const m=ensureContextMenu();m.innerHTML=`<button onclick="openUnitProfile('${unitId}')">📂 فتح ملف الوحدة</button><button onclick="unitAction('${unitId}','${u.status==='مؤجر'?'سداد':'عقد'}')">${u.status==='مؤجر'?'💵 سداد':'📄 إصدار عقد'}</button><button onclick="openUnitProfile('${unitId}','finance')">💰 كشف مالي</button><button onclick="openUnitProfile('${unitId}','services')">⚡ الكهرباء والخدمات</button><button onclick="openUnitProfile('${unitId}','maintenance')">🛠 الصيانة</button><button onclick="openTenantMessage('${unitId}','عقد')">📬 إرسال واتساب</button><button onclick="openUnitReport('${unitId}',getCenter('${u.center_id}'))">📊 تقرير تفصيلي</button>`;m.style.right=(window.innerWidth-e.clientX)+'px';m.style.top=e.clientY+'px';m.style.display='block'}
+function unitProfileData(unitId){const u=getUnit(unitId),c=u?getCenter(u.center_id)||{}:{};const active=u?activeContractForUnit(u.id):null;const fs=active?contractFinancialSummary(active.id):{inst:[],total:0,paid:0,remaining:0,paidCount:0,partialCount:0,lateCount:0,lastPaid:'-'};const contracts=linkedLoad('contracts').filter(x=>u&&String(x.unit_id)===String(u.id)&&x['نوع العقد']!=='خروج').sort((a,b)=>String(b.created||b.id||'').localeCompare(String(a.created||a.id||'')));const old=active?contracts.filter(x=>String(x.id)!==String(active.id)):contracts;const payments=linkedLoad('payments').filter(x=>u&&String(x.unit_id)===String(u.id));const expenses=linkedLoad('expenses').filter(x=>u&&String(x.unit_id)===String(u.id));const services=linkedLoad('services').filter(x=>u&&String(x.unit_id)===String(u.id));return {u,c,active,fs,contracts,old,payments,expenses,services}}
+function openUnitProfile(unitId,tab='overview'){const d=unitProfileData(unitId);if(!d.u)return alert('لم يتم العثور على الوحدة');byId('modalTitle').textContent='ملف الوحدة - '+d.u.type+' '+d.u.unit_no;byId('modalBody').innerHTML=renderUnitProfileShell(d,tab);byId('modal').classList.add('show')}
+function switchUnitTab(unitId,tab){const d=unitProfileData(unitId);const box=byId('unitTabContent');if(!box)return;document.querySelectorAll('.unit-tabs button').forEach(b=>b.classList.remove('active'));const btn=byId('tab_'+tab);if(btn)btn.classList.add('active');box.innerHTML=renderUnitTab(d,tab)}
+function renderUnitProfileShell(d,tab){return `<div class="unit-profile-head"><div class="unit-profile-card"><div class="unit-profile-title"><h3>${d.u.type==='محل'?'🏢':'🏠'} ${d.u.type} ${d.u.unit_no}</h3>${statusBadge(d.u.status)}</div><div class="grid row3" style="margin-top:12px"><div class="report-box"><span>مركز التكلفة</span><b>${d.c.name||'-'}</b></div><div class="report-box"><span>المستأجر الحالي</span><b>${d.u.tenant||'-'}</b></div><div class="report-box"><span>حساب الكهرباء</span><b>${d.u.electric_account||'-'}</b></div></div><div class="unit-quick-actions"><button onclick="unitAction('${d.u.id}','${d.u.status==='مؤجر'?'سداد':'عقد'}')">${d.u.status==='مؤجر'?'💵 سداد':'📄 عقد جديد'}</button><button onclick="unitAction('${d.u.id}','خروج')">🚪 خروج</button><button onclick="openTenantMessage('${d.u.id}','عقد')">📬 واتساب</button><button onclick="printPage()">🖨️ طباعة</button></div></div><div class="unit-profile-card"><h3 style="margin:0 0 10px">الملخص المالي</h3><div class="report-box"><span>قيمة العقد الحالي</span><b>${moneyProp(d.fs.total)} ر.س</b></div><div class="report-box"><span>المسدد</span><b class="green">${moneyProp(d.fs.paid)} ر.س</b></div><div class="report-box"><span>المتبقي</span><b class="red">${moneyProp(d.fs.remaining)} ر.س</b></div></div></div><div class="compact-note">لتقليل الأيقونات: كل تفاصيل الشقة أو المحل موجودة هنا داخل ملف الوحدة، ولا تظهر كأيقونات مستقلة في القائمة الرئيسية.</div><div class="unit-tabs"><button id="tab_overview" class="${tab==='overview'?'active':''}" onclick="switchUnitTab('${d.u.id}','overview')">نظرة عامة</button><button id="tab_contracts" class="${tab==='contracts'?'active':''}" onclick="switchUnitTab('${d.u.id}','contracts')">العقود</button><button id="tab_finance" class="${tab==='finance'?'active':''}" onclick="switchUnitTab('${d.u.id}','finance')">المالية</button><button id="tab_services" class="${tab==='services'?'active':''}" onclick="switchUnitTab('${d.u.id}','services')">الكهرباء والخدمات</button><button id="tab_maintenance" class="${tab==='maintenance'?'active':''}" onclick="switchUnitTab('${d.u.id}','maintenance')">الصيانة</button><button id="tab_files" class="${tab==='files'?'active':''}" onclick="switchUnitTab('${d.u.id}','files')">المرفقات</button><button id="tab_stats" class="${tab==='stats'?'active':''}" onclick="switchUnitTab('${d.u.id}','stats')">الإحصائيات</button></div><div id="unitTabContent">${renderUnitTab(d,tab)}</div><div class="actions"><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`}
+function renderUnitTab(d,tab){if(tab==='contracts')return renderUnitContractsTab(d);if(tab==='finance')return renderUnitFinanceTab(d);if(tab==='services')return renderUnitServicesTab(d);if(tab==='maintenance')return renderUnitMaintenanceTab(d);if(tab==='files')return renderUnitFilesTab(d);if(tab==='stats')return renderUnitStatsTab(d);return renderUnitOverviewTab(d)}
+function renderUnitOverviewTab(d){return `<div class="panel"><div class="panel-title"><h3>نظرة عامة</h3>${d.active?`<button class="primary" onclick="printContract('${d.active.id}')">طباعة العقد</button>`:''}</div><div class="grid row3"><div class="report-box"><span>رقم العقد الحالي</span><b>${d.active?formalContractNo(d.active):'-'}</b></div><div class="report-box"><span>بداية العقد</span><b>${d.active?d.active['تاريخ البداية']||'-':'-'}</b></div><div class="report-box"><span>نهاية العقد</span><b>${d.active?d.active['تاريخ النهاية']||'-':'-'}</b></div><div class="report-box"><span>الدفعات</span><b>${d.fs.paidCount} مدفوعة / ${d.fs.inst.length}</b></div><div class="report-box"><span>المتأخرة</span><b class="red">${d.fs.lateCount}</b></div><div class="report-box"><span>آخر سداد</span><b>${d.fs.lastPaid}</b></div></div></div>`}
+function renderUnitContractsTab(d){return `<div class="panel"><div class="panel-title"><h3>العقد الحالي</h3>${d.active?`<button class="soft-btn" onclick="openUnitReport('${d.u.id}',getCenter('${d.u.center_id}'))">عرض تفصيلي</button>`:''}</div>${d.active?`<div class="table-wrap"><table><thead><tr><th>الدفعة</th><th>الاستحقاق</th><th>الفترة</th><th>المبلغ</th><th>المدفوع</th><th>المتبقي</th><th>الحالة</th></tr></thead><tbody>${d.fs.inst.map(r=>`<tr><td>${r['رقم الدفعة']}</td><td>${r['تاريخ الاستحقاق']||'-'}</td><td>${(r['الفترة من']||'-')+(r['الفترة إلى']?' إلى '+r['الفترة إلى']:'')}</td><td>${moneyProp(r['المبلغ'])}</td><td>${moneyProp(installmentPaid(r))}</td><td>${moneyProp(installmentRemaining(r))}</td><td><span class="badge ${r['الحالة']==='مدفوع'?'ok':(r['الحالة']==='جزئي'?'info':(r['الحالة']==='ملغاة'?'bad':'warn'))}">${r['الحالة']}</span></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا يوجد عقد نشط</div>'}</div><div class="panel" style="margin-top:12px"><div class="panel-title"><h3>العقود السابقة</h3></div><div class="table-wrap"><table>${rowsTable(['رقم العقد','المستأجر','الفترة','الحالة','إجراء'],d.old.map(ct=>`<tr><td>${formalContractNo(ct)}</td><td>${ct['المستأجر']||'-'}</td><td>${ct['تاريخ البداية']||'-'} إلى ${ct['تاريخ النهاية']||'-'}</td><td>${ct['الحالة']||'-'}</td><td><button class="soft-btn" onclick="openContractArchive('${ct.id}')">عرض الأرشيف</button></td></tr>`))}</table></div></div>`}
+function renderUnitFinanceTab(d){const rows=[...d.payments.map(r=>['سداد',r['البيان'],r['المبلغ'],r['تاريخ السداد']||'-']),...d.expenses.map(r=>['مصروف',r['البيان']||r['البند'],n(r['المبلغ'])+n(r['الضريبة']),r.created?.slice(0,10)||'-'])];return `<div class="panel"><div class="panel-title"><h3>الحركات المالية للوحدة</h3><button class="primary" onclick="unitAction('${d.u.id}','سداد')">+ سند قبض</button></div><div class="table-wrap"><table>${rowsTable(['النوع','البيان','المبلغ','التاريخ'],rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]||'-'}</td><td>${moneyProp(r[2])}</td><td>${r[3]}</td></tr>`))}</table></div></div>`}
+function renderUnitServicesTab(d){return `<div class="panel"><div class="panel-title"><h3>الكهرباء والخدمات</h3><button class="soft-btn" onclick="unitAction('${d.u.id}','كهرباء')">+ فاتورة خدمة</button></div><div class="table-wrap"><table>${rowsTable(['الخدمة','رقم الحساب/الفاتورة','المبلغ','الحالة'],d.services.map(r=>`<tr><td>${r['نوع الخدمة']||'كهرباء'}</td><td>${r['رقم الحساب']||r['رقم الفاتورة']||'-'}</td><td>${moneyProp(r['الإجمالي']||n(r['قيمة الفاتورة'])+n(r['الضريبة']))}</td><td>${r['حالة السداد']||'-'}</td></tr>`))}</table></div></div>`}
+function renderUnitMaintenanceTab(d){return `<div class="panel"><div class="panel-title"><h3>الصيانة</h3><button class="soft-btn" onclick="unitAction('${d.u.id}','مصروف')">+ مصروف صيانة</button></div><div class="empty">سيتم ربط أوامر الصيانة هنا. حاليًا تظهر مصروفات الصيانة من تبويب المالية.</div></div>`}
+function renderUnitFilesTab(d){return `<div class="panel"><div class="panel-title"><h3>المرفقات والأرشيف</h3><button class="soft-btn" onclick="alert('سيتم تفعيل رفع المرفقات عند الربط السحابي')">+ مرفق</button></div><div class="empty">هنا تحفظ العقود PDF، سندات القبض، كشوف الحساب، صور الهوية، وصور الوحدة عند الربط السحابي.</div></div>`}
+function renderUnitStatsTab(d){const income=d.payments.reduce((a,r)=>a+n(r['المبلغ']),0);const exp=d.expenses.reduce((a,r)=>a+n(r['المبلغ'])+n(r['الضريبة']),0);const svc=d.services.reduce((a,r)=>a+n(r['الإجمالي']||n(r['قيمة الفاتورة'])+n(r['الضريبة'])),0);return `<div class="panel"><div class="panel-title"><h3>إحصائيات الوحدة</h3></div><div class="grid row3"><div class="report-box"><span>إجمالي المقبوض</span><b class="green">${moneyProp(income)} ر.س</b></div><div class="report-box"><span>المصروفات</span><b class="red">${moneyProp(exp)} ر.س</b></div><div class="report-box"><span>الخدمات</span><b class="orange">${moneyProp(svc)} ر.س</b></div><div class="report-box"><span>صافي الوحدة</span><b class="blue">${moneyProp(income-exp-svc)} ر.س</b></div><div class="report-box"><span>عدد العقود</span><b>${d.contracts.length}</b></div><div class="report-box"><span>نسبة السداد للعقد الحالي</span><b>${d.fs.total?Math.round((d.fs.paid/d.fs.total)*100):0}%</b></div></div></div>`}
+
+
+// ===== V21 Finance Advanced Filters: receipts & payments =====
+let financeFilterState={};
+function financeUnique(field){
+  const vals=load('finance').map(r=>r[field]||'').filter(Boolean);
+  return [...new Set(vals)].sort();
+}
+function financeSelectOptions(values,selected,label='الكل'){
+  return `<option value="">${label}</option>`+values.map(v=>`<option value="${String(v).replaceAll('"','&quot;')}" ${String(selected||'')===String(v)?'selected':''}>${v}</option>`).join('');
+}
+function financeReadFilters(){
+  financeFilterState={
+    from:byId('ff_from')?.value||'',
+    to:byId('ff_to')?.value||'',
+    user:byId('ff_user')?.value||'',
+    center:byId('ff_center')?.value||'',
+    method:byId('ff_method')?.value||'',
+    type:byId('ff_type')?.value||'',
+    approval:byId('ff_approval')?.value||'',
+    tax:byId('ff_tax')?.value||'',
+    min:n(byId('ff_min')?.value),
+    max:n(byId('ff_max')?.value),
+    q:(byId('ff_q')?.value||'').trim().toLowerCase()
+  };
+  renderFinanceSection();
+}
+function financeClearFilters(){financeFilterState={};renderFinanceSection()}
+function financeApplyFilters(rows){
+  const f=financeFilterState||{};
+  return rows.filter(r=>{
+    const date=String(r['التاريخ']||r.created||'').slice(0,10);
+    const amount=n(r['المبلغ']);
+    const user=r['المستخدم']||r.user||r['أنشأ بواسطة']||'النظام';
+    const hay=JSON.stringify(r).toLowerCase();
+    if(f.from && date < f.from) return false;
+    if(f.to && date > f.to) return false;
+    if(f.user && String(user)!==String(f.user)) return false;
+    if(f.center && String(r['مركز التكلفة']||'')!==String(f.center)) return false;
+    if(f.method && String(r['طريقة الدفع']||'')!==String(f.method)) return false;
+    if(f.type && String(r['نوع العملية']||'')!==String(f.type)) return false;
+    if(f.approval && String(r['حالة الاعتماد']||'معتمد')!==String(f.approval)) return false;
+    if(f.tax && String(r['ضريبي']||'غير ضريبي')!==String(f.tax)) return false;
+    if(f.min && amount < f.min) return false;
+    if(f.max && amount > f.max) return false;
+    if(f.q && !hay.includes(f.q)) return false;
+    return true;
+  });
+}
+function financeSetType(type){financeFilterState={...(financeFilterState||{}),type};renderFinanceSection()}
+function renderFinanceFilterBar(rows){
+  const f=financeFilterState||{};
+  const users=[...new Set(rows.map(r=>r['المستخدم']||r.user||r['أنشأ بواسطة']||'النظام'))].sort();
+  const centers=financeUnique('مركز التكلفة');
+  const methods=financeUnique('طريقة الدفع');
+  const approvals=[...new Set(rows.map(r=>r['حالة الاعتماد']||'معتمد'))].sort();
+  return `<div class="panel" style="margin-top:16px">
+    <div class="panel-title"><h3>🔎 فلاتر السندات المالية</h3><div><button class="soft-btn" onclick="financeSetType('سند قبض')">سندات قبض</button> <button class="soft-btn" onclick="financeSetType('سند صرف')">سندات صرف</button> <button class="soft-btn" onclick="financeClearFilters()">مسح الفلاتر</button></div></div>
+    <div class="form" style="grid-template-columns:repeat(6,1fr)">
+      <div class="field"><label>من تاريخ</label><input id="ff_from" type="date" value="${f.from||''}" onchange="financeReadFilters()"></div>
+      <div class="field"><label>إلى تاريخ</label><input id="ff_to" type="date" value="${f.to||''}" onchange="financeReadFilters()"></div>
+      <div class="field"><label>المستخدم</label><select id="ff_user" onchange="financeReadFilters()">${financeSelectOptions(users,f.user)}</select></div>
+      <div class="field"><label>مركز التكلفة</label><select id="ff_center" onchange="financeReadFilters()">${financeSelectOptions(centers,f.center)}</select></div>
+      <div class="field"><label>طريقة الدفع</label><select id="ff_method" onchange="financeReadFilters()">${financeSelectOptions(methods,f.method)}</select></div>
+      <div class="field"><label>نوع السند</label><select id="ff_type" onchange="financeReadFilters()"><option value="">الكل</option><option ${f.type==='سند قبض'?'selected':''}>سند قبض</option><option ${f.type==='سند صرف'?'selected':''}>سند صرف</option></select></div>
+      <div class="field"><label>حالة الاعتماد</label><select id="ff_approval" onchange="financeReadFilters()">${financeSelectOptions(approvals,f.approval)}</select></div>
+      <div class="field"><label>ضريبي</label><select id="ff_tax" onchange="financeReadFilters()"><option value="">الكل</option><option ${f.tax==='ضريبي'?'selected':''}>ضريبي</option><option ${f.tax==='غير ضريبي'?'selected':''}>غير ضريبي</option></select></div>
+      <div class="field"><label>من مبلغ</label><input id="ff_min" type="number" value="${f.min||''}" oninput="financeReadFilters()"></div>
+      <div class="field"><label>إلى مبلغ</label><input id="ff_max" type="number" value="${f.max||''}" oninput="financeReadFilters()"></div>
+      <div class="field" style="grid-column:span 2"><label>بحث ذكي</label><input id="ff_q" value="${(f.q||'').replaceAll('"','&quot;')}" placeholder="رقم سند، مستفيد، مورد، مستأجر، بيان، عقد، جوال..." oninput="financeReadFilters()"></div>
+    </div>
+  </div>`;
+}
+function renderFinanceSummaryCards(rows){
+  const receipts=rows.filter(r=>r['نوع العملية']==='سند قبض');
+  const payments=rows.filter(r=>r['نوع العملية']==='سند صرف');
+  const totalIn=receipts.reduce((a,r)=>a+n(r['المبلغ']),0);
+  const totalOut=payments.reduce((a,r)=>a+n(r['المبلغ']),0);
+  const tax=rows.reduce((a,r)=>a+n(r['الضريبة']),0);
+  const cash=rows.filter(r=>r['طريقة الدفع']==='نقدي').reduce((a,r)=>a+n(r['المبلغ']),0);
+  const transfer=rows.filter(r=>r['طريقة الدفع']==='تحويل').reduce((a,r)=>a+n(r['المبلغ']),0);
+  const network=rows.filter(r=>r['طريقة الدفع']==='شبكة').reduce((a,r)=>a+n(r['المبلغ']),0);
+  return `<div class="cards" style="grid-template-columns:repeat(6,minmax(140px,1fr));margin-top:16px">
+    <div class="metric"><div><div class="label">عدد السندات</div><div class="value blue">${rows.length}</div><div class="hint">حسب الفلاتر</div></div><div class="micon">📄</div></div>
+    <div class="metric"><div><div class="label">إجمالي القبض</div><div class="value green">${money(totalIn)}</div><div class="hint">سندات قبض</div></div><div class="micon">💰</div></div>
+    <div class="metric"><div><div class="label">إجمالي الصرف</div><div class="value red">${money(totalOut)}</div><div class="hint">سندات صرف</div></div><div class="micon">💸</div></div>
+    <div class="metric"><div><div class="label">الضريبة</div><div class="value orange">${money(tax)}</div><div class="hint">حسب النتائج</div></div><div class="micon">🧾</div></div>
+    <div class="metric"><div><div class="label">نقدي</div><div class="value blue">${money(cash)}</div><div class="hint">كل الحركات</div></div><div class="micon">💵</div></div>
+    <div class="metric"><div><div class="label">تحويل/شبكة</div><div class="value blue">${money(transfer+network)}</div><div class="hint">بنكي</div></div><div class="micon">🏦</div></div>
+  </div>`;
+}
+function exportFinanceFilteredCSV(){
+  const rows=financeApplyFilters(load('finance'));
+  const cols=['رقم السند','التاريخ','نوع العملية','المستخدم','مركز التكلفة','بند الصرف','طريقة الدفع','المستلم منه','المستفيد','المورد','البيان','ضريبي','حالة الاعتماد','المبلغ','الضريبة'];
+  let csv='\ufeff'+cols.join(',')+'\n'+rows.map(r=>cols.map(c=>`"${String(r[c]||'').replaceAll('"','""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='finance_filtered.csv';a.click();
+}
+function renderFinanceSection(){
+  const allRows=load('finance');
+  const rows=financeApplyFilters(allRows).sort((a,b)=>String(b['التاريخ']||b.created||'').localeCompare(String(a['التاريخ']||a.created||''))||String(b.created||'').localeCompare(String(a.created||'')));
+  const receipts=allRows.filter(r=>r['نوع العملية']==='سند قبض');
+  const payments=allRows.filter(r=>r['نوع العملية']==='سند صرف');
+  const totalIn=receipts.reduce((a,r)=>a+n(r['المبلغ']),0);
+  const totalOut=payments.reduce((a,r)=>a+n(r['المبلغ']),0);
+  const taxIn=payments.reduce((a,r)=>a+n(r['الضريبة']),0);
+  const todayStr=new Date().toISOString().slice(0,10);
+  const todayRows=allRows.filter(r=>(r['التاريخ']||r.created||'').slice(0,10)===todayStr);
+  const movements=rows.map(r=>{
+    const isIn=r['نوع العملية']==='سند قبض';
+    const user=r['المستخدم']||r.user||r['أنشأ بواسطة']||'النظام';
+    return `<tr><td><b>${r['رقم السند']||'-'}</b></td><td>${r['التاريخ']||'-'}</td><td>${r['نوع العملية']||'-'}</td><td>${user}</td><td>${r['مركز التكلفة']||'-'}</td><td>${r['بند الصرف']||'-'}</td><td>${r['طريقة الدفع']||'-'}</td><td>${isIn?money(r['المبلغ']):'-'}</td><td>${!isIn?money(r['المبلغ']):'-'}</td><td>${r['ضريبي']||'غير ضريبي'}</td><td>${r['حالة الاعتماد']||'معتمد'}</td><td><button class="soft-btn" onclick="printFinanceVoucher(${r.id})">طباعة/PDF</button></td></tr>`
+  });
+  byId('finance').innerHTML=`
+    <div class="hero" style="margin-bottom:16px;background:linear-gradient(135deg,#08233f,#0f766e)"><div><span class="kicker">Financial Core</span><h1>الإدارة المالية</h1><p>سندات قبض وصرف مع فلاتر متقدمة حسب المستخدم، مركز التكلفة، طريقة الدفع، النوع، الضريبة والتاريخ.</p></div><div class="health"><span>صافي النقد</span><b>${money(totalIn-totalOut)}</b></div></div>
+    <div class="cards" style="grid-template-columns:repeat(4,minmax(170px,1fr))"><div class="metric"><div><div class="label">إجمالي القبض</div><div class="value green">${money(totalIn)}</div><div class="hint">كل سندات القبض</div></div><div class="micon">💰</div></div><div class="metric"><div><div class="label">إجمالي الصرف</div><div class="value red">${money(totalOut)}</div><div class="hint">كل سندات الصرف</div></div><div class="micon">💸</div></div><div class="metric"><div><div class="label">ضريبة مدخلات</div><div class="value blue">${money(taxIn)}</div><div class="hint">من سندات الصرف الضريبية</div></div><div class="micon">🧾</div></div><div class="metric"><div><div class="label">حركات اليوم</div><div class="value orange">${todayRows.length}</div><div class="hint">قبض وصرف</div></div><div class="micon">📒</div></div></div>
+    <div class="panel"><div class="panel-title"><h3>⚡ إجراءات مالية سريعة</h3><div><button class="success" onclick="openFinanceReceiptVoucher()">+ سند قبض</button> <button class="danger" onclick="openFinancePaymentVoucher()">+ سند صرف</button> <button class="soft-btn" onclick="printFinanceDailyReport()">طباعة تقرير اليوم</button></div></div><div class="notice">يمكنك الآن فلترة سندات القبض والصرف حسب المستخدم، مركز التكلفة، طريقة الدفع، التاريخ، الضريبة، حالة الاعتماد، المبلغ والبحث الذكي.</div></div>
+    ${renderFinanceFilterBar(allRows)}
+    ${renderFinanceSummaryCards(rows)}
+    <div class="grid row2" style="margin-top:16px"><div class="panel"><div class="panel-title"><h3>💰 سندات القبض حسب الفلتر</h3></div><div class="table-wrap"><table>${rowsTable(['السند','التاريخ','من','المركز','المبلغ','طريقة الدفع'],rows.filter(r=>r['نوع العملية']==='سند قبض').slice(0,8).map(r=>`<tr><td>${r['رقم السند']||'-'}</td><td>${r['التاريخ']||'-'}</td><td>${r['المستلم منه']||'-'}</td><td>${r['مركز التكلفة']||'-'}</td><td>${money(r['المبلغ'])}</td><td>${r['طريقة الدفع']||'-'}</td></tr>`))}</table></div></div><div class="panel"><div class="panel-title"><h3>💸 سندات الصرف حسب الفلتر</h3></div><div class="table-wrap"><table>${rowsTable(['السند','التاريخ','المستفيد','المركز','البند','الإجمالي'],rows.filter(r=>r['نوع العملية']==='سند صرف').slice(0,8).map(r=>`<tr><td>${r['رقم السند']||'-'}</td><td>${r['التاريخ']||'-'}</td><td>${r['المستفيد']||r['المورد']||'-'}</td><td>${r['مركز التكلفة']||'-'}</td><td>${r['بند الصرف']||'-'}</td><td>${money(r['المبلغ'])}</td></tr>`))}</table></div></div></div>
+    <div class="panel" style="margin-top:16px"><div class="panel-title"><h3>📒 الحركات المالية المفلترة</h3><div><button class="soft-btn" onclick="exportFinanceFilteredCSV()">تصدير النتائج CSV</button> <button class="soft-btn" onclick="window.print()">طباعة</button></div></div><div class="table-wrap"><table>${rowsTable(['رقم السند','التاريخ','العملية','المستخدم','مركز التكلفة','البند','طريقة الدفع','قبض','صرف','الضريبة','الاعتماد','إجراء'],movements)}</table></div></div>`;
+}
+
+
+// ===== V22: System Reset & Backup Center =====
+const SYSTEM_BACKUP_VERSION='الشريمي ERP V22';
+function managedStorageKeys(){
+  const keys=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k && (k.startsWith(LS) || k.startsWith('hasan_property_') || k==='communication_logs')) keys.push(k);
+  }
+  return keys.sort();
+}
+function downloadJsonFile(name,obj){
+  const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function createFullBackup(reason='نسخة احتياطية يدوية'){
+  const data={meta:{app:'نظام مؤسسة حسن محمد الشريمي',version:SYSTEM_BACKUP_VERSION,reason,created_at:new Date().toISOString()},items:{}};
+  managedStorageKeys().forEach(k=>{data.items[k]=localStorage.getItem(k)});
+  const stamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  downloadJsonFile(`نسخة_احتياطية_نظام_الشريمي_${stamp}.json`,data);
+  return data;
+}
+function requireResetApproval(kind){
+  const pin=prompt('إجراء خاص بالمدير فقط. أدخل الرقم السري للمدير:');
+  if(pin!=='1234'){alert('الرقم السري غير صحيح. لم يتم تنفيذ أي إجراء.');return false;}
+  const word=kind==='factory'?'ضبط المصنع':'تهيئة';
+  const confirmWord=prompt(`للتأكيد اكتب كلمة: ${word}`);
+  if(confirmWord!==word){alert('لم يتم التأكيد. تم إلغاء العملية.');return false;}
+  return confirm(`سيتم تنفيذ: ${kind==='factory'?'إعادة ضبط المصنع وحذف جميع بيانات النظام':'تهيئة البيانات التشغيلية وحذف العقود والسندات والحركات فقط'}\nسيتم تنزيل نسخة احتياطية أولاً. هل تريد المتابعة؟`);
+}
+function resetOperationalData(){
+  if(!requireResetApproval('operational')) return;
+  createFullBackup('قبل تهيئة البيانات التشغيلية');
+  const lsClear=['contracts','payments','rent_installments','finance','tax','expenses','services','purchases','communication_logs','contract_timeline','alerts'];
+  lsClear.forEach(k=>localStorage.setItem(LS+k,'[]'));
+  // تنظيف الوحدات مع إبقاء مراكز التكلفة والشقق والمحلات كما هي
+  const units=propLoad(PROP_UNITS_KEY).map(u=>({
+    ...u,status:'متاح',tenant:'',phone:'',due:0,total_remaining:0,last_payment:'-',contract_id:'',contract_end:'',note:u.note||''
+  }));
+  propSave(PROP_UNITS_KEY,units);
+  localStorage.setItem(LS+'seed','1');
+  alert('تمت تهيئة البيانات التشغيلية بنجاح. بقيت مراكز التكلفة والوحدات والمستخدمون والإعدادات كما هي.');
+  renderDashboard(); renderSystemSettings();
+}
+function factoryResetSystem(){
+  if(!requireResetApproval('factory')) return;
+  createFullBackup('قبل إعادة ضبط المصنع');
+  managedStorageKeys().forEach(k=>localStorage.removeItem(k));
+  currentPropertyCenter='';
+  alert('تمت إعادة ضبط المصنع. سيتم إعادة تحميل الصفحة.');
+  location.reload();
+}
+function restoreSystemBackup(input){
+  const file=input.files && input.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const backup=JSON.parse(e.target.result);
+      if(!backup.items) throw new Error('صيغة غير صحيحة');
+      const pin=prompt('لاستعادة النسخة الاحتياطية أدخل الرقم السري للمدير:');
+      if(pin!=='1234') return alert('الرقم السري غير صحيح.');
+      createFullBackup('قبل استعادة نسخة احتياطية');
+      Object.keys(backup.items).forEach(k=>localStorage.setItem(k,backup.items[k]));
+      alert('تمت الاستعادة بنجاح. سيتم إعادة تحميل الصفحة.');
+      location.reload();
+    }catch(err){alert('تعذر قراءة النسخة الاحتياطية: '+err.message)}
+  };
+  reader.readAsText(file,'utf-8');
+}
+function renderSystemSettings(){
+  const keys=managedStorageKeys();
+  const units=propLoad(PROP_UNITS_KEY), centers=propLoad(PROP_CENTERS_KEY);
+  const contracts=load('contracts'), payments=load('payments'), finance=load('finance'), purchases=load('purchases'), services=load('services');
+  byId('settings').innerHTML=`
+    <div class="hero" style="margin-bottom:16px;background:linear-gradient(135deg,#08233f,#0f766e)"><div><span class="kicker">System Control</span><h1>الإعدادات والتهيئة</h1><p>تهيئة آمنة قبل التشغيل الفعلي مع نسخة احتياطية كاملة قبل أي حذف.</p></div><div class="health"><span>ملفات محفوظة</span><b>${keys.length}</b><span>Local Storage</span></div></div>
+    <div class="grid row3">
+      <div class="panel"><div class="panel-title"><h3>📦 النسخ الاحتياطي</h3></div><p style="color:var(--muted);font-weight:800">نزّل نسخة كاملة قبل أي تحديث أو تهيئة.</p><div class="actions"><button class="primary" onclick="createFullBackup()">تنزيل نسخة احتياطية كاملة</button><label class="soft-btn" style="cursor:pointer">استعادة نسخة<input type="file" accept="application/json" style="display:none" onchange="restoreSystemBackup(this)"></label></div></div>
+      <div class="panel"><div class="panel-title"><h3>🗑️ تهيئة التشغيل</h3></div><p style="color:var(--muted);font-weight:800">تحذف العقود والسندات والحركات التجريبية وتبقي الوحدات ومراكز التكلفة.</p><div class="actions"><button class="danger" onclick="resetOperationalData()">تهيئة البيانات التشغيلية</button></div></div>
+      <div class="panel"><div class="panel-title"><h3>⚠️ ضبط المصنع</h3></div><p style="color:var(--muted);font-weight:800">يحذف كل شيء ويعيد النظام كبداية جديدة. استخدمه نادرًا فقط.</p><div class="actions"><button class="danger" onclick="factoryResetSystem()">إعادة ضبط المصنع</button></div></div>
+    </div>
+    <div class="panel" style="margin-top:16px"><div class="panel-title"><h3>📊 ملخص البيانات الحالية</h3></div>
+      <div class="cards" style="grid-template-columns:repeat(6,minmax(140px,1fr))">
+        <div class="metric"><div><div class="label">مراكز التكلفة</div><div class="value blue">${centers.length}</div><div class="hint">تبقى بعد التهيئة</div></div><div class="micon">🏢</div></div>
+        <div class="metric"><div><div class="label">الوحدات</div><div class="value blue">${units.length}</div><div class="hint">تبقى بعد التهيئة</div></div><div class="micon">🏠</div></div>
+        <div class="metric"><div><div class="label">العقود</div><div class="value orange">${contracts.length}</div><div class="hint">تحذف في التهيئة</div></div><div class="micon">📄</div></div>
+        <div class="metric"><div><div class="label">السدادات</div><div class="value orange">${payments.length}</div><div class="hint">تحذف في التهيئة</div></div><div class="micon">💵</div></div>
+        <div class="metric"><div><div class="label">الحركات المالية</div><div class="value orange">${finance.length}</div><div class="hint">تحذف في التهيئة</div></div><div class="micon">📒</div></div>
+        <div class="metric"><div><div class="label">الخدمات/المشتريات</div><div class="value orange">${services.length+purchases.length}</div><div class="hint">تحذف في التهيئة</div></div><div class="micon">⚡</div></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px"><div class="panel-title"><h3>✅ ماذا يحدث عند تهيئة التشغيل؟</h3></div>
+      <div class="notice">سيتم تنزيل نسخة احتياطية تلقائيًا، ثم حذف البيانات التشغيلية التجريبية فقط: العقود، الدفعات، سندات القبض والصرف، الحركات المالية، الكهرباء، المشتريات، المصروفات، الرسائل وسجل العمليات. وستبقى مراكز التكلفة والشقق والمحلات والمستخدمون والإعدادات الأساسية.</div>
+    </div>`;
+}
+
+
+// ===== V1.0.1: Voucher Actions, Corrections & Permissions =====
+const CURRENT_USER_KEY=LS+'current_user_profile';
+function getCurrentUser(){
+  try{return JSON.parse(localStorage.getItem(CURRENT_USER_KEY)||'null')||{name:'أبو قصي',role:'مالك النظام'}}catch(e){return {name:'أبو قصي',role:'مالك النظام'}}
+}
+function setCurrentUserProfile(name,role){localStorage.setItem(CURRENT_USER_KEY,JSON.stringify({name,role}));renderFinanceSection()}
+const ROLE_PERMS={
+  'مالك النظام':['view','add','edit','delete','cancel','approve','print','pdf','audit'],
+  'مدير':['view','add','edit','cancel','approve','print','pdf','audit'],
+  'محاسب':['view','add','edit','print','pdf'],
+  'موظف':['view','add','print']
+};
+function canVoucher(action){const u=getCurrentUser();return (ROLE_PERMS[u.role]||ROLE_PERMS['موظف']).includes(action)}
+function statusOfVoucher(r){return r['حالة الاعتماد']||r.status||'بانتظار اعتماد'}
+function statusBadgeVoucher(st){const cls=st==='معتمد'?'approved':st==='ملغي'?'cancelled':st==='مسودة'?'draft':'waiting';return `<span class="voucher-status ${cls}">${st}</span>`}
+function addAuditToVoucher(r,action,note=''){const u=getCurrentUser();const arr=Array.isArray(r.audit)?r.audit:[];arr.push({at:new Date().toLocaleString('ar-SA'),user:u.name,role:u.role,action,note});r.audit=arr;return r}
+function findFinanceVoucher(id){const rows=load('finance');const idx=rows.findIndex(x=>String(x.id)===String(id));return {rows,idx,row:idx>-1?rows[idx]:null}}
+function safeText(v){return String(v??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+function voucherActionButtons(r){
+  const st=statusOfVoucher(r), id=r.id;
+  const isApproved=st==='معتمد', isCancelled=st==='ملغي';
+  return `<div class="action-cell">
+    <button class="print" onclick="printFinanceVoucher(${id})">🖨️ طباعة/PDF</button>
+    <button class="edit" ${(!canVoucher('edit')||isApproved||isCancelled)?'disabled':''} onclick="editFinanceVoucher(${id})">✏️ تعديل</button>
+    <button class="approve" ${(!canVoucher('approve')||isApproved||isCancelled)?'disabled':''} onclick="approveFinanceVoucher(${id})">✅ اعتماد</button>
+    <button class="cancel" ${(!canVoucher('cancel')||isCancelled)?'disabled':''} onclick="cancelFinanceVoucher(${id})">🚫 إلغاء</button>
+    <button class="delete" ${(!canVoucher('delete')||isApproved||isCancelled)?'disabled':''} onclick="deleteFinanceVoucher(${id})">🗑️ حذف</button>
+    <button onclick="viewFinanceVoucher(${id})">👁️ تفاصيل</button>
+  </div>`;
+}
+function viewFinanceVoucher(id){
+  const {row:r}=findFinanceVoucher(id); if(!r) return alert('لم يتم العثور على السند');
+  const audit=(r.audit||[]).map(x=>`<div class="audit-line"><span>${safeText(x.action)} - ${safeText(x.note||'')}</span><b>${safeText(x.user)} • ${safeText(x.at)}</b></div>`).join('')||'<div class="empty">لا يوجد سجل عمليات لهذا السند</div>';
+  byId('modalTitle').textContent='تفاصيل السند '+(r['رقم السند']||'');
+  byId('modalBody').innerHTML=`<div class="grid row3">
+    <div class="report-box"><span>رقم السند</span><b>${safeText(r['رقم السند']||'-')}</b></div>
+    <div class="report-box"><span>النوع</span><b>${safeText(r['نوع العملية']||'-')}</b></div>
+    <div class="report-box"><span>الحالة</span><b>${statusBadgeVoucher(statusOfVoucher(r))}</b></div>
+    <div class="report-box"><span>التاريخ</span><b>${safeText(r['التاريخ']||'-')}</b></div>
+    <div class="report-box"><span>مركز التكلفة</span><b>${safeText(r['مركز التكلفة']||'-')}</b></div>
+    <div class="report-box"><span>طريقة الدفع</span><b>${safeText(r['طريقة الدفع']||'-')}</b></div>
+    <div class="report-box"><span>المبلغ</span><b>${money(r['المبلغ'])} ر.س</b></div>
+    <div class="report-box"><span>الضريبة</span><b>${money(r['الضريبة'])} ر.س</b></div>
+    <div class="report-box"><span>المستخدم</span><b>${safeText(r['المستخدم']||r.user||r['أنشأ بواسطة']||'النظام')}</b></div>
+  </div><div class="panel" style="margin-top:12px"><h3>البيان</h3><p style="font-weight:800;color:#475569">${safeText(r['البيان']||'-')}</p></div><div class="audit-box"><h3 style="margin:0 0 8px">سجل العمليات</h3>${audit}</div><div class="actions"><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`;
+  byId('modal').classList.add('show');
+}
+function editFinanceVoucher(id){
+  const {row:r}=findFinanceVoucher(id); if(!r) return alert('لم يتم العثور على السند');
+  const st=statusOfVoucher(r); if(st==='معتمد'||st==='ملغي') return alert('لا يمكن تعديل سند معتمد أو ملغي. استخدم الإلغاء أو سند عكسي.');
+  if(!canVoucher('edit')) return alert('ليست لديك صلاحية تعديل السندات');
+  byId('modalTitle').textContent='تعديل السند '+(r['رقم السند']||'');
+  byId('modalBody').innerHTML=`<div class="permission-note">التعديل متاح فقط قبل الاعتماد. بعد الاعتماد يتم الإلغاء بسجل عمليات للحفاظ على الأثر المحاسبي.</div><div class="form">
+    <div class="field"><label>التاريخ</label><input id="ev_date" type="date" value="${safeText(r['التاريخ']||'')}"></div>
+    <div class="field"><label>نوع العملية</label><select id="ev_type"><option ${r['نوع العملية']==='سند قبض'?'selected':''}>سند قبض</option><option ${r['نوع العملية']==='سند صرف'?'selected':''}>سند صرف</option></select></div>
+    <div class="field"><label>المستلم منه / المستفيد</label><input id="ev_party" value="${safeText(r['المستلم منه']||r['المستفيد']||r['المورد']||'')}"></div>
+    <div class="field"><label>مركز التكلفة</label><input id="ev_center" value="${safeText(r['مركز التكلفة']||'')}"></div>
+    <div class="field"><label>بند الصرف</label><input id="ev_item" value="${safeText(r['بند الصرف']||'')}"></div>
+    <div class="field"><label>طريقة الدفع</label><select id="ev_method"><option ${r['طريقة الدفع']==='نقدي'?'selected':''}>نقدي</option><option ${r['طريقة الدفع']==='تحويل'?'selected':''}>تحويل</option><option ${r['طريقة الدفع']==='شبكة'?'selected':''}>شبكة</option><option ${r['طريقة الدفع']==='شيك'?'selected':''}>شيك</option></select></div>
+    <div class="field"><label>المبلغ</label><input id="ev_amount" type="number" step="0.01" value="${n(r['المبلغ'])}"></div>
+    <div class="field"><label>الضريبة</label><input id="ev_tax" type="number" step="0.01" value="${n(r['الضريبة'])}"></div>
+    <div class="field"><label>ضريبي</label><select id="ev_taxable"><option ${r['ضريبي']==='غير ضريبي'?'selected':''}>غير ضريبي</option><option ${r['ضريبي']==='ضريبي'?'selected':''}>ضريبي</option></select></div>
+    <div class="field" style="grid-column:span 3"><label>البيان</label><input id="ev_desc" value="${safeText(r['البيان']||'')}"></div>
+  </div><div class="actions"><button class="success" onclick="saveEditedFinanceVoucher(${id})">حفظ التعديل</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;
+  byId('modal').classList.add('show');
+}
+function saveEditedFinanceVoucher(id){
+  const {rows,idx,row:r}=findFinanceVoucher(id); if(idx<0) return;
+  const type=byId('ev_type').value, party=byId('ev_party').value;
+  rows[idx]={...r,'التاريخ':byId('ev_date').value,'نوع العملية':type,'مركز التكلفة':byId('ev_center').value,'بند الصرف':byId('ev_item').value,'طريقة الدفع':byId('ev_method').value,'المبلغ':n(byId('ev_amount').value),'الضريبة':n(byId('ev_tax').value),'ضريبي':byId('ev_taxable').value,'البيان':byId('ev_desc').value,'المستلم منه':type==='سند قبض'?party:(r['المستلم منه']||''),'المستفيد':type==='سند صرف'?party:(r['المستفيد']||''),'المستخدم':r['المستخدم']||getCurrentUser().name};
+  addAuditToVoucher(rows[idx],'تعديل','تم تعديل بيانات السند قبل الاعتماد');
+  save('finance',rows); closeModal(); renderFinanceSection(); renderDashboard();
+}
+function approveFinanceVoucher(id){
+  if(!canVoucher('approve')) return alert('ليست لديك صلاحية اعتماد السندات');
+  const {rows,idx,row:r}=findFinanceVoucher(id); if(idx<0) return;
+  if(statusOfVoucher(r)==='ملغي') return alert('لا يمكن اعتماد سند ملغي');
+  rows[idx]['حالة الاعتماد']='معتمد'; rows[idx]['تاريخ الاعتماد']=new Date().toISOString(); rows[idx]['اعتمد بواسطة']=getCurrentUser().name;
+  addAuditToVoucher(rows[idx],'اعتماد','تم اعتماد السند'); save('finance',rows); renderFinanceSection(); renderDashboard();
+}
+function cancelFinanceVoucher(id){
+  if(!canVoucher('cancel')) return alert('ليست لديك صلاحية إلغاء السندات');
+  const {rows,idx,row:r}=findFinanceVoucher(id); if(idx<0) return;
+  if(statusOfVoucher(r)==='ملغي') return alert('السند ملغي مسبقًا');
+  const reason=prompt('اكتب سبب إلغاء السند:'); if(!reason) return alert('سبب الإلغاء إلزامي');
+  rows[idx]['حالة الاعتماد']='ملغي'; rows[idx]['سبب الإلغاء']=reason; rows[idx]['تاريخ الإلغاء']=new Date().toISOString(); rows[idx]['ألغي بواسطة']=getCurrentUser().name;
+  addAuditToVoucher(rows[idx],'إلغاء',reason); save('finance',rows); renderFinanceSection(); renderDashboard();
+}
+function deleteFinanceVoucher(id){
+  if(!canVoucher('delete')) return alert('ليست لديك صلاحية حذف السندات');
+  const {rows,idx,row:r}=findFinanceVoucher(id); if(idx<0) return;
+  if(statusOfVoucher(r)==='معتمد') return alert('لا يمكن حذف سند معتمد. استخدم إلغاء السند ليبقى الأثر المحاسبي محفوظًا.');
+  const reason=prompt('اكتب سبب الحذف:'); if(!reason) return alert('سبب الحذف إلزامي');
+  if(!confirm('سيتم حذف السند غير المعتمد نهائيًا. هل أنت متأكد؟')) return;
+  rows.splice(idx,1); save('finance',rows); renderFinanceSection(); renderDashboard();
+}
+const oldPrintFinanceVoucher = typeof printFinanceVoucher==='function' ? printFinanceVoucher : null;
+function printFinanceVoucher(id){
+  const {row:r}=findFinanceVoucher(id); if(!r) return alert('لم يتم العثور على السند');
+  const w=window.open('','_blank','width=900,height=760');
+  w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${safeText(r['رقم السند']||'سند')}</title><style>body{font-family:Arial;padding:32px;color:#111} .head{border-bottom:3px solid #0b2346;padding-bottom:14px;margin-bottom:18px;display:flex;justify-content:space-between}.brand{font-size:24px;font-weight:bold}.box{border:1px solid #ddd;border-radius:12px;padding:14px;margin:10px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row{display:flex;justify-content:space-between;border-bottom:1px dashed #ddd;padding:7px}.status{padding:5px 10px;border-radius:20px;background:#eef} .sig{display:flex;justify-content:space-between;margin-top:60px}.sig div{width:40%;border-top:1px solid #333;text-align:center;padding-top:10px}</style></head><body><div class="head"><div><div class="brand">مؤسسة حسن محمد الشريمي</div><div>سند مالي رسمي</div></div><div><b>${safeText(r['نوع العملية']||'-')}</b><br>${statusBadgeVoucher(statusOfVoucher(r))}</div></div><div class="grid"><div class="box"><div class="row"><span>رقم السند</span><b>${safeText(r['رقم السند']||'-')}</b></div><div class="row"><span>التاريخ</span><b>${safeText(r['التاريخ']||'-')}</b></div><div class="row"><span>مركز التكلفة</span><b>${safeText(r['مركز التكلفة']||'-')}</b></div><div class="row"><span>طريقة الدفع</span><b>${safeText(r['طريقة الدفع']||'-')}</b></div></div><div class="box"><div class="row"><span>المستفيد/المستلم منه</span><b>${safeText(r['المستلم منه']||r['المستفيد']||r['المورد']||'-')}</b></div><div class="row"><span>المبلغ</span><b>${money(r['المبلغ'])} ر.س</b></div><div class="row"><span>الضريبة</span><b>${money(r['الضريبة'])} ر.س</b></div><div class="row"><span>المستخدم</span><b>${safeText(r['المستخدم']||r.user||'النظام')}</b></div></div></div><div class="box"><b>البيان:</b><p>${safeText(r['البيان']||'-')}</p></div><div class="sig"><div>المحاسب</div><div>المدير / الاعتماد</div></div><script>setTimeout(()=>window.print(),300)<\/script></body></html>`);
+  w.document.close();
+  const {rows,idx}=findFinanceVoucher(id); if(idx>-1){addAuditToVoucher(rows[idx],'طباعة','تمت طباعة السند / PDF');save('finance',rows)}
+}
+function renderFinanceRow(r){
+  const isIn=r['نوع العملية']==='سند قبض';
+  const user=r['المستخدم']||r.user||r['أنشأ بواسطة']||'النظام';
+  return `<tr><td><b>${r['رقم السند']||'-'}</b></td><td>${r['التاريخ']||'-'}</td><td>${r['نوع العملية']||'-'}</td><td>${user}</td><td>${r['مركز التكلفة']||'-'}</td><td>${r['بند الصرف']||'-'}</td><td>${r['طريقة الدفع']||'-'}</td><td>${isIn?money(r['المبلغ']):'-'}</td><td>${!isIn?money(r['المبلغ']):'-'}</td><td>${r['ضريبي']||'غير ضريبي'}</td><td>${statusBadgeVoucher(statusOfVoucher(r))}</td><td>${voucherActionButtons(r)}</td></tr>`;
+}
+function renderFinanceSection(){
+  const allRows=load('finance');
+  const rows=financeApplyFilters(allRows).sort((a,b)=>String(b['التاريخ']||b.created||'').localeCompare(String(a['التاريخ']||a.created||''))||String(b.created||'').localeCompare(String(a.created||'')));
+  const activeRows=allRows.filter(r=>statusOfVoucher(r)!=='ملغي');
+  const receipts=activeRows.filter(r=>r['نوع العملية']==='سند قبض');
+  const payments=activeRows.filter(r=>r['نوع العملية']==='سند صرف');
+  const totalIn=receipts.reduce((a,r)=>a+n(r['المبلغ']),0);
+  const totalOut=payments.reduce((a,r)=>a+n(r['المبلغ']),0);
+  const taxIn=payments.reduce((a,r)=>a+n(r['الضريبة']),0);
+  const todayStr=new Date().toISOString().slice(0,10);
+  const todayRows=allRows.filter(r=>(r['التاريخ']||r.created||'').slice(0,10)===todayStr);
+  const movements=rows.map(renderFinanceRow);
+  const cu=getCurrentUser();
+  byId('finance').innerHTML=`
+    <div class="hero" style="margin-bottom:16px;background:linear-gradient(135deg,#08233f,#0f766e)"><div><span class="kicker">Financial Core V1.0.1</span><h1>الإدارة المالية</h1><p>سندات قبض وصرف مع تعديل، اعتماد، إلغاء، طباعة، PDF وصلاحيات حسب المستخدم.</p></div><div class="health"><span>صافي النقد</span><b>${money(totalIn-totalOut)}</b></div></div>
+    <div class="permission-note">المستخدم الحالي: <b>${cu.name}</b> — الدور: <b>${cu.role}</b>. قبل الاعتماد يمكن التعديل والحذف حسب الصلاحية، وبعد الاعتماد يكون التصحيح عن طريق الإلغاء فقط مع سبب وسجل عمليات.</div>
+    <div class="cards" style="grid-template-columns:repeat(4,minmax(170px,1fr))"><div class="metric"><div><div class="label">إجمالي القبض</div><div class="value green">${money(totalIn)}</div><div class="hint">بدون الملغي</div></div><div class="micon">💰</div></div><div class="metric"><div><div class="label">إجمالي الصرف</div><div class="value red">${money(totalOut)}</div><div class="hint">بدون الملغي</div></div><div class="micon">💸</div></div><div class="metric"><div><div class="label">ضريبة مدخلات</div><div class="value blue">${money(taxIn)}</div><div class="hint">من سندات الصرف</div></div><div class="micon">🧾</div></div><div class="metric"><div><div class="label">حركات اليوم</div><div class="value orange">${todayRows.length}</div><div class="hint">قبض وصرف</div></div><div class="micon">📒</div></div></div>
+    <div class="panel"><div class="panel-title"><h3>⚡ إجراءات مالية سريعة</h3><div><button class="success" onclick="openFinanceReceiptVoucher()">+ سند قبض</button> <button class="danger" onclick="openFinancePaymentVoucher()">+ سند صرف</button> <button class="soft-btn" onclick="printFinanceDailyReport()">طباعة تقرير اليوم</button></div></div><div class="notice">لكل سند الآن أزرار: تعديل، اعتماد، إلغاء، حذف قبل الاعتماد، طباعة/PDF، وعرض التفاصيل مع سجل العمليات.</div></div>
+    ${renderFinanceFilterBar(allRows)}
+    ${renderFinanceSummaryCards(rows)}
+    <div class="grid row2" style="margin-top:16px"><div class="panel"><div class="panel-title"><h3>💰 سندات القبض حسب الفلتر</h3></div><div class="table-wrap"><table>${rowsTable(['السند','التاريخ','من','المركز','المبلغ','طريقة الدفع','إجراء'],rows.filter(r=>r['نوع العملية']==='سند قبض').slice(0,8).map(r=>`<tr><td>${r['رقم السند']||'-'}</td><td>${r['التاريخ']||'-'}</td><td>${r['المستلم منه']||'-'}</td><td>${r['مركز التكلفة']||'-'}</td><td>${money(r['المبلغ'])}</td><td>${r['طريقة الدفع']||'-'}</td><td>${voucherActionButtons(r)}</td></tr>`))}</table></div></div><div class="panel"><div class="panel-title"><h3>💸 سندات الصرف حسب الفلتر</h3></div><div class="table-wrap"><table>${rowsTable(['السند','التاريخ','المستفيد','المركز','البند','الإجمالي','إجراء'],rows.filter(r=>r['نوع العملية']==='سند صرف').slice(0,8).map(r=>`<tr><td>${r['رقم السند']||'-'}</td><td>${r['التاريخ']||'-'}</td><td>${r['المستفيد']||r['المورد']||'-'}</td><td>${r['مركز التكلفة']||'-'}</td><td>${r['بند الصرف']||'-'}</td><td>${money(r['المبلغ'])}</td><td>${voucherActionButtons(r)}</td></tr>`))}</table></div></div></div>
+    <div class="panel" style="margin-top:16px"><div class="panel-title"><h3>📒 الحركات المالية المفلترة</h3><div><button class="soft-btn" onclick="exportFinanceFilteredCSV()">تصدير النتائج CSV</button> <button class="soft-btn" onclick="window.print()">طباعة</button></div></div><div class="table-wrap"><table>${rowsTable(['رقم السند','التاريخ','العملية','المستخدم','مركز التكلفة','البند','طريقة الدفع','قبض','صرف','الضريبة','الاعتماد','إجراء'],movements)}</table></div></div>`;
+}
 
 seedProperties();
 
