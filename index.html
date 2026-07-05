@@ -496,7 +496,7 @@ const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
 const ORG_ID='41e9d7b4-71c1-4de4-b797-f7f5d5e1817d';
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let users=[], currentUser=null, shifts=[], allShifts=[], receiving=[], allReceiving=[], selectedShift=null, posDevices=[], allPosDevices=[], networkMatches=[], allNetworkMatches=[], pendingShiftAttachments=[], selectedShiftAttachments=[], modalIndex=0, modalZoom=1, smartImportRows=[];
-const WORKSPACES=[{id:'retail',icon:'🛒',name:'أسواق سنابل المع',type:'Retail Workspace',hint:'الورديات، الشبكة، المبيعات، الجرد',health:98,warn:0},{id:'contracting',icon:'🏗️',name:'مؤسسة حسن الشريمي',type:'Contracting Workspace',hint:'المقاولات، العهد، المصروفات، المشاريع',health:96,warn:0},{id:'property',icon:'🏠',name:'إدارة العقارات',type:'Property Workspace',hint:'الشقق، المحلات، العقود، السداد',health:94,warn:2},{id:'waqf',icon:'🕌',name:'إدارة الوقف',type:'Waqf Workspace',hint:'العقود الهجرية، الإيرادات، المصروفات',health:97,warn:0},{id:'cafe',icon:'☕',name:'المقاهي والمشاريع',type:'Cafe Workspace',hint:'المبيعات السريعة، الوصفات، التكاليف',health:95,warn:0}];
+const WORKSPACES=[{id:'retail',icon:'🛒',name:'أسواق سنابل المع',type:'Retail Workspace',hint:'الورديات، الشبكة، المبيعات، الجرد',health:98,warn:0},{id:'receivables',icon:'💳',name:'إدارة الذمم المدينة',type:'Receivables Workspace',hint:'سندات القبض، كشف الحساب، العملاء المتأخرون',health:100,warn:0,externalUrl:'appsreceivables/index.html'},{id:'contracting',icon:'🏗️',name:'مؤسسة حسن الشريمي',type:'Contracting Workspace',hint:'المقاولات، العهد، المصروفات، المشاريع',health:96,warn:0},{id:'property',icon:'🏠',name:'إدارة العقارات',type:'Property Workspace',hint:'الشقق، المحلات، العقود، السداد',health:94,warn:2},{id:'waqf',icon:'🕌',name:'إدارة الوقف',type:'Waqf Workspace',hint:'العقود الهجرية، الإيرادات، المصروفات',health:97,warn:0},{id:'cafe',icon:'☕',name:'المقاهي والمشاريع',type:'Cafe Workspace',hint:'المبيعات السريعة، الوصفات، التكاليف',health:95,warn:0}];
 let currentWorkspaceId=localStorage.getItem('sanabel_os_workspace')||'retail';
 const ACCOUNTANT_WHATSAPP_KEY="sanabel_accountant_whatsapp";
 const roleMap={owner:'مدير عام',manager:'مدير',accountant:'محاسب',cashier:'كاشير',purchase_manager:'مدير مشتريات',receiver:'موظف استلام'};
@@ -522,10 +522,17 @@ function renderWorkspaceSwitcher(){
 function renderWorkspaceCards(){
   const box=byId('workspaceCards'); if(!box)return;
   const addCard=`<div class="workspace-card add-workspace" onclick="toast('قريباً: إضافة مساحة عمل جديدة')"><div class="ico">＋</div><h3>إضافة مساحة عمل</h3><p>أنشئ مساحة عمل جديدة لمؤسستك أو نشاطك</p><div class="ws-actions"><button>إضافة الآن</button></div></div>`;
-  const cards=WORKSPACES.map(w=>`<div class="workspace-card ${w.id===currentWorkspaceId?'active':''}" onclick="switchWorkspace('${w.id}')"><div class="ico">${w.icon}</div><h3>${w.name}</h3><p>${w.type}</p><div class="hint">${w.hint}</div><div class="ws-badges"><span>نشط</span><span class="${w.warn?'warn':''}">${w.warn?('تنبيهات '+w.warn):(w.health+'%')}</span></div><div class="ws-actions"><button onclick="event.stopPropagation();switchWorkspace('${w.id}');show('dashboard')">دخول</button><button class="more" onclick="event.stopPropagation();toast('إعدادات '+ '${w.name}')">···</button></div></div>`).join('');
+  const cards=WORKSPACES.map(w=>{
+    const openAction=w.externalUrl?`openWorkspaceApp('${w.externalUrl}')`:`switchWorkspace('${w.id}')`;
+    const enterAction=w.externalUrl?`openWorkspaceApp('${w.externalUrl}')`:`switchWorkspace('${w.id}');show('dashboard')`;
+    return `<div class="workspace-card ${w.id===currentWorkspaceId?'active':''}" onclick="${openAction}"><div class="ico">${w.icon}</div><h3>${w.name}</h3><p>${w.type}</p><div class="hint">${w.hint}</div><div class="ws-badges"><span>نشط</span><span class="${w.warn?'warn':''}">${w.warn?('تنبيهات '+w.warn):(w.health+'%')}</span></div><div class="ws-actions"><button onclick="event.stopPropagation();${enterAction}">دخول</button><button class="more" onclick="event.stopPropagation();toast('إعدادات '+ '${w.name}')">···</button></div></div>`
+  }).join('');
   box.innerHTML=addCard+cards;
 }
+function openWorkspaceApp(url){ window.location.href=url; }
 async function switchWorkspace(id){
+  const target=WORKSPACES.find(w=>w.id===id);
+  if(target?.externalUrl){openWorkspaceApp(target.externalUrl);return;}
   currentWorkspaceId=id||'retail';
   localStorage.setItem('sanabel_os_workspace',currentWorkspaceId);
   renderWorkspaceSwitcher();

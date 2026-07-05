@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نظام مؤسسة حسن محمد الشريمي - V17 Commercial Installments</title>
+<title>نظام مؤسسة حسن محمد الشريمي - V1.0.6 Dashboard Action Routing</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -60,7 +60,14 @@ button,input,select,textarea{font-size:14px}.app{grid-template-columns:282px 1fr
 /* ===== V1.0.1 Voucher Actions & Permissions ===== */
 .action-cell{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.action-cell button{padding:7px 9px;border-radius:10px;font-size:12px;font-weight:900;border:1px solid #dbe6f3;background:#f8fbff;color:#1d4ed8}.action-cell .print{background:#eef6ff}.action-cell .edit{background:#ecfdf5;color:#047857;border-color:#bbf7d0}.action-cell .approve{background:#f0fdf4;color:#166534;border-color:#bbf7d0}.action-cell .cancel{background:#fff7ed;color:#b45309;border-color:#fed7aa}.action-cell .delete{background:#fef2f2;color:#b91c1c;border-color:#fecaca}.action-cell button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.3)}.voucher-status{display:inline-block;border-radius:999px;padding:4px 9px;font-weight:900;font-size:12px}.voucher-status.approved{background:#dcfce7;color:#166534}.voucher-status.waiting{background:#fef3c7;color:#92400e}.voucher-status.cancelled{background:#fee2e2;color:#991b1b}.voucher-status.draft{background:#e0f2fe;color:#075985}.permission-note{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:14px;padding:10px 12px;color:#475569;font-weight:800;margin:10px 0}.audit-box{background:#f8fafc;border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:12px}.audit-line{display:flex;gap:10px;justify-content:space-between;border-bottom:1px dashed #dbe4f0;padding:8px 0;font-size:13px}.audit-line:last-child{border-bottom:0}
 
+.unit-edit-note{background:#fff7ed;border:1px solid #fed7aa;color:#92400e;border-radius:14px;padding:10px 12px;font-weight:900;margin:10px 0}.danger-outline{background:#fff1f2!important;color:#be123c!important;border:1px solid #fecdd3!important}
 </style>
+
+<!-- Release: V1.0.2
+- الإعدادات والتهيئة مع نسخة احتياطية قبل الحذف.
+- توليد دفعات تلقائي لعقود الشقق والمحلات.
+- المحلات التجارية شهري/سنوي فقط، والشقق تدعم يومي/شهري/سنوي.
+-->
 </head>
 <body>
 <div class="app">
@@ -68,7 +75,7 @@ button,input,select,textarea{font-size:14px}.app{grid-template-columns:282px 1fr
   <div class="brand"><div class="logo">🏢</div><div><h1>نظام الشريمي</h1><p>إدارة مؤسسة حسن محمد الشريمي</p></div></div>
   <div class="user-card"><b>مؤسسة حسن محمد الشريمي</b><br><span style="color:#9fb4d2">مقاولات • عقارات • خدمات • مالية</span></div>
   <div class="nav" id="nav"></div>
-  <div class="footer-note">نظام مؤسسة حسن محمد الشريمي V17<br>نسخة تشغيل وتجربة داخل المتصفح</div>
+  <div class="footer-note">نظام مؤسسة حسن محمد الشريمي V1.0.2<br>نسخة تشغيل وتجربة داخل المتصفح</div>
 </aside>
 <main class="main">
   <div class="topbar">
@@ -78,7 +85,7 @@ button,input,select,textarea{font-size:14px}.app{grid-template-columns:282px 1fr
   </div>
 
   <section id="dashboard" class="section active">
-    <div class="hero"><div><span class="kicker">نظام الشريمي V17</span><h1>مرحبًا بك في لوحة المدير</h1><p>مؤشرات يومية، تقارير مالية، متابعة مشاريع، عقارات، مشتريات، خدمات وموارد بشرية من شاشة واحدة.</p></div><div class="health"><span>النظام يعمل بكفاءة</span><b>98%</b><span>صحة النظام</span></div></div>
+    <div class="hero"><div><span class="kicker">نظام الشريمي V1.0.2</span><h1>مرحبًا بك في لوحة المدير</h1><p>مؤشرات يومية، تقارير مالية، متابعة مشاريع، عقارات، مشتريات، خدمات وموارد بشرية من شاشة واحدة.</p></div><div class="health"><span>النظام يعمل بكفاءة</span><b>98%</b><span>صحة النظام</span></div></div>
     
     <div class="command-center" id="commandCenter">
       <div class="command-panel">
@@ -240,7 +247,7 @@ function renderProperties(){
       <div class="prop-kpi"><span>المتأخرات</span><b class="red">${moneyProp(due)}</b></div>
     </div>
     <div class="panel">
-      <div class="panel-title"><h3>${center?.type?.includes('محلات')?'🏢':'🏠'} ${center?.name||'العقارات'}</h3><div class="actions" style="margin:0"><button class="soft-btn" onclick="printPage()">طباعة</button><button class="soft-btn" onclick="exportPropertyCSV()">تصدير CSV</button></div></div>
+      <div class="panel-title"><h3>${center?.type?.includes('محلات')?'🏢':'🏠'} ${center?.name||'العقارات'}</h3><div class="actions" style="margin:0"><button class="soft-btn" onclick="openEditCenterForm(currentPropertyCenter)">تعديل المركز</button><button class="soft-btn" onclick="printPage()">طباعة</button><button class="soft-btn" onclick="exportPropertyCSV()">تصدير CSV</button></div></div>
       <div class="prop-toolbar">
         <div class="field"><label>بحث</label><input id="propSearch" oninput="filterUnits()" placeholder="رقم الوحدة أو اسم المستأجر"></div>
         <div class="field"><label>النوع</label><select id="propTypeFilter" onchange="filterUnits()"><option value="all">الكل</option><option>شقة</option><option>محل</option></select></div>
@@ -333,6 +340,75 @@ function saveBulkUnits(){
 }
 
 function saveUnit(){const no=byId('u_no').value.trim();if(!no)return alert('أدخل رقم الوحدة');const rows=propLoad(PROP_UNITS_KEY);rows.unshift({id:Date.now(),center_id:byId('u_center').value,type:byId('u_type').value,unit_no:no,status:byId('u_status').value,tenant:byId('u_tenant').value,rent:byId('u_rent').value,due:byId('u_due').value,last_payment:byId('u_last').value||'-',electric_account:byId('u_electric').value,note:byId('u_note').value});propSave(PROP_UNITS_KEY,rows);currentPropertyCenter=byId('u_center').value;closeModal();renderProperties();renderDashboard()}
+
+function propertyCentersOptions(selected){
+  return propLoad(PROP_CENTERS_KEY).map(c=>`<option value="${c.id}" ${String(c.id)===String(selected)?'selected':''}>${c.name}</option>`).join('');
+}
+function openEditUnitForm(unitId){
+  seedProperties();
+  const u=getUnit(unitId); if(!u)return alert('لم يتم العثور على الوحدة');
+  const c=getCenter(u.center_id)||{};
+  byId('modalTitle').textContent='تعديل بيانات الوحدة - '+u.type+' '+u.unit_no;
+  byId('modalBody').innerHTML=`
+    <div class="unit-edit-note">تعديل بيانات الشقق والمحلات هنا لا يحذف العقود أو السندات السابقة، وإنما يحدث كرت الوحدة وملفها فقط.</div>
+    <div class="form">
+      <div class="field"><label>مركز التكلفة</label><select id="eu_center">${propertyCentersOptions(u.center_id)}</select></div>
+      <div class="field"><label>النوع</label><select id="eu_type"><option ${u.type==='شقة'?'selected':''}>شقة</option><option ${u.type==='محل'?'selected':''}>محل</option></select></div>
+      <div class="field"><label>رقم الوحدة / المحل</label><input id="eu_no" value="${u.unit_no||''}" placeholder="101 / محل 1"></div>
+      <div class="field"><label>الحالة</label><select id="eu_status"><option ${u.status==='متاح'?'selected':''}>متاح</option><option ${u.status==='مؤجر'?'selected':''}>مؤجر</option><option ${u.status==='صيانة'?'selected':''}>صيانة</option></select></div>
+      <div class="field"><label>المستأجر الحالي</label><input id="eu_tenant" value="${u.tenant||''}"></div>
+      <div class="field"><label>رقم الجوال</label><input id="eu_phone" value="${u.phone||''}" placeholder="05xxxxxxxx"></div>
+      <div class="field"><label>الإيجار الشهري</label><input id="eu_rent" type="number" step="0.01" value="${u.rent||0}"></div>
+      <div class="field"><label>المستحق الحالي</label><input id="eu_due" type="number" step="0.01" value="${u.due||0}"></div>
+      <div class="field"><label>آخر سداد</label><input id="eu_last" type="date" value="${(u.last_payment&&u.last_payment!=='-')?String(u.last_payment).slice(0,10):''}"></div>
+      <div class="field"><label>حساب الكهرباء</label><input id="eu_electric" value="${u.electric_account||''}"></div>
+      <div class="field"><label>الدور / الموقع الداخلي</label><input id="eu_floor" value="${u.floor||''}" placeholder="الدور الخامس / الواجهة / الخلفي"></div>
+      <div class="field"><label>المساحة</label><input id="eu_area" value="${u.area||''}" placeholder="اختياري"></div>
+      <div class="field"><label>ملاحظة</label><input id="eu_note" value="${u.note||''}"></div>
+    </div>
+    <div class="actions">
+      <button class="success" onclick="saveUnitEdit('${unitId}')">حفظ التعديل</button>
+      <button class="soft-btn" onclick="openUnitProfile('${unitId}')">رجوع لملف الوحدة</button>
+      <button class="danger-outline" onclick="deleteUnitWithCheck('${unitId}')">حذف الوحدة</button>
+      <button class="soft-btn" onclick="closeModal()">إلغاء</button>
+    </div>`;
+  byId('modal').classList.add('show');
+}
+function saveUnitEdit(unitId){
+  const u=getUnit(unitId); if(!u)return alert('لم يتم العثور على الوحدة');
+  const newCenter=byId('eu_center').value, newNo=byId('eu_no').value.trim();
+  if(!newNo)return alert('أدخل رقم الوحدة أو المحل');
+  const rows=propLoad(PROP_UNITS_KEY);
+  const duplicate=rows.some(x=>String(x.id)!==String(unitId)&&String(x.center_id)===String(newCenter)&&String(x.unit_no).trim()===newNo);
+  if(duplicate&&!confirm('يوجد وحدة بنفس الرقم في نفس مركز التكلفة. هل تريد المتابعة؟'))return;
+  updateUnit(unitId,{center_id:newCenter,type:byId('eu_type').value,unit_no:newNo,status:byId('eu_status').value,tenant:byId('eu_tenant').value,phone:byId('eu_phone').value,rent:n(byId('eu_rent').value),due:n(byId('eu_due').value),last_payment:byId('eu_last').value||'-',electric_account:byId('eu_electric').value,floor:byId('eu_floor').value,area:byId('eu_area').value,note:byId('eu_note').value,updated_at:new Date().toISOString()});
+  currentPropertyCenter=newCenter;
+  renderProperties();renderDashboard();
+  byId('modalTitle').textContent='تم تعديل الوحدة';
+  byId('modalBody').innerHTML=`<div class="success-box" style="background:#ecfdf5;border:1px solid #86efac;color:#14532d;border-radius:18px;padding:16px;font-weight:900">✅ تم حفظ تعديلات الوحدة بنجاح.</div><div class="actions"><button class="primary" onclick="openUnitProfile('${unitId}')">فتح ملف الوحدة</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`;
+}
+function deleteUnitWithCheck(unitId){
+  const u=getUnit(unitId); if(!u)return alert('لم يتم العثور على الوحدة');
+  const hasContracts=linkedLoad('contracts').some(r=>String(r.unit_id)===String(unitId));
+  const hasPayments=linkedLoad('payments').some(r=>String(r.unit_id)===String(unitId));
+  const hasExpenses=linkedLoad('expenses').some(r=>String(r.unit_id)===String(unitId));
+  if(hasContracts||hasPayments||hasExpenses){alert('لا يمكن حذف الوحدة لأنها مرتبطة بعقود أو سندات أو مصروفات. غيّر حالتها إلى صيانة أو متاح بدلاً من الحذف.');return;}
+  if(!confirm('حذف الوحدة نهائياً؟'))return;
+  propSave(PROP_UNITS_KEY,propLoad(PROP_UNITS_KEY).filter(x=>String(x.id)!==String(unitId)));
+  closeModal();renderProperties();renderDashboard();
+}
+function openEditCenterForm(centerId){
+  const centers=propLoad(PROP_CENTERS_KEY);const c=centers.find(x=>String(x.id)===String(centerId));if(!c)return alert('لم يتم العثور على مركز التكلفة');
+  byId('modalTitle').textContent='تعديل مركز التكلفة - '+c.name;
+  byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>اسم مركز التكلفة</label><input id="ec_name" value="${c.name||''}"></div><div class="field"><label>النوع</label><select id="ec_type"><option ${c.type==='شقق سكنية'?'selected':''}>شقق سكنية</option><option ${c.type==='محلات تجارية'?'selected':''}>محلات تجارية</option><option ${c.type==='مختلط'?'selected':''}>مختلط</option><option ${c.type==='عام'?'selected':''}>عام</option></select></div><div class="field"><label>الموقع</label><input id="ec_location" value="${c.location||''}"></div><div class="field"><label>ملاحظة</label><input id="ec_note" value="${c.note||''}"></div></div><div class="actions"><button class="success" onclick="saveCenterEdit('${centerId}')">حفظ التعديل</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;
+  byId('modal').classList.add('show');
+}
+function saveCenterEdit(centerId){
+  const centers=propLoad(PROP_CENTERS_KEY);const i=centers.findIndex(x=>String(x.id)===String(centerId));if(i<0)return;
+  centers[i]={...centers[i],name:byId('ec_name').value.trim()||centers[i].name,type:byId('ec_type').value,location:byId('ec_location').value,note:byId('ec_note').value,updated_at:new Date().toISOString()};
+  propSave(PROP_CENTERS_KEY,centers);closeModal();renderProperties();renderDashboard();
+}
+
 
 function getUnit(id){return propLoad(PROP_UNITS_KEY).find(u=>String(u.id)===String(id))}
 function getCenter(id){return propLoad(PROP_CENTERS_KEY).find(c=>c.id===id)}
@@ -966,19 +1042,21 @@ openContractArchive=function(contractId){
         <div class="unit-row"><span>المستأجر</span><b>${u.tenant||'-'}</b></div>
         <div class="unit-row"><span>الإيجار</span><b>${moneyProp(u.rent)} ر.س</b></div>
         <div class="unit-row"><span>المستحق</span><b class="${Number(u.due)>0?'red':''}">${moneyProp(u.due)} ر.س</b></div>
+        <div class="unit-row"><span>حساب الكهرباء</span><b>${u.electric_account||'-'}</b></div>
+        ${(u.floor||u.area)?`<div class="unit-row"><span>تفاصيل</span><b>${[u.floor,u.area].filter(Boolean).join(' - ')}</b></div>`:''}
         ${extra}
       </div>
-      <div class="unit-actions" onclick="event.stopPropagation()">${isRented?`<button class="primary-mini" onclick="unitAction('${u.id}','سداد')">سداد</button><button onclick="openUnitProfile('${u.id}','contracts')">العقد</button><button onclick="unitAction('${u.id}','خروج')">خروج</button>`:`<button class="primary-mini" onclick="unitAction('${u.id}','عقد')">عقد</button><button onclick="openUnitProfile('${u.id}','finance')">المالية</button><button onclick="openUnitProfile('${u.id}','services')">الخدمات</button>`}</div>
+      <div class="unit-actions" onclick="event.stopPropagation()">${isRented?`<button class="primary-mini" onclick="unitAction('${u.id}','سداد')">سداد</button><button onclick="openUnitProfile('${u.id}','contracts')">العقد</button><button onclick="unitAction('${u.id}','خروج')">خروج</button><button onclick="openEditUnitForm('${u.id}')">تعديل</button>`:`<button class="primary-mini" onclick="unitAction('${u.id}','عقد')">عقد</button><button onclick="openUnitProfile('${u.id}','finance')">المالية</button><button onclick="openUnitProfile('${u.id}','services')">الخدمات</button><button onclick="openEditUnitForm('${u.id}')">تعديل</button>`}</div>
       <div class="more-hint"><span>اضغط الكرت لفتح ملف الوحدة الكامل</span><b>فتح الملف ›</b></div>
     </div>`;
   };
 })();
 function ensureContextMenu(){let m=document.getElementById('unitContextMenu');if(!m){m=document.createElement('div');m.id='unitContextMenu';m.className='context-menu';document.body.appendChild(m);document.addEventListener('click',()=>m.style.display='none')}return m}
-function openUnitContextMenu(e,unitId){e.preventDefault();const u=getUnit(unitId);if(!u)return;const m=ensureContextMenu();m.innerHTML=`<button onclick="openUnitProfile('${unitId}')">📂 فتح ملف الوحدة</button><button onclick="unitAction('${unitId}','${u.status==='مؤجر'?'سداد':'عقد'}')">${u.status==='مؤجر'?'💵 سداد':'📄 إصدار عقد'}</button><button onclick="openUnitProfile('${unitId}','finance')">💰 كشف مالي</button><button onclick="openUnitProfile('${unitId}','services')">⚡ الكهرباء والخدمات</button><button onclick="openUnitProfile('${unitId}','maintenance')">🛠 الصيانة</button><button onclick="openTenantMessage('${unitId}','عقد')">📬 إرسال واتساب</button><button onclick="openUnitReport('${unitId}',getCenter('${u.center_id}'))">📊 تقرير تفصيلي</button>`;m.style.right=(window.innerWidth-e.clientX)+'px';m.style.top=e.clientY+'px';m.style.display='block'}
+function openUnitContextMenu(e,unitId){e.preventDefault();const u=getUnit(unitId);if(!u)return;const m=ensureContextMenu();m.innerHTML=`<button onclick="openUnitProfile('${unitId}')">📂 فتح ملف الوحدة</button><button onclick="openEditUnitForm('${unitId}')">✏️ تعديل بيانات الوحدة</button><button onclick="unitAction('${unitId}','${u.status==='مؤجر'?'سداد':'عقد'}')">${u.status==='مؤجر'?'💵 سداد':'📄 إصدار عقد'}</button><button onclick="openUnitProfile('${unitId}','finance')">💰 كشف مالي</button><button onclick="openUnitProfile('${unitId}','services')">⚡ الكهرباء والخدمات</button><button onclick="openUnitProfile('${unitId}','maintenance')">🛠 الصيانة</button><button onclick="openTenantMessage('${unitId}','عقد')">📬 إرسال واتساب</button><button onclick="openUnitReport('${unitId}',getCenter('${u.center_id}'))">📊 تقرير تفصيلي</button>`;m.style.right=(window.innerWidth-e.clientX)+'px';m.style.top=e.clientY+'px';m.style.display='block'}
 function unitProfileData(unitId){const u=getUnit(unitId),c=u?getCenter(u.center_id)||{}:{};const active=u?activeContractForUnit(u.id):null;const fs=active?contractFinancialSummary(active.id):{inst:[],total:0,paid:0,remaining:0,paidCount:0,partialCount:0,lateCount:0,lastPaid:'-'};const contracts=linkedLoad('contracts').filter(x=>u&&String(x.unit_id)===String(u.id)&&x['نوع العقد']!=='خروج').sort((a,b)=>String(b.created||b.id||'').localeCompare(String(a.created||a.id||'')));const old=active?contracts.filter(x=>String(x.id)!==String(active.id)):contracts;const payments=linkedLoad('payments').filter(x=>u&&String(x.unit_id)===String(u.id));const expenses=linkedLoad('expenses').filter(x=>u&&String(x.unit_id)===String(u.id));const services=linkedLoad('services').filter(x=>u&&String(x.unit_id)===String(u.id));return {u,c,active,fs,contracts,old,payments,expenses,services}}
 function openUnitProfile(unitId,tab='overview'){const d=unitProfileData(unitId);if(!d.u)return alert('لم يتم العثور على الوحدة');byId('modalTitle').textContent='ملف الوحدة - '+d.u.type+' '+d.u.unit_no;byId('modalBody').innerHTML=renderUnitProfileShell(d,tab);byId('modal').classList.add('show')}
 function switchUnitTab(unitId,tab){const d=unitProfileData(unitId);const box=byId('unitTabContent');if(!box)return;document.querySelectorAll('.unit-tabs button').forEach(b=>b.classList.remove('active'));const btn=byId('tab_'+tab);if(btn)btn.classList.add('active');box.innerHTML=renderUnitTab(d,tab)}
-function renderUnitProfileShell(d,tab){return `<div class="unit-profile-head"><div class="unit-profile-card"><div class="unit-profile-title"><h3>${d.u.type==='محل'?'🏢':'🏠'} ${d.u.type} ${d.u.unit_no}</h3>${statusBadge(d.u.status)}</div><div class="grid row3" style="margin-top:12px"><div class="report-box"><span>مركز التكلفة</span><b>${d.c.name||'-'}</b></div><div class="report-box"><span>المستأجر الحالي</span><b>${d.u.tenant||'-'}</b></div><div class="report-box"><span>حساب الكهرباء</span><b>${d.u.electric_account||'-'}</b></div></div><div class="unit-quick-actions"><button onclick="unitAction('${d.u.id}','${d.u.status==='مؤجر'?'سداد':'عقد'}')">${d.u.status==='مؤجر'?'💵 سداد':'📄 عقد جديد'}</button><button onclick="unitAction('${d.u.id}','خروج')">🚪 خروج</button><button onclick="openTenantMessage('${d.u.id}','عقد')">📬 واتساب</button><button onclick="printPage()">🖨️ طباعة</button></div></div><div class="unit-profile-card"><h3 style="margin:0 0 10px">الملخص المالي</h3><div class="report-box"><span>قيمة العقد الحالي</span><b>${moneyProp(d.fs.total)} ر.س</b></div><div class="report-box"><span>المسدد</span><b class="green">${moneyProp(d.fs.paid)} ر.س</b></div><div class="report-box"><span>المتبقي</span><b class="red">${moneyProp(d.fs.remaining)} ر.س</b></div></div></div><div class="compact-note">لتقليل الأيقونات: كل تفاصيل الشقة أو المحل موجودة هنا داخل ملف الوحدة، ولا تظهر كأيقونات مستقلة في القائمة الرئيسية.</div><div class="unit-tabs"><button id="tab_overview" class="${tab==='overview'?'active':''}" onclick="switchUnitTab('${d.u.id}','overview')">نظرة عامة</button><button id="tab_contracts" class="${tab==='contracts'?'active':''}" onclick="switchUnitTab('${d.u.id}','contracts')">العقود</button><button id="tab_finance" class="${tab==='finance'?'active':''}" onclick="switchUnitTab('${d.u.id}','finance')">المالية</button><button id="tab_services" class="${tab==='services'?'active':''}" onclick="switchUnitTab('${d.u.id}','services')">الكهرباء والخدمات</button><button id="tab_maintenance" class="${tab==='maintenance'?'active':''}" onclick="switchUnitTab('${d.u.id}','maintenance')">الصيانة</button><button id="tab_files" class="${tab==='files'?'active':''}" onclick="switchUnitTab('${d.u.id}','files')">المرفقات</button><button id="tab_stats" class="${tab==='stats'?'active':''}" onclick="switchUnitTab('${d.u.id}','stats')">الإحصائيات</button></div><div id="unitTabContent">${renderUnitTab(d,tab)}</div><div class="actions"><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`}
+function renderUnitProfileShell(d,tab){return `<div class="unit-profile-head"><div class="unit-profile-card"><div class="unit-profile-title"><h3>${d.u.type==='محل'?'🏢':'🏠'} ${d.u.type} ${d.u.unit_no}</h3>${statusBadge(d.u.status)}</div><div class="grid row3" style="margin-top:12px"><div class="report-box"><span>مركز التكلفة</span><b>${d.c.name||'-'}</b></div><div class="report-box"><span>المستأجر الحالي</span><b>${d.u.tenant||'-'}</b></div><div class="report-box"><span>حساب الكهرباء</span><b>${d.u.electric_account||'-'}</b></div></div><div class="unit-quick-actions"><button onclick="unitAction('${d.u.id}','${d.u.status==='مؤجر'?'سداد':'عقد'}')">${d.u.status==='مؤجر'?'💵 سداد':'📄 عقد جديد'}</button><button onclick="unitAction('${d.u.id}','خروج')">🚪 خروج</button><button onclick="openTenantMessage('${d.u.id}','عقد')">📬 واتساب</button><button onclick="printPage()">🖨️ طباعة</button><button onclick="openEditUnitForm('${d.u.id}')">✏️ تعديل الوحدة</button></div></div><div class="unit-profile-card"><h3 style="margin:0 0 10px">الملخص المالي</h3><div class="report-box"><span>قيمة العقد الحالي</span><b>${moneyProp(d.fs.total)} ر.س</b></div><div class="report-box"><span>المسدد</span><b class="green">${moneyProp(d.fs.paid)} ر.س</b></div><div class="report-box"><span>المتبقي</span><b class="red">${moneyProp(d.fs.remaining)} ر.س</b></div></div></div><div class="compact-note">لتقليل الأيقونات: كل تفاصيل الشقة أو المحل موجودة هنا داخل ملف الوحدة، ولا تظهر كأيقونات مستقلة في القائمة الرئيسية.</div><div class="unit-tabs"><button id="tab_overview" class="${tab==='overview'?'active':''}" onclick="switchUnitTab('${d.u.id}','overview')">نظرة عامة</button><button id="tab_contracts" class="${tab==='contracts'?'active':''}" onclick="switchUnitTab('${d.u.id}','contracts')">العقود</button><button id="tab_finance" class="${tab==='finance'?'active':''}" onclick="switchUnitTab('${d.u.id}','finance')">المالية</button><button id="tab_services" class="${tab==='services'?'active':''}" onclick="switchUnitTab('${d.u.id}','services')">الكهرباء والخدمات</button><button id="tab_maintenance" class="${tab==='maintenance'?'active':''}" onclick="switchUnitTab('${d.u.id}','maintenance')">الصيانة</button><button id="tab_files" class="${tab==='files'?'active':''}" onclick="switchUnitTab('${d.u.id}','files')">المرفقات</button><button id="tab_stats" class="${tab==='stats'?'active':''}" onclick="switchUnitTab('${d.u.id}','stats')">الإحصائيات</button></div><div id="unitTabContent">${renderUnitTab(d,tab)}</div><div class="actions"><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`}
 function renderUnitTab(d,tab){if(tab==='contracts')return renderUnitContractsTab(d);if(tab==='finance')return renderUnitFinanceTab(d);if(tab==='services')return renderUnitServicesTab(d);if(tab==='maintenance')return renderUnitMaintenanceTab(d);if(tab==='files')return renderUnitFilesTab(d);if(tab==='stats')return renderUnitStatsTab(d);return renderUnitOverviewTab(d)}
 function renderUnitOverviewTab(d){return `<div class="panel"><div class="panel-title"><h3>نظرة عامة</h3>${d.active?`<button class="primary" onclick="printContract('${d.active.id}')">طباعة العقد</button>`:''}</div><div class="grid row3"><div class="report-box"><span>رقم العقد الحالي</span><b>${d.active?formalContractNo(d.active):'-'}</b></div><div class="report-box"><span>بداية العقد</span><b>${d.active?d.active['تاريخ البداية']||'-':'-'}</b></div><div class="report-box"><span>نهاية العقد</span><b>${d.active?d.active['تاريخ النهاية']||'-':'-'}</b></div><div class="report-box"><span>الدفعات</span><b>${d.fs.paidCount} مدفوعة / ${d.fs.inst.length}</b></div><div class="report-box"><span>المتأخرة</span><b class="red">${d.fs.lateCount}</b></div><div class="report-box"><span>آخر سداد</span><b>${d.fs.lastPaid}</b></div></div></div>`}
 function renderUnitContractsTab(d){return `<div class="panel"><div class="panel-title"><h3>العقد الحالي</h3>${d.active?`<button class="soft-btn" onclick="openUnitReport('${d.u.id}',getCenter('${d.u.center_id}'))">عرض تفصيلي</button>`:''}</div>${d.active?`<div class="table-wrap"><table><thead><tr><th>الدفعة</th><th>الاستحقاق</th><th>الفترة</th><th>المبلغ</th><th>المدفوع</th><th>المتبقي</th><th>الحالة</th></tr></thead><tbody>${d.fs.inst.map(r=>`<tr><td>${r['رقم الدفعة']}</td><td>${r['تاريخ الاستحقاق']||'-'}</td><td>${(r['الفترة من']||'-')+(r['الفترة إلى']?' إلى '+r['الفترة إلى']:'')}</td><td>${moneyProp(r['المبلغ'])}</td><td>${moneyProp(installmentPaid(r))}</td><td>${moneyProp(installmentRemaining(r))}</td><td><span class="badge ${r['الحالة']==='مدفوع'?'ok':(r['الحالة']==='جزئي'?'info':(r['الحالة']==='ملغاة'?'bad':'warn'))}">${r['الحالة']}</span></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا يوجد عقد نشط</div>'}</div><div class="panel" style="margin-top:12px"><div class="panel-title"><h3>العقود السابقة</h3></div><div class="table-wrap"><table>${rowsTable(['رقم العقد','المستأجر','الفترة','الحالة','إجراء'],d.old.map(ct=>`<tr><td>${formalContractNo(ct)}</td><td>${ct['المستأجر']||'-'}</td><td>${ct['تاريخ البداية']||'-'} إلى ${ct['تاريخ النهاية']||'-'}</td><td>${ct['الحالة']||'-'}</td><td><button class="soft-btn" onclick="openContractArchive('${ct.id}')">عرض الأرشيف</button></td></tr>`))}</table></div></div>`}
@@ -1111,7 +1189,7 @@ function renderFinanceSection(){
 
 
 // ===== V22: System Reset & Backup Center =====
-const SYSTEM_BACKUP_VERSION='الشريمي ERP V22';
+const SYSTEM_BACKUP_VERSION='الشريمي ERP V1.0.3';
 function managedStorageKeys(){
   const keys=[];
   for(let i=0;i<localStorage.length;i++){
@@ -1339,6 +1417,251 @@ function renderFinanceSection(){
     ${renderFinanceSummaryCards(rows)}
     <div class="grid row2" style="margin-top:16px"><div class="panel"><div class="panel-title"><h3>💰 سندات القبض حسب الفلتر</h3></div><div class="table-wrap"><table>${rowsTable(['السند','التاريخ','من','المركز','المبلغ','طريقة الدفع','إجراء'],rows.filter(r=>r['نوع العملية']==='سند قبض').slice(0,8).map(r=>`<tr><td>${r['رقم السند']||'-'}</td><td>${r['التاريخ']||'-'}</td><td>${r['المستلم منه']||'-'}</td><td>${r['مركز التكلفة']||'-'}</td><td>${money(r['المبلغ'])}</td><td>${r['طريقة الدفع']||'-'}</td><td>${voucherActionButtons(r)}</td></tr>`))}</table></div></div><div class="panel"><div class="panel-title"><h3>💸 سندات الصرف حسب الفلتر</h3></div><div class="table-wrap"><table>${rowsTable(['السند','التاريخ','المستفيد','المركز','البند','الإجمالي','إجراء'],rows.filter(r=>r['نوع العملية']==='سند صرف').slice(0,8).map(r=>`<tr><td>${r['رقم السند']||'-'}</td><td>${r['التاريخ']||'-'}</td><td>${r['المستفيد']||r['المورد']||'-'}</td><td>${r['مركز التكلفة']||'-'}</td><td>${r['بند الصرف']||'-'}</td><td>${money(r['المبلغ'])}</td><td>${voucherActionButtons(r)}</td></tr>`))}</table></div></div></div>
     <div class="panel" style="margin-top:16px"><div class="panel-title"><h3>📒 الحركات المالية المفلترة</h3><div><button class="soft-btn" onclick="exportFinanceFilteredCSV()">تصدير النتائج CSV</button> <button class="soft-btn" onclick="window.print()">طباعة</button></div></div><div class="table-wrap"><table>${rowsTable(['رقم السند','التاريخ','العملية','المستخدم','مركز التكلفة','البند','طريقة الدفع','قبض','صرف','الضريبة','الاعتماد','إجراء'],movements)}</table></div></div>`;
+}
+
+
+// ===== V1.0.3 Production Reset Fix: تصفير المؤشرات بعد التهيئة ومنع البيانات التجريبية =====
+const SYSTEM_RELEASE='V1.0.3 - Reset Fix & Installments';
+// منع إنشاء بيانات تجريبية جديدة عند فتح النظام على متصفح جديد
+seed=function(){
+  if(!localStorage.getItem(LS+'seed')){
+    if(!load('users').length){
+      save('users',[{id:1,'اسم المستخدم':'أبو قصي','الجوال':'05xxxxxxxx','الدور':'مالك النظام','الصلاحية':'كامل','الحالة':'نشط',created:new Date().toISOString()}]);
+    }
+    localStorage.setItem(LS+'seed','1');
+  }
+};
+function resetModuleData(keys){ keys.forEach(k=>localStorage.setItem(LS+k,'[]')); }
+resetOperationalData=function(){
+  if(!requireResetApproval('operational')) return;
+  createFullBackup('قبل تهيئة البيانات التشغيلية V1.0.3');
+  // يمسح كل البيانات التشغيلية والتجريبية التي تظهر في لوحة المدير
+  resetModuleData([
+    'projects','properties','contracts','payments','rent_installments','finance','tax','expenses','services','purchases',
+    'equipment','hr','expenseItems','communication_logs','contract_timeline','alerts','receipts','vouchers','suppliers','reports'
+  ]);
+  // مفاتيح العقارات المرتبطة خارج بادئة LS
+  ['hasan_property_contracts_v1','hasan_property_installments_v1','hasan_property_timeline_v1','hasan_property_receipts_v1'].forEach(k=>localStorage.setItem(k,'[]'));
+  // تنظيف الوحدات مع إبقاء مراكز التكلفة وأرقام الوحدات فقط
+  const units=propLoad(PROP_UNITS_KEY).map(u=>({
+    ...u,status:'متاح',tenant:'',phone:'',due:0,total_remaining:0,last_payment:'-',contract_id:'',contract_end:'',rent:n(u.rent||0),note:u.note||''
+  }));
+  propSave(PROP_UNITS_KEY,units);
+  localStorage.setItem(LS+'seed','1');
+  alert('تمت التهيئة بنجاح. تم تصفير الإيرادات والمصروفات والتنبيهات والحركات، وبقيت مراكز التكلفة والوحدات فقط.');
+  renderDashboard(); if(typeof renderSystemSettings==='function') renderSystemSettings();
+};
+renderAlerts=function(){
+  const services=load('services').filter(x=>(x['حالة السداد']||x['الحالة']||'')!=='مسدد');
+  const purchases=load('purchases').filter(x=>(x['حالة السداد']||x['الحالة']||'')!=='مسدد');
+  const contracts=propLoad('hasan_property_contracts_v1')||[];
+  const today=new Date();
+  const soon=contracts.filter(c=>{const d=new Date(c['تاريخ النهاية']||c.end_date||'');return !isNaN(d)&&d>=today&&((d-today)/(1000*60*60*24))<=30});
+  const arr=[];
+  if(services.length) arr.push(['⚡',`${services.length} فواتير خدمات مستحقة`,'تحتاج متابعة','red']);
+  if(soon.length) arr.push(['📄',`${soon.length} عقود على وشك الانتهاء`,'خلال 30 يوم','orange']);
+  if(purchases.length) arr.push(['🛒',`${purchases.length} فواتير مشتريات غير مسددة`,'راجع الموردين','red']);
+  byId('alertCount').textContent=arr.length;
+  byId('alertsList').innerHTML=arr.length?arr.map(a=>`<div class="alert"><div class="ai">${a[0]}</div><div><b>${a[1]}</b><span>${a[2]}</span></div><div class="status-dot" style="background:${a[3]==='red'?'#ef4444':'#f59e0b'}"></div></div>`).join(''):'<div class="empty">لا توجد تنبيهات حالية</div>';
+  byId('alerts').innerHTML=`<div class="panel"><div class="panel-title"><h3>جميع التنبيهات والمهام</h3><button class="primary" onclick="openModal('مهمة جديدة')">إضافة مهمة</button></div><div class="alerts">${byId('alertsList').innerHTML}</div></div>`;
+};
+renderDashboard=function(){
+  const fin=load('finance').filter(r=>statusOfVoucher?statusOfVoucher(r)!=='ملغي':true);
+  const receipts=fin.filter(r=>r['نوع العملية']==='سند قبض').reduce((a,r)=>a+n(r['المبلغ']),0);
+  const payVouchers=fin.filter(r=>r['نوع العملية']==='سند صرف').reduce((a,r)=>a+n(r['المبلغ']),0);
+  const purchases=total('purchases','المبلغ قبل الضريبة')+total('purchases','الضريبة');
+  const expenses=total('expenses','المبلغ')+total('expenses','الضريبة')+payVouchers;
+  const projectRevenue=total('projects','قيمة العقد');
+  const propertyRevenue=receipts + total('payments','المبلغ');
+  const rev=projectRevenue+propertyRevenue;
+  const profit=rev-expenses-purchases;
+  const cash=receipts-payVouchers;
+  byId('metrics').innerHTML=[['الرصيد النقدي',cash,'حسب سندات القبض والصرف','💼','blue'],['صافي الربح',profit,'حسب البيانات الحالية','📈',profit<0?'red':'green'],['إجمالي الإيرادات',rev,'مشاريع + عقارات','💵','green'],['إجمالي المشتريات',purchases,'مشتريات وضريبة','🛒','blue'],['إجمالي المصروفات',expenses,'مصروفات وخدمات','💳','red']].map(x=>`<div class="metric"><div><div class="label">${x[0]}</div><div class="value ${x[4]}">${money(x[1])}</div><div class="hint">${x[2]}</div></div><div class="micon">${x[3]}</div></div>`).join('');
+  byId('miniStats').innerHTML=[['المشاريع النشطة',load('projects').length,'🏗'],['الوحدات العقارية',propLoad(PROP_UNITS_KEY).length,'🏠'],['الموظفون',load('hr').length,'👥'],['الموردون',load('purchases').length,'🤝'],['المعدات',load('equipment').length,'🚜']].map(x=>`<div class="mini"><div><span class="hint">${x[0]}</span><br><b>${x[1]}</b></div><div class="micon">${x[2]}</div></div>`).join('');
+  byId('donutTotal').textContent=money(expenses).replace('.00','');
+  byId('expenseDist').innerHTML=expenses>0?[['المشاريع','35%'],['العقارات','25%'],['المشتريات','20%'],['الموظفين','10%'],['المصاريف العامة','10%']].map(x=>`<div class="ditem"><span>${x[0]}</span><b>${x[1]}</b></div>`).join(''):'<div class="empty">لا توجد مصروفات بعد</div>';
+  renderAlerts(); renderChart(); renderReports(); renderCommandCenter();
+};
+renderCommandCenter=function(){
+  const d=commandData();
+  const serviceDue=d.services.filter(x=>(x['حالة السداد']||x['الحالة']||'')!=='مسدد').length;
+  const purchaseDue=d.purchases.filter(x=>(x['حالة السداد']||x['الحالة']||'')!=='مسدد').length;
+  const equipmentMaint=load('equipment').filter(x=>(x['الحالة']||'').includes('صيانة') || (x['الحالة']||'')==='متوقفة').length;
+  const hrDue=0;
+  const tiles=[
+    {key:'contracts_soon',emoji:'📄',count:d.soonContracts.length,title:'عقود تنتهي قريبًا',hint:'خلال 30 يوم',color:'orange'},
+    {key:'contracts_expired',emoji:'⛔',count:d.expiredContracts.length,title:'عقود منتهية',hint:'تحتاج إجراء',color:'red'},
+    {key:'services_due',emoji:'⚡',count:serviceDue,title:'فواتير خدمات مستحقة',hint:'كهرباء ومياه واتصالات',color:'red'},
+    {key:'finance_waiting',emoji:'✅',count:d.waiting.length,title:'سندات تنتظر اعتماد',hint:'قبض وصرف',color:'orange'},
+    {key:'purchases_due',emoji:'🛒',count:purchaseDue,title:'مشتريات غير مسددة',hint:'فواتير موردين',color:'orange'},
+    {key:'installments_due',emoji:'💵',count:d.unpaidInst.length,title:'دفعات إيجار غير مدفوعة',hint:'حسب العقود',color:'red'},
+    {key:'equipment',emoji:'🚜',count:equipmentMaint,title:'معدات تحتاج متابعة',hint:'صيانة أو تشغيل',color:'orange'},
+    {key:'hr',emoji:'👥',count:hrDue,title:'تنبيهات موارد بشرية',hint:'إقامات وعقود',color:'green'},
+    {key:'tax',emoji:'🧾',count:Math.round((total('tax','الضريبة')+total('expenses','الضريبة'))||0),title:'ضريبة قابلة للتقرير',hint:'مدخلات ومخرجات',color:'green'}
+  ];
+  const smart=byId('smartTiles'); if(smart) smart.innerHTML=tiles.map(t=>`<button class="smart-tile ${t.color}" onclick="openCommandDetail('${t.key}')"><div class="top"><div class="emoji">${t.emoji}</div><div class="count">${t.count}</div></div><b>${t.title}</b><span>${t.hint}</span></button>`).join('');
+  const fin=load('finance').filter(r=>statusOfVoucher?statusOfVoucher(r)!=='ملغي':true);
+  const receipts=fin.filter(r=>r['نوع العملية']==='سند قبض').reduce((a,r)=>a+n(r['المبلغ']),0);
+  const pays=fin.filter(r=>r['نوع العملية']==='سند صرف').reduce((a,r)=>a+n(r['المبلغ']),0);
+  const brief=byId('todayBrief'); if(brief) brief.innerHTML=[['إيرادات اليوم',money(receipts),'green'],['مصروفات اليوم',money(pays),'red'],['صافي اليوم',money(receipts-pays),'blue'],['مهام عاجلة',tiles.filter(x=>x.count>0).length,'orange']].map(x=>`<div class="brief-card ${x[2]}"><div><span>${x[0]}</span><br><b>${x[1]}</b></div><span>›</span></div>`).join('');
+  const inboxItems=[];
+  if(d.waiting.length) inboxItems.push(['💸','سندات تنتظر الاعتماد','راجع السندات المالية','finance']);
+  if(d.soonContracts.length) inboxItems.push(['📄','عقود تنتهي قريبًا','افتح العقود للتجديد','contracts']);
+  if(serviceDue) inboxItems.push(['⚡','فواتير خدمات مستحقة','مركز الخدمات','services']);
+  if(purchaseDue) inboxItems.push(['🛒','فواتير موردين غير مسددة','المشتريات','purchases']);
+  const inbox=byId('execInbox'); if(inbox) inbox.innerHTML=inboxItems.length?inboxItems.map(x=>`<div class="inbox-item"><div class="mini-ico">${x[0]}</div><div><b>${x[1]}</b><span>${x[2]}</span></div><button class="mini-action" onclick="show('${x[3]}')">فتح</button></div>`).join(''):'<div class="empty">لا توجد عمليات تحتاج متابعة</div>';
+};
+renderReports=function(){
+  const fin=load('finance').filter(r=>statusOfVoucher?statusOfVoucher(r)!=='ملغي':true);
+  const inc=fin.filter(r=>r['نوع العملية']==='سند قبض').reduce((a,r)=>a+n(r['المبلغ']),0)+total('payments','المبلغ');
+  const out=fin.filter(r=>r['نوع العملية']==='سند صرف').reduce((a,r)=>a+n(r['المبلغ']),0)+total('expenses','المبلغ')+total('purchases','المبلغ قبل الضريبة');
+  byId('cashReport').innerHTML=`<div class="report-box" style="color:#16a34a"><span>إجمالي المداخل</span><b>${money(inc)} ر.س</b></div><div class="report-box" style="color:#dc2626"><span>إجمالي المخارج</span><b>${money(out)} ر.س</b></div><div class="report-box" style="color:#2563eb"><span>صافي التدفق</span><b>${money(inc-out)} ر.س</b></div>`;
+  byId('dailyPurchaseReport').innerHTML=`<div class="report-box" style="color:#16a34a"><span>إيرادات اليوم</span><b>${money(inc)} ر.س</b></div><div class="report-box" style="color:#2563eb"><span>مشتريات اليوم</span><b>${money(total('purchases','المبلغ قبل الضريبة'))} ر.س</b></div><div class="report-box" style="color:#f59e0b"><span>عدد الفواتير</span><b>${load('purchases').length}</b></div>`;
+  byId('projectPerf').innerHTML=rowsTable(['المشروع','الإيرادات','التكلفة','نسبة الإنجاز','الربح'],load('projects').map((p)=>`<tr><td>${p['اسم المشروع']||'-'}</td><td>${money(p['قيمة العقد'])}</td><td>${money(p['التكلفة']||0)}</td><td><span class="badge ok">${p['نسبة الإنجاز']||0}%</span></td><td>${money(n(p['قيمة العقد'])-n(p['التكلفة']))}</td></tr>`));
+  renderReportsSection();
+};
+
+
+// ===== V1.0.5 Dashboard Sync Fix =====
+function dateStart(v){
+  const d=new Date(v||'');
+  if(isNaN(d)) return null;
+  return new Date(d.getFullYear(),d.getMonth(),d.getDate());
+}
+function todayStart(){
+  const t=new Date();
+  return new Date(t.getFullYear(),t.getMonth(),t.getDate());
+}
+function activeStatus(v){return !['ملغي','مؤرشف','منتهي بعد خروج'].includes(String(v||''));}
+function commandData(){
+  const contractsRaw=load('contracts')||[];
+  const units=propLoad(PROP_UNITS_KEY)||[];
+  const centers=propLoad(PROP_CENTERS_KEY)||[];
+  const unitContracts=units.filter(u=>u.contract_end && !contractsRaw.some(c=>String(c.id)===String(u.contract_id))).map(u=>({
+    id:u.contract_id||('unit-'+u.id),'مركز التكلفة':(centers.find(c=>c.id===u.center_id)||{}).name||'',
+    'الوحدة':u.unit_no,'نوع الوحدة':u.type,'المستأجر':u.tenant,'تاريخ النهاية':u.contract_end,'الحالة':u.status==='مؤجر'?'نشط':(u.status||''),unit_id:u.id,center_id:u.center_id
+  }));
+  const contracts=[...contractsRaw,...unitContracts].filter(c=>activeStatus(c['الحالة']||c.status));
+  const installments=(load('rent_installments')||[]).filter(i=>activeStatus(i['الحالة']||i.status));
+  const today=todayStart();
+  const soonContracts=contracts.filter(c=>{const d=dateStart(c['تاريخ النهاية']||c.end_date);return d&&d>=today&&((d-today)/(1000*60*60*24))<=30});
+  const expiredContracts=contracts.filter(c=>{const d=dateStart(c['تاريخ النهاية']||c.end_date);return d&&d<today});
+  const unpaidInst=installments.filter(i=>!['مدفوع','مسدد'].includes(String(i['الحالة']||i.status||'')) && n(i['المتبقي']??i['المبلغ'])>0);
+  const services=load('services');
+  const purchases=load('purchases');
+  const finance=load('finance').filter(r=>statusOfVoucher?statusOfVoucher(r)!=='ملغي':true);
+  const waiting=finance.filter(x=>['بانتظار اعتماد','مسودة'].includes(String(x['حالة الاعتماد']||x['الحالة']||x.status||'')));
+  return {contracts,soonContracts,expiredContracts,unpaidInst,services,purchases,finance,waiting};
+}
+renderAlerts=function(){
+  const d=commandData();
+  const services=d.services.filter(x=>(x['حالة السداد']||x['الحالة']||'')!=='مسدد');
+  const purchases=d.purchases.filter(x=>(x['حالة السداد']||x['الحالة']||'')!=='مسدد');
+  const arr=[];
+  if(services.length) arr.push(['⚡',`${services.length} فواتير خدمات مستحقة`,'تحتاج متابعة','red']);
+  if(d.expiredContracts.length) arr.push(['⛔',`${d.expiredContracts.length} عقود منتهية`,'تحتاج إجراء','red']);
+  if(d.soonContracts.length) arr.push(['📄',`${d.soonContracts.length} عقود على وشك الانتهاء`,'خلال 30 يوم','orange']);
+  if(d.unpaidInst.length) arr.push(['💵',`${d.unpaidInst.length} دفعات إيجار غير مدفوعة`,'حسب العقود','red']);
+  if(purchases.length) arr.push(['🛒',`${purchases.length} فواتير مشتريات غير مسددة`,'راجع الموردين','red']);
+  byId('alertCount').textContent=arr.length;
+  byId('alertsList').innerHTML=arr.length?arr.map(a=>`<div class="alert"><div class="ai">${a[0]}</div><div><b>${a[1]}</b><span>${a[2]}</span></div><div class="status-dot" style="background:${a[3]==='red'?'#ef4444':'#f59e0b'}"></div></div>`).join(''):'<div class="empty">لا توجد تنبيهات حالية</div>';
+  byId('alerts').innerHTML=`<div class="panel"><div class="panel-title"><h3>جميع التنبيهات والمهام</h3><button class="primary" onclick="openModal('مهمة جديدة')">إضافة مهمة</button></div><div class="alerts">${byId('alertsList').innerHTML}</div></div>`;
+};
+
+
+
+// ===== V1.0.6 Dashboard Smart Routing Fix =====
+function commandUnitIdFromRecord(r){
+  if(!r) return '';
+  if(r.unit_id) return String(r.unit_id);
+  const units=propLoad(PROP_UNITS_KEY)||[];
+  const centers=propLoad(PROP_CENTERS_KEY)||[];
+  const unitNo=String(r['الوحدة']||r.unit_no||'').trim();
+  const centerName=String(r['مركز التكلفة']||'').trim();
+  const unit=units.find(u=>String(u.unit_no).trim()===unitNo && (!centerName || ((centers.find(c=>c.id===u.center_id)||{}).name||'')===centerName)) || units.find(u=>String(u.unit_no).trim()===unitNo);
+  return unit?String(unit.id):'';
+}
+function commandOpenUnit(unitId,tab='contracts'){
+  if(unitId && typeof openUnitProfile==='function') return openUnitProfile(String(unitId),tab);
+  alert('لم أستطع ربط هذا السجل بملف وحدة. افتح العقارات وابحث عن الوحدة يدويًا.');
+}
+function commandOpenUnitReport(unitId){
+  if(unitId && typeof getUnit==='function' && typeof getCenter==='function' && typeof openUnitReport==='function'){
+    const u=getUnit(String(unitId)); if(u) return openUnitReport(String(unitId),getCenter(u.center_id));
+  }
+  alert('لم أستطع فتح تقرير الوحدة لهذا السجل.');
+}
+function commandAction(unitId,action){
+  if(unitId && typeof unitAction==='function') return unitAction(String(unitId),action);
+  alert('لم أستطع تنفيذ الإجراء لأن السجل غير مربوط بوحدة.');
+}
+function commandContractRow(r,kind){
+  const unitId=commandUnitIdFromRecord(r);
+  const end=r['تاريخ النهاية']||r.end_date||'-';
+  const tenant=r['المستأجر']||'-';
+  const unit=r['الوحدة']||'-';
+  const center=r['مركز التكلفة']||'-';
+  const status=kind==='expired'?'منتهي':'قريب الانتهاء';
+  return `<div class="detail-row" style="grid-template-columns:1fr auto">
+    <div><b>${unit} — ${tenant}</b><span>${center} • نهاية العقد: ${end} • ${status}</span></div>
+    <div class="action-cell">
+      <button class="print" onclick="commandOpenUnit('${unitId}','contracts')">📂 ملف الوحدة</button>
+      <button class="edit" onclick="commandOpenUnitReport('${unitId}')">📊 تقرير</button>
+      <button class="approve" onclick="commandAction('${unitId}','تجديد')">🔄 تجديد</button>
+      <button class="cancel" onclick="commandAction('${unitId}','خروج')">🚪 خروج</button>
+      <button class="print" onclick="commandAction('${unitId}','سداد')">💵 سداد</button>
+    </div>
+  </div>`;
+}
+function commandInstallmentRow(r){
+  const unitId=commandUnitIdFromRecord(r) || commandUnitIdFromRecord((load('contracts')||[]).find(c=>String(c.id)===String(r.contract_id))||{});
+  const remain = n(r['المتبقي']??r['المبلغ']);
+  return `<div class="detail-row" style="grid-template-columns:1fr auto">
+    <div><b>${r['الوحدة']||'-'} — دفعة ${r['رقم الدفعة']||'-'}</b><span>استحقاق: ${r['تاريخ الاستحقاق']||'-'} • المتبقي: ${money(remain)} ر.س</span></div>
+    <div class="action-cell">
+      <button class="print" onclick="commandOpenUnit('${unitId}','contracts')">📂 ملف الوحدة</button>
+      <button class="approve" onclick="commandAction('${unitId}','سداد')">💵 سداد</button>
+      <button class="edit" onclick="commandOpenUnitReport('${unitId}')">📊 كشف</button>
+    </div>
+  </div>`;
+}
+function openCommandDetail(key){
+  const d=commandData();
+  let title='تفاصيل', html='', fullTarget='dashboard';
+  if(key==='contracts_soon'){
+    title='العقود التي تنتهي خلال 30 يوم'; fullTarget='properties';
+    html=d.soonContracts.length?d.soonContracts.map(r=>commandContractRow(r,'soon')).join(''):'<div class="empty">لا توجد عقود قريبة الانتهاء</div>';
+  }else if(key==='contracts_expired'){
+    title='العقود المنتهية وتحتاج إجراء'; fullTarget='properties';
+    html=d.expiredContracts.length?d.expiredContracts.map(r=>commandContractRow(r,'expired')).join(''):'<div class="empty">لا توجد عقود منتهية</div>';
+  }else if(key==='installments_due'){
+    title='دفعات الإيجار غير المدفوعة'; fullTarget='payments';
+    html=d.unpaidInst.length?d.unpaidInst.map(commandInstallmentRow).join(''):'<div class="empty">لا توجد دفعات غير مدفوعة</div>';
+  }else if(key==='services_due'){
+    title='فواتير الخدمات المستحقة'; fullTarget='services';
+    const rows=d.services.filter(x=>(x['حالة السداد']||x['الحالة']||'')!=='مسدد');
+    html=rows.length?rows.map(r=>`<div class="detail-row" style="grid-template-columns:1fr auto"><div><b>${r['نوع الخدمة']||'خدمة'} — ${r['رقم الحساب']||'-'}</b><span>${r['مركز التكلفة']||'-'} • ${money(r['قيمة الفاتورة']||r['المبلغ']||0)} ر.س</span></div><button class="mini-action" onclick="closeModal();show('services')">فتح الخدمات</button></div>`).join(''):'<div class="empty">لا توجد فواتير خدمات مستحقة</div>';
+  }else if(key==='finance_waiting'){
+    title='السندات التي تنتظر اعتماد المدير'; fullTarget='finance';
+    html=d.waiting.length?d.waiting.map(r=>`<div class="detail-row" style="grid-template-columns:1fr auto"><div><b>${r['رقم السند']||'-'} — ${r['نوع العملية']||'-'}</b><span>${r['مركز التكلفة']||'-'} • ${money(r['المبلغ']||0)} ر.س</span></div><button class="mini-action" onclick="closeModal();show('finance')">فتح المالية</button></div>`).join(''):'<div class="empty">لا توجد سندات تنتظر الاعتماد</div>';
+  }else if(key==='purchases_due'){
+    title='فواتير المشتريات غير المسددة'; fullTarget='purchases';
+    const rows=d.purchases.filter(x=>(x['حالة السداد']||x['الحالة']||'')!=='مسدد');
+    html=rows.length?rows.map(r=>`<div class="detail-row" style="grid-template-columns:1fr auto"><div><b>${r['المورد']||'-'} — ${r['رقم الفاتورة']||'-'}</b><span>الإجمالي: ${money(n(r['المبلغ قبل الضريبة'])+n(r['الضريبة']))} ر.س</span></div><button class="mini-action" onclick="closeModal();show('purchases')">فتح المشتريات</button></div>`).join(''):'<div class="empty">لا توجد مشتريات غير مسددة</div>';
+  }else if(key==='equipment'){
+    title='المعدات التي تحتاج متابعة'; fullTarget='equipment';
+    const rows=load('equipment').filter(x=>(x['الحالة']||'').includes('صيانة') || (x['الحالة']||'')==='متوقفة');
+    html=rows.length?rows.map(r=>`<div class="detail-row" style="grid-template-columns:1fr auto"><div><b>${r['اسم المعدة']||'-'}</b><span>${r['الحالة']||'-'} • ${r['المشروع الحالي']||'-'}</span></div><button class="mini-action" onclick="closeModal();show('equipment')">فتح المعدات</button></div>`).join(''):'<div class="empty">لا توجد معدات تحتاج متابعة</div>';
+  }else if(key==='hr'){
+    title='تنبيهات الموارد البشرية'; fullTarget='hr';
+    html='<div class="empty">لا توجد تنبيهات موارد بشرية حاليًا</div>';
+  }else{
+    title='ملخص الضريبة'; fullTarget='tax';
+    html=`<div class="detail-row"><div><b>ضريبة المشتريات</b><span>${money(total('purchases','الضريبة'))} ر.س</span></div></div><div class="detail-row"><div><b>ضريبة المصروفات</b><span>${money(total('expenses','الضريبة'))} ر.س</span></div></div><div class="detail-row"><div><b>إجمالي الضريبة</b><span>${money(total('tax','الضريبة')+total('purchases','الضريبة')+total('expenses','الضريبة'))} ر.س</span></div></div>`;
+  }
+  byId('modalTitle').textContent='🚀 '+title;
+  byId('modalBody').innerHTML=`<div class="compact-note">هذه القائمة مرتبطة مباشرة بملفات الوحدات والتقارير. لا تفتح صفحة بيضاء؛ اختر الإجراء المطلوب من نفس السجل.</div><div class="detail-list" style="margin-top:12px">${html}</div><div class="actions"><button class="primary" onclick="closeModal();show('${fullTarget}')">فتح القسم الكامل</button><button class="soft-btn" onclick="printPage()">طباعة</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`;
+  byId('modal').classList.add('show');
 }
 
 seedProperties();
