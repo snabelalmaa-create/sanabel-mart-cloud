@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>سنابل OS - إدارة الذمم المدينة V6 Ultimate</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --bg:#f5f7fb;--surface:#ffffff;--ink:#111827;--muted:#667085;--nav:#07152d;--nav2:#0c2348;--brand:#0b1f3f;--gold:#c89b3c;--gold2:#f2d48b;--line:#e6eaf0;--red:#dc2626;--green:#12805c;--blue:#2563eb;--yellow:#b7791f;--shadow:0 18px 45px rgba(17,24,39,.10);--soft:0 10px 25px rgba(11,31,63,.12);--radius:24px
@@ -119,13 +120,211 @@ function actionButtons(id){return `<button class="btn" onclick="printReceipt('${
 function summarizePayments(rows){let active=rows.filter(r=>r.status!=='deleted');let methods=['نقدي','شبكة','تحويل','STC Pay','شيك','خصم'];let map={};methods.forEach(m=>map[m]={count:0,total:0});active.forEach(r=>{let key=r.pay||'غير محدد';if(!map[key])map[key]={count:0,total:0};map[key].count++;map[key].total+=Number(r.amount||0)});return {active,map,total:active.reduce((s,r)=>s+Number(r.amount||0),0),remain:active.reduce((s,r)=>s+Number(r.remain||0),0),clients:new Set(active.map(r=>r.client)).size} }
 function renderPaymentSummary(summary){let icons={'نقدي':'💵','شبكة':'💳','تحويل':'🏦','STC Pay':'📱','شيك':'🧾','خصم':'➖','غير محدد':'❔'};let entries=Object.entries(summary.map).filter(([k,v])=>v.count||['نقدي','شبكة','تحويل','STC Pay','شيك','خصم'].includes(k));paymentSummary.innerHTML=entries.map(([k,v])=>`<div class="payment-card"><div class="pay-title"><span>${icons[k]||'💰'} ${k}</span><span>${summary.total?((v.total/summary.total)*100).toFixed(1):'0.0'}%</span></div><div class="pay-amount">${money(v.total)}</div><div class="pay-count">عدد السندات: ${Number(v.count).toLocaleString('en-US')}</div></div>`).join('');let cash=summary.map['نقدي']?.total||0,bank=(summary.map['شبكة']?.total||0)+(summary.map['تحويل']?.total||0),stc=summary.map['STC Pay']?.total||0,cheque=summary.map['شيك']?.total||0;dailyMatchBox.innerHTML=`<h3>مطابقة التحصيل اليومية</h3><div class="daily-match-row"><span>💵 إجمالي النقد</span><b>${money(cash)}</b></div><div class="daily-match-row"><span>🏦 إجمالي الإيداعات البنكية (شبكة + تحويل)</span><b>${money(bank)}</b></div><div class="daily-match-row"><span>📱 إجمالي STC Pay</span><b>${money(stc)}</b></div><div class="daily-match-row"><span>🧾 إجمالي الشيكات</span><b>${money(cheque)}</b></div><div class="daily-match-row"><span>الإجمالي العام</span><b>${money(summary.total)}</b></div>`}
 function renderReports(){let rows=filterRows('f');let q=norm(document.getElementById('fSearch')?.value).toLowerCase();if(q)rows=rows.filter(r=>[r.id,r.client,r.ref,r.collector,r.note].some(v=>norm(v).toLowerCase().includes(q)));let summary=summarizePayments(rows);reportSummary.innerHTML=`عدد السندات: <b>${rows.length.toLocaleString('en-US')}</b> | إجمالي المقبوضات: <b>${money(summary.total)}</b> | إجمالي المتبقي: <b>${money(summary.remain)}</b>`;reportKpis.innerHTML=`<div class="report-kpi"><span>💰 إجمالي المقبوضات</span><b>${money(summary.total)}</b></div><div class="report-kpi"><span>⏳ إجمالي المتبقي</span><b>${money(summary.remain)}</b></div><div class="report-kpi"><span>📄 عدد السندات</span><b>${rows.length.toLocaleString('en-US')}</b></div><div class="report-kpi"><span>👥 عملاء تم التحصيل منهم</span><b>${summary.clients.toLocaleString('en-US')}</b></div>`;renderPaymentSummary(summary);reportsRows.innerHTML=rows.map(r=>`<tr><td>${r.id}</td><td>${r.date}</td><td>${r.client}</td><td>${money(r.amount)}</td><td>${r.pay}</td><td>${money(r.remain)}</td><td>${r.ref||'-'}</td><td>${r.collector||'-'}</td><td>${r.fileName?'<span class="filelink" onclick="showAttachment(\''+r.id+'\')">'+r.fileName+'</span>':'-'}</td><td>${badge(r.status)}</td><td class="no-print">${actionButtons(r.id)}</td></tr>`).join('')||'<tr><td colspan="11">لا توجد بيانات</td></tr>'}
-function printDailySummary(){renderReports();let rows=filterRows('f');let q=norm(document.getElementById('fSearch')?.value).toLowerCase();if(q)rows=rows.filter(r=>[r.id,r.client,r.ref,r.collector,r.note].some(v=>norm(v).toLowerCase().includes(q)));let s=summarizePayments(rows);let from=fFrom.value||'بداية البيانات',to=fTo.value||'نهاية البيانات';let org=db.settings.org||setOrg.value||'أسواق سنابل المع المركزية';let methodRows=Object.entries(s.map).filter(([k,v])=>v.count).map(([k,v])=>`<tr><td>${k}</td><td>${v.count.toLocaleString('en-US')}</td><td>${money(v.total)}</td></tr>`).join('')||'<tr><td colspan="3">لا توجد بيانات</td></tr>';let w=window.open('','_blank');w.document.write(`<html dir="rtl" lang="ar"><head><title>ملخص اليومية</title><style>body{font-family:Tahoma,Arial;padding:32px;color:#111827}h1{text-align:center;color:#0b1f3f}.meta{text-align:center;color:#64748b;margin-bottom:20px}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border:1px solid #ddd;padding:12px;text-align:right}th{background:#f3f6fb}.total{font-size:22px;font-weight:900;text-align:center;margin-top:18px;color:#0b1f3f}</style></head><body><h1>ملخص التحصيل اليومي</h1><div class="meta">${org}<br>الفترة: ${from} إلى ${to}</div><table><thead><tr><th>طريقة الدفع</th><th>عدد السندات</th><th>الإجمالي</th></tr></thead><tbody>${methodRows}</tbody></table><div class="total">الإجمالي العام: ${money(s.total)}</div><script>print()<\/script></body></html>`)}
+function printDailySummary(){renderReports();let rows=filterRows('f');let q=norm(document.getElementById('fSearch')?.value).toLowerCase();if(q)rows=rows.filter(r=>[r.id,r.client,r.ref,r.collector,r.note].some(v=>norm(v).toLowerCase().includes(q)));let s=summarizePayments(rows);let from=fFrom.value||'بداية البيانات',to=fTo.value||'نهاية البيانات';let org=db.settings.org||setOrg.value||'أسواق سنابل المع المركزية';let methodRows=Object.entries(s.map).filter(([k,v])=>v.count).map(([k,v])=>`<tr><td>${k}</td><td>${v.count.toLocaleString('en-US')}</td><td>${money(v.total)}</td></tr>`).join('')||'<tr><td colspan="3">لا توجد بيانات</td></tr>';let w=window.open('','_blank');w.document.write(`<html dir="rtl" lang="ar"><head><title>ملخص اليومية</title><style>body{font-family:Tahoma,Arial;padding:32px;color:#111827}h1{text-align:center;color:#0b1f3f}.meta{text-align:center;color:#64748b;margin-bottom:20px}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border:1px solid #ddd;padding:12px;text-align:right}th{background:#f3f6fb}.total{font-size:22px;font-weight:900;text-align:center;margin-top:18px;color:#0b1f3f}</style></head><body><h1>ملخص التحصيل اليومي</h1><div class="meta">${org}<br>الفترة: ${from} إلى ${to}</div><table><thead><tr><th>طريقة الدفع</th><th>عدد السندات</th><th>الإجمالي</th></tr></thead><tbody>${methodRows}</tbody></table><div class="total">الإجمالي العام: ${money(s.total)}</div><script>print()<\/script>
+<script>
+/* ===== Sanabel OS Cloud Connector V7 - Supabase ===== */
+const SANABEL_SUPABASE_URL = 'https://rueapdmdkjytsxkfumpw.supabase.co';
+const SANABEL_SUPABASE_KEY = 'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
+const SANABEL_TENANT_CODE = 'SANABEL';
+const SANABEL_MODULE_ID = 'receivables';
+const cloud = window.supabase.createClient(SANABEL_SUPABASE_URL, SANABEL_SUPABASE_KEY);
+let cloudTenant=null, cloudUser=null, cloudPayments=[];
+
+function cloudToast(msg){
+  let t=document.getElementById('cloudToast');
+  if(!t){t=document.createElement('div');t.id='cloudToast';t.style.cssText='position:fixed;left:24px;bottom:24px;background:#061b3d;color:#fff;border-radius:18px;padding:14px 18px;z-index:99999;box-shadow:0 18px 45px rgba(0,0,0,.25);font-weight:900';document.body.appendChild(t)}
+  t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3500)
+}
+function cloudLoginUI(){
+  let div=document.createElement('div');div.id='cloudLogin';div.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#061b3d,#08295c);z-index:999999;display:grid;place-items:center;padding:20px';
+  div.innerHTML=`<div style="width:min(460px,100%);background:#fff;border-radius:28px;padding:26px;box-shadow:0 30px 90px rgba(0,0,0,.35);font-family:Tajawal,Tahoma,Arial">
+    <h1 style="margin:0 0 8px;color:#07152f">سنابل OS</h1>
+    <p style="margin:0 0 18px;color:#64748b;font-weight:800">تسجيل دخول إدارة الذمم السحابية</p>
+    <label style="font-weight:900">البريد الإلكتروني</label><input id="cloudEmail" style="width:100%;padding:14px;border:1px solid #d9e3f1;border-radius:14px;margin:8px 0 14px" placeholder="email@example.com">
+    <label style="font-weight:900">كلمة المرور</label><input id="cloudPass" type="password" style="width:100%;padding:14px;border:1px solid #d9e3f1;border-radius:14px;margin:8px 0 14px">
+    <button id="cloudLoginBtn" style="width:100%;border:0;border-radius:16px;padding:14px;background:linear-gradient(135deg,#0b4fb3,#061b3d);color:#fff;font-weight:900;font-size:17px">دخول</button>
+    <div id="cloudLoginMsg" style="margin-top:12px;color:#dc2626;font-weight:800"></div>
+  </div>`;
+  document.body.appendChild(div);
+  document.getElementById('cloudLoginBtn').onclick=async()=>{
+    let email=cloudEmail.value.trim(), password=cloudPass.value;
+    cloudLoginMsg.textContent='جاري تسجيل الدخول...';
+    const {error}=await cloud.auth.signInWithPassword({email,password});
+    if(error){cloudLoginMsg.textContent='خطأ: '+error.message;return}
+    div.remove(); await cloudInit();
+  }
+}
+async function cloudRequireAuth(){
+  const {data:{session}}=await cloud.auth.getSession();
+  if(!session){cloudLoginUI();return false}
+  cloudUser=session.user;return true;
+}
+async function cloudInit(){
+  try{
+    if(!(await cloudRequireAuth()))return;
+    let {data:t,error:te}=await cloud.from('tenants').select('*').eq('code',SANABEL_TENANT_CODE).single();
+    if(te) throw te; cloudTenant=t;
+    let {data:p,error:pe}=await cloud.from('os_payment_methods').select('*').eq('tenant_id',cloudTenant.id).order('name');
+    if(pe) throw pe; cloudPayments=p||[];
+    rPay.innerHTML=cloudPayments.map(x=>`<option>${x.name}</option>`).join('')||rPay.innerHTML;
+    ePay.innerHTML=rPay.innerHTML; fPay.innerHTML='<option value="">الكل</option>'+rPay.innerHTML;
+    await cloudLoadAll();
+    cloudToast('تم الاتصال بالسحابة بنجاح');
+  }catch(err){console.error(err);cloudToast('تعذر الاتصال بالسحابة: '+(err.message||err));}
+}
+function cloudPayId(name){let p=cloudPayments.find(x=>x.name===name);return p?.id||null}
+function cloudPayName(id){let p=cloudPayments.find(x=>x.id===id);return p?.name||'-'}
+async function cloudLoadAll(){
+  if(!cloudTenant)return;
+  const {data:cs,error:ce}=await cloud.from('os_customers').select('*').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:true});
+  if(ce) throw ce;
+  const {data:rs,error:re}=await cloud.from('os_receipts').select('*, customer:os_customers(name,phone), payment:os_payment_methods(name,type)').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:true});
+  if(re) throw re;
+  db.clients=(cs||[]).map(c=>({cloud_id:c.id,name:c.name,phone:c.phone||'',note:c.notes||'',opening_balance:c.opening_balance||0}));
+  db.receipts=(rs||[]).map(r=>({cloud_id:r.id,id:r.receipt_no,date:r.receipt_date,client:r.customer?.name||'-',customer_id:r.customer_id,amount:Number(r.amount||0),pay:r.payment?.name||cloudPayName(r.payment_method_id),remain:Number(r.remaining||0),ref:r.reference_no||'',collector:r.collector_name||'',note:r.notes||'',status:r.status||'pending',createdAt:r.created_at,updatedAt:r.updated_at,fileName:''}));
+  renderAll();
+}
+async function cloudGetOrCreateCustomer(name,phone='',note=''){
+  name=norm(name); if(!name) throw new Error('اسم العميل مطلوب');
+  let {data:found,error:fe}=await cloud.from('os_customers').select('*').eq('tenant_id',cloudTenant.id).eq('name',name).maybeSingle();
+  if(fe) throw fe;
+  if(found) return found;
+  let {data,error}=await cloud.from('os_customers').insert({tenant_id:cloudTenant.id,name,phone,notes:note}).select().single();
+  if(error) throw error; return data;
+}
+async function cloudNextReceiptNo(){
+  let {data}=await cloud.from('os_receipts').select('receipt_no').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:false}).limit(1);
+  let mx=0;(data||[]).forEach(r=>{let m=String(r.receipt_no||'').match(/(\d+)$/);if(m)mx=Math.max(mx,Number(m[1]))});
+  return 'RC-'+String(mx+1).padStart(6,'0');
+}
+
+// إلغاء الحفظ المحلي كمصدر أساسي
+save=function(){renderAll()};
+addClient=async function(){try{let name=cName.value.trim();if(!name)return alert('اكتب اسم العميل');await cloudGetOrCreateCustomer(name,cPhone.value,cNote.value);cName.value=cPhone.value=cNote.value='';await cloudLoadAll();cloudToast('تم حفظ العميل في السحابة')}catch(e){alert('خطأ حفظ العميل: '+(e.message||e))}}
+addClientFromModal=async function(){try{let name=mName.value.trim();if(!name)return alert('اكتب اسم العميل');await cloudGetOrCreateCustomer(name,mPhone.value,mNote.value||'أضيف من سند القبض');rClient.value=name;closeClientModal();await cloudLoadAll()}catch(e){alert('خطأ حفظ العميل: '+(e.message||e))}}
+saveReceipt=async function(){try{let client=rClient.value.trim(),amount=Number(rAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let c=await cloudGetOrCreateCustomer(client,'','أضيف تلقائياً من سند قبض');let no=await cloudNextReceiptNo();let payload={tenant_id:cloudTenant.id,module_id:SANABEL_MODULE_ID,customer_id:c.id,receipt_no:no,receipt_date:rDate.value||todayISO(),amount,remaining:Number(rRemain.value)||0,payment_method_id:cloudPayId(rPay.value),reference_no:rRef.value||null,collector_name:rCollector.value||null,notes:rNote.value||null,status:'pending'};let {error}=await cloud.from('os_receipts').insert(payload);if(error)throw error;clearReceipt();await cloudLoadAll();alert('تم حفظ السند في السحابة وظهر في التقارير')}catch(e){console.error(e);alert('خطأ حفظ السند: '+(e.message||e))}}
+approve=async function(id){try{let r=db.receipts.find(x=>x.id===id);if(!r?.cloud_id)return;let {error}=await cloud.from('os_receipts').update({status:'approved',updated_at:new Date().toISOString()}).eq('id',r.cloud_id);if(error)throw error;await cloudLoadAll()}catch(e){alert('خطأ الاعتماد: '+(e.message||e))}}
+delReceipt=async function(id){try{if(!confirm('سيتم إلغاء السند كنص محاسبي ولن يحذف نهائياً'))return;let r=db.receipts.find(x=>x.id===id);if(!r?.cloud_id)return;let {error}=await cloud.from('os_receipts').update({status:'deleted',updated_at:new Date().toISOString()}).eq('id',r.cloud_id);if(error)throw error;await cloudLoadAll()}catch(e){alert('خطأ الإلغاء: '+(e.message||e))}}
+saveEditReceipt=async function(){try{let r=db.receipts.find(x=>x.id===eId.value);if(!r?.cloud_id)return alert('لم يتم العثور على السند');let client=eClient.value.trim(),amount=Number(eAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let c=await cloudGetOrCreateCustomer(client,'','أضيف من تعديل سند');let payload={customer_id:c.id,receipt_date:eDate.value||todayISO(),amount,remaining:Number(eRemain.value)||0,payment_method_id:cloudPayId(ePay.value),reference_no:eRef.value||null,collector_name:eCollector.value||null,notes:eNote.value||null,status:eStatus.value,updated_at:new Date().toISOString()};let {error}=await cloud.from('os_receipts').update(payload).eq('id',r.cloud_id);if(error)throw error;closeEditModal();await cloudLoadAll();alert('تم تعديل السند في السحابة')}catch(e){alert('خطأ تعديل السند: '+(e.message||e))}}
+importClientsExcel=async function(ev){let f=ev.target.files[0];if(!f)return;let reader=new FileReader();reader.onload=async e=>{try{let wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]],json=XLSX.utils.sheet_to_json(ws,{defval:''});let added=0,updated=0,ignored=0;for(const row of json){let name=row['اسم العميل']||row['العميل']||row['Name']||row['Customer']||row['customer']||row['name'];let phone=row['الجوال']||row['رقم الجوال']||row['Phone']||row['Mobile']||row['phone'];let note=row['ملاحظة']||row['Notes']||row['Note']||row['note'];if(!norm(name)){ignored++;continue}let before=db.clients.some(c=>norm(c.name)===norm(name));await cloudGetOrCreateCustomer(name,phone,note);before?updated++:added++}await cloudLoadAll();importResult.innerHTML=`تمت قراءة الملف: <b>${f.name}</b><br>إضافة: <b>${added.toLocaleString('en-US')}</b> | موجود سابقًا: <b>${updated.toLocaleString('en-US')}</b> | بدون اسم: <b>${ignored.toLocaleString('en-US')}</b>`;alert('تم استيراد العملاء إلى السحابة')}catch(err){console.error(err);alert('تعذر قراءة ملف Excel: '+err.message)}};reader.readAsArrayBuffer(f)}
+
+// شريط حالة السحابة وزر خروج
+window.addEventListener('load',()=>{
+  let b=document.createElement('div');b.style.cssText='position:fixed;left:24px;top:18px;z-index:9999;display:flex;gap:8px;align-items:center';
+  b.innerHTML='<button id="cloudRefresh" class="btn blue">☁️ تحديث السحابة</button><button id="cloudLogout" class="btn">خروج</button>';
+  document.body.appendChild(b);
+  cloudRefresh.onclick=cloudLoadAll;
+  cloudLogout.onclick=async()=>{await cloud.auth.signOut();location.reload()};
+  cloudInit();
+});
+</script>
+
+</body></html>`)}
 function renderStatement(){let rows=filterRows('s').filter(r=>r.status!=='deleted');let total=rows.reduce((sum,r)=>sum+Number(r.amount||0),0),remain=rows.reduce((sum,r)=>sum+Number(r.remain||0),0),last=rows.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];statementTitle.textContent='كشف حساب العميل: '+(sClient.value||'الكل');if(document.getElementById('statementTotals'))statementTotals.innerHTML=`<div class="statement-total">إجمالي المقبوضات<b>${money(total)}</b></div><div class="statement-total">إجمالي المتبقي<b>${money(remain)}</b></div><div class="statement-total">آخر عملية<b>${last?last.date:'-'}</b></div>`;statementRows.innerHTML=rows.map(r=>`<tr><td>${r.date}</td><td>${r.id}</td><td>${money(r.amount)}</td><td>${r.pay}</td><td>${money(r.remain)}</td><td>${r.note||'-'}</td><td>${badge(r.status)}</td><td class="no-print">${actionButtons(r.id)}</td></tr>`).join('')||'<tr><td colspan="8">لا توجد بيانات</td></tr>'}
 function approve(id){let r=db.receipts.find(x=>x.id===id);if(r){r.status='approved';r.updatedAt=new Date().toISOString()}save()}function delReceipt(id){if(confirm('سيتم إلغاء السند كنص محاسبي ولن يحذف نهائياً')){let r=db.receipts.find(x=>x.id===id);if(r){r.status='deleted';r.updatedAt=new Date().toISOString()}save()}}
 function openEditReceipt(id){let r=db.receipts.find(x=>x.id===id);if(!r)return;eId.value=r.id;eClient.value=r.client;eDate.value=r.date;eAmount.value=r.amount;ePay.value=r.pay;eRemain.value=r.remain||0;eRef.value=r.ref||'';eCollector.value=r.collector||'';eStatus.value=r.status||'pending';eNote.value=r.note||'';eFile.value='';editModal.classList.add('active')}
 function closeEditModal(){editModal.classList.remove('active')}
 function saveEditReceipt(){let r=db.receipts.find(x=>x.id===eId.value);if(!r)return;let client=eClient.value.trim(),amount=Number(eAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');if(!existsClient(client)){if(confirm('العميل غير موجود. هل تريد إضافته؟'))pushClient(client,'','أضيف من تعديل سند');else return}function apply(file){Object.assign(r,{client,date:eDate.value||todayISO(),amount,pay:ePay.value,remain:Number(eRemain.value)||0,ref:eRef.value,note:eNote.value,status:eStatus.value,collector:eCollector.value,updatedAt:new Date().toISOString()});if(file.fileName){r.fileName=file.fileName;r.fileData=file.fileData;r.fileType=file.fileType}closeEditModal();save();alert('تم تعديل السند')}fileToData(eFile,apply)}
-function showAttachment(id){let r=db.receipts.find(x=>x.id===id);if(!r||!r.fileName)return alert('لا يوجد مرفق لهذا السند');if(r.fileData){let w=window.open('','_blank');if(String(r.fileType).includes('pdf'))w.document.write(`<iframe src="${r.fileData}" style="border:0;width:100%;height:100vh"></iframe>`);else w.document.write(`<html><body style="margin:0;display:grid;place-items:center;background:#111"><img src="${r.fileData}" style="max-width:100%;max-height:100vh"></body></html>`)}else alert('هذا السند محفوظ باسم المرفق فقط من نسخة قديمة: '+r.fileName)}
+function showAttachment(id){let r=db.receipts.find(x=>x.id===id);if(!r||!r.fileName)return alert('لا يوجد مرفق لهذا السند');if(r.fileData){let w=window.open('','_blank');if(String(r.fileType).includes('pdf'))w.document.write(`<iframe src="${r.fileData}" style="border:0;width:100%;height:100vh"></iframe>`);else w.document.write(`<html><body style="margin:0;display:grid;place-items:center;background:#111"><img src="${r.fileData}" style="max-width:100%;max-height:100vh">
+<script>
+/* ===== Sanabel OS Cloud Connector V7 - Supabase ===== */
+const SANABEL_SUPABASE_URL = 'https://rueapdmdkjytsxkfumpw.supabase.co';
+const SANABEL_SUPABASE_KEY = 'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
+const SANABEL_TENANT_CODE = 'SANABEL';
+const SANABEL_MODULE_ID = 'receivables';
+const cloud = window.supabase.createClient(SANABEL_SUPABASE_URL, SANABEL_SUPABASE_KEY);
+let cloudTenant=null, cloudUser=null, cloudPayments=[];
+
+function cloudToast(msg){
+  let t=document.getElementById('cloudToast');
+  if(!t){t=document.createElement('div');t.id='cloudToast';t.style.cssText='position:fixed;left:24px;bottom:24px;background:#061b3d;color:#fff;border-radius:18px;padding:14px 18px;z-index:99999;box-shadow:0 18px 45px rgba(0,0,0,.25);font-weight:900';document.body.appendChild(t)}
+  t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3500)
+}
+function cloudLoginUI(){
+  let div=document.createElement('div');div.id='cloudLogin';div.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#061b3d,#08295c);z-index:999999;display:grid;place-items:center;padding:20px';
+  div.innerHTML=`<div style="width:min(460px,100%);background:#fff;border-radius:28px;padding:26px;box-shadow:0 30px 90px rgba(0,0,0,.35);font-family:Tajawal,Tahoma,Arial">
+    <h1 style="margin:0 0 8px;color:#07152f">سنابل OS</h1>
+    <p style="margin:0 0 18px;color:#64748b;font-weight:800">تسجيل دخول إدارة الذمم السحابية</p>
+    <label style="font-weight:900">البريد الإلكتروني</label><input id="cloudEmail" style="width:100%;padding:14px;border:1px solid #d9e3f1;border-radius:14px;margin:8px 0 14px" placeholder="email@example.com">
+    <label style="font-weight:900">كلمة المرور</label><input id="cloudPass" type="password" style="width:100%;padding:14px;border:1px solid #d9e3f1;border-radius:14px;margin:8px 0 14px">
+    <button id="cloudLoginBtn" style="width:100%;border:0;border-radius:16px;padding:14px;background:linear-gradient(135deg,#0b4fb3,#061b3d);color:#fff;font-weight:900;font-size:17px">دخول</button>
+    <div id="cloudLoginMsg" style="margin-top:12px;color:#dc2626;font-weight:800"></div>
+  </div>`;
+  document.body.appendChild(div);
+  document.getElementById('cloudLoginBtn').onclick=async()=>{
+    let email=cloudEmail.value.trim(), password=cloudPass.value;
+    cloudLoginMsg.textContent='جاري تسجيل الدخول...';
+    const {error}=await cloud.auth.signInWithPassword({email,password});
+    if(error){cloudLoginMsg.textContent='خطأ: '+error.message;return}
+    div.remove(); await cloudInit();
+  }
+}
+async function cloudRequireAuth(){
+  const {data:{session}}=await cloud.auth.getSession();
+  if(!session){cloudLoginUI();return false}
+  cloudUser=session.user;return true;
+}
+async function cloudInit(){
+  try{
+    if(!(await cloudRequireAuth()))return;
+    let {data:t,error:te}=await cloud.from('tenants').select('*').eq('code',SANABEL_TENANT_CODE).single();
+    if(te) throw te; cloudTenant=t;
+    let {data:p,error:pe}=await cloud.from('os_payment_methods').select('*').eq('tenant_id',cloudTenant.id).order('name');
+    if(pe) throw pe; cloudPayments=p||[];
+    rPay.innerHTML=cloudPayments.map(x=>`<option>${x.name}</option>`).join('')||rPay.innerHTML;
+    ePay.innerHTML=rPay.innerHTML; fPay.innerHTML='<option value="">الكل</option>'+rPay.innerHTML;
+    await cloudLoadAll();
+    cloudToast('تم الاتصال بالسحابة بنجاح');
+  }catch(err){console.error(err);cloudToast('تعذر الاتصال بالسحابة: '+(err.message||err));}
+}
+function cloudPayId(name){let p=cloudPayments.find(x=>x.name===name);return p?.id||null}
+function cloudPayName(id){let p=cloudPayments.find(x=>x.id===id);return p?.name||'-'}
+async function cloudLoadAll(){
+  if(!cloudTenant)return;
+  const {data:cs,error:ce}=await cloud.from('os_customers').select('*').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:true});
+  if(ce) throw ce;
+  const {data:rs,error:re}=await cloud.from('os_receipts').select('*, customer:os_customers(name,phone), payment:os_payment_methods(name,type)').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:true});
+  if(re) throw re;
+  db.clients=(cs||[]).map(c=>({cloud_id:c.id,name:c.name,phone:c.phone||'',note:c.notes||'',opening_balance:c.opening_balance||0}));
+  db.receipts=(rs||[]).map(r=>({cloud_id:r.id,id:r.receipt_no,date:r.receipt_date,client:r.customer?.name||'-',customer_id:r.customer_id,amount:Number(r.amount||0),pay:r.payment?.name||cloudPayName(r.payment_method_id),remain:Number(r.remaining||0),ref:r.reference_no||'',collector:r.collector_name||'',note:r.notes||'',status:r.status||'pending',createdAt:r.created_at,updatedAt:r.updated_at,fileName:''}));
+  renderAll();
+}
+async function cloudGetOrCreateCustomer(name,phone='',note=''){
+  name=norm(name); if(!name) throw new Error('اسم العميل مطلوب');
+  let {data:found,error:fe}=await cloud.from('os_customers').select('*').eq('tenant_id',cloudTenant.id).eq('name',name).maybeSingle();
+  if(fe) throw fe;
+  if(found) return found;
+  let {data,error}=await cloud.from('os_customers').insert({tenant_id:cloudTenant.id,name,phone,notes:note}).select().single();
+  if(error) throw error; return data;
+}
+async function cloudNextReceiptNo(){
+  let {data}=await cloud.from('os_receipts').select('receipt_no').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:false}).limit(1);
+  let mx=0;(data||[]).forEach(r=>{let m=String(r.receipt_no||'').match(/(\d+)$/);if(m)mx=Math.max(mx,Number(m[1]))});
+  return 'RC-'+String(mx+1).padStart(6,'0');
+}
+
+// إلغاء الحفظ المحلي كمصدر أساسي
+save=function(){renderAll()};
+addClient=async function(){try{let name=cName.value.trim();if(!name)return alert('اكتب اسم العميل');await cloudGetOrCreateCustomer(name,cPhone.value,cNote.value);cName.value=cPhone.value=cNote.value='';await cloudLoadAll();cloudToast('تم حفظ العميل في السحابة')}catch(e){alert('خطأ حفظ العميل: '+(e.message||e))}}
+addClientFromModal=async function(){try{let name=mName.value.trim();if(!name)return alert('اكتب اسم العميل');await cloudGetOrCreateCustomer(name,mPhone.value,mNote.value||'أضيف من سند القبض');rClient.value=name;closeClientModal();await cloudLoadAll()}catch(e){alert('خطأ حفظ العميل: '+(e.message||e))}}
+saveReceipt=async function(){try{let client=rClient.value.trim(),amount=Number(rAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let c=await cloudGetOrCreateCustomer(client,'','أضيف تلقائياً من سند قبض');let no=await cloudNextReceiptNo();let payload={tenant_id:cloudTenant.id,module_id:SANABEL_MODULE_ID,customer_id:c.id,receipt_no:no,receipt_date:rDate.value||todayISO(),amount,remaining:Number(rRemain.value)||0,payment_method_id:cloudPayId(rPay.value),reference_no:rRef.value||null,collector_name:rCollector.value||null,notes:rNote.value||null,status:'pending'};let {error}=await cloud.from('os_receipts').insert(payload);if(error)throw error;clearReceipt();await cloudLoadAll();alert('تم حفظ السند في السحابة وظهر في التقارير')}catch(e){console.error(e);alert('خطأ حفظ السند: '+(e.message||e))}}
+approve=async function(id){try{let r=db.receipts.find(x=>x.id===id);if(!r?.cloud_id)return;let {error}=await cloud.from('os_receipts').update({status:'approved',updated_at:new Date().toISOString()}).eq('id',r.cloud_id);if(error)throw error;await cloudLoadAll()}catch(e){alert('خطأ الاعتماد: '+(e.message||e))}}
+delReceipt=async function(id){try{if(!confirm('سيتم إلغاء السند كنص محاسبي ولن يحذف نهائياً'))return;let r=db.receipts.find(x=>x.id===id);if(!r?.cloud_id)return;let {error}=await cloud.from('os_receipts').update({status:'deleted',updated_at:new Date().toISOString()}).eq('id',r.cloud_id);if(error)throw error;await cloudLoadAll()}catch(e){alert('خطأ الإلغاء: '+(e.message||e))}}
+saveEditReceipt=async function(){try{let r=db.receipts.find(x=>x.id===eId.value);if(!r?.cloud_id)return alert('لم يتم العثور على السند');let client=eClient.value.trim(),amount=Number(eAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let c=await cloudGetOrCreateCustomer(client,'','أضيف من تعديل سند');let payload={customer_id:c.id,receipt_date:eDate.value||todayISO(),amount,remaining:Number(eRemain.value)||0,payment_method_id:cloudPayId(ePay.value),reference_no:eRef.value||null,collector_name:eCollector.value||null,notes:eNote.value||null,status:eStatus.value,updated_at:new Date().toISOString()};let {error}=await cloud.from('os_receipts').update(payload).eq('id',r.cloud_id);if(error)throw error;closeEditModal();await cloudLoadAll();alert('تم تعديل السند في السحابة')}catch(e){alert('خطأ تعديل السند: '+(e.message||e))}}
+importClientsExcel=async function(ev){let f=ev.target.files[0];if(!f)return;let reader=new FileReader();reader.onload=async e=>{try{let wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]],json=XLSX.utils.sheet_to_json(ws,{defval:''});let added=0,updated=0,ignored=0;for(const row of json){let name=row['اسم العميل']||row['العميل']||row['Name']||row['Customer']||row['customer']||row['name'];let phone=row['الجوال']||row['رقم الجوال']||row['Phone']||row['Mobile']||row['phone'];let note=row['ملاحظة']||row['Notes']||row['Note']||row['note'];if(!norm(name)){ignored++;continue}let before=db.clients.some(c=>norm(c.name)===norm(name));await cloudGetOrCreateCustomer(name,phone,note);before?updated++:added++}await cloudLoadAll();importResult.innerHTML=`تمت قراءة الملف: <b>${f.name}</b><br>إضافة: <b>${added.toLocaleString('en-US')}</b> | موجود سابقًا: <b>${updated.toLocaleString('en-US')}</b> | بدون اسم: <b>${ignored.toLocaleString('en-US')}</b>`;alert('تم استيراد العملاء إلى السحابة')}catch(err){console.error(err);alert('تعذر قراءة ملف Excel: '+err.message)}};reader.readAsArrayBuffer(f)}
+
+// شريط حالة السحابة وزر خروج
+window.addEventListener('load',()=>{
+  let b=document.createElement('div');b.style.cssText='position:fixed;left:24px;top:18px;z-index:9999;display:flex;gap:8px;align-items:center';
+  b.innerHTML='<button id="cloudRefresh" class="btn blue">☁️ تحديث السحابة</button><button id="cloudLogout" class="btn">خروج</button>';
+  document.body.appendChild(b);
+  cloudRefresh.onclick=cloudLoadAll;
+  cloudLogout.onclick=async()=>{await cloud.auth.signOut();location.reload()};
+  cloudInit();
+});
+</script>
+
+</body></html>`)}else alert('هذا السند محفوظ باسم المرفق فقط من نسخة قديمة: '+r.fileName)}
 function tafqeet(num){num=Math.round(Number(num)||0);if(num===0)return 'صفر ريال';const ones=['','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة','أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];const tens=['','','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'];const hund=['','مائة','مائتان','ثلاثمائة','أربعمائة','خمسمائة','ستمائة','سبعمائة','ثمانمائة','تسعمائة'];function under1000(n){let h=Math.floor(n/100),r=n%100,out=[];if(h)out.push(hund[h]);if(r){if(r<20)out.push(ones[r]);else{let o=r%10,t=Math.floor(r/10);out.push((o?ones[o]+' و ':'')+tens[t])}}return out.join(' و ')}let parts=[];let th=Math.floor(num/1000),rem=num%1000;if(th){if(th===1)parts.push('ألف');else if(th===2)parts.push('ألفان');else if(th<11)parts.push(under1000(th)+' آلاف');else parts.push(under1000(th)+' ألف')}if(rem)parts.push(under1000(rem));return parts.join(' و ')+' ريال فقط لا غير'}
 function printReceipt(id){let r=db.receipts.find(x=>x.id===id);if(!r)return;let org=db.settings.org||setOrg.value||'أسواق سنابل المع المركزية',city=db.settings.city||setCity.value||'رجال ألمع - الحبيل',manager=db.settings.manager||setManager.value||'أبوقصي';let w=window.open('','_blank');w.document.write(`<html dir="rtl" lang="ar"><head><title>سند قبض ${r.id}</title><style>body{font-family:Tahoma,Arial,sans-serif;padding:35px;font-size:18px;color:#111827}.receiptPrint{max-width:800px;margin:auto}.logo{text-align:center;font-size:30px;font-weight:900;color:#0b1f3f}.city{text-align:center;color:#64748b;margin-top:6px}.box{border:2px solid #0b1f3f;padding:26px;border-radius:24px;margin-top:20px}.title{text-align:center;color:#0b1f3f;margin:0 0 20px}.row{display:flex;justify-content:space-between;gap:18px;border-bottom:1px solid #e5e7eb;padding:12px 0}.row b{color:#334155}.status{display:inline-block;padding:8px 14px;border-radius:999px;background:${r.status==='approved'?'#dcfce7':'#fef3c7'};color:${r.status==='approved'?'#166534':'#92400e'};font-weight:900}.signs{display:flex;justify-content:space-between;margin-top:45px}.stamp{border:1px dashed #94a3b8;border-radius:16px;padding:20px;min-width:190px;text-align:center;color:#64748b}@media print{button{display:none}}
 
@@ -133,7 +332,106 @@ function printReceipt(id){let r=db.receipts.find(x=>x.id===id);if(!r)return;let 
 :root{--bg:#f6f9ff;--surface:#ffffff;--ink:#061225;--muted:#69778c;--nav:#061b3d;--nav2:#08295c;--brand:#0b3b82;--brand2:#1463d9;--gold:#c99b3f;--line:#e8eef7;--red:#ef4444;--green:#13a36a;--blue:#2563eb;--yellow:#f59e0b;--purple:#7c3aed;--cyan:#06b6d4;--shadow:0 18px 45px rgba(12,34,69,.08);--soft:0 14px 38px rgba(11,59,130,.14);--radius:26px}
 html,body{background:linear-gradient(180deg,#fbfdff 0%,#f4f8ff 100%)!important;color:var(--ink);font-family:Tajawal,Tahoma,Arial,sans-serif;font-size:16.5px;font-variant-numeric:tabular-nums}.app{grid-template-columns:318px minmax(0,1fr);background:transparent}.side{background:linear-gradient(180deg,#061b3d 0%,#072a5d 56%,#041328 100%);padding:24px 18px;border-left:1px solid rgba(255,255,255,.10);box-shadow:-24px 0 70px rgba(6,27,61,.18)}.logoBox{padding:4px 2px 18px;margin-bottom:15px;border-bottom:1px solid rgba(255,255,255,.08)}.mark{width:58px;height:58px;border-radius:22px;background:linear-gradient(135deg,#fff1c2,#c99b3f);font-size:24px;color:#07152f}.logo{font-size:27px}.subLogo{color:#dbeafe;font-weight:700}.org{border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);padding:18px;margin:4px 0 24px}.org b{display:block;font-size:18px;color:#fff}.org span{color:#dbeafe}.nav button{height:52px;border-radius:16px;padding:0 14px;font-weight:900;color:#eaf2ff;display:flex;align-items:center;justify-content:flex-start;gap:10px;margin:7px 0}.nav button.active{background:linear-gradient(135deg,#0b4fb3,#144a91);box-shadow:0 14px 34px rgba(20,99,217,.28);border:1px solid rgba(255,255,255,.12)}.nav button:hover{background:rgba(255,255,255,.09);transform:translateX(-4px)}main{padding:30px 34px 110px}.top{display:grid;grid-template-columns:1fr auto;align-items:start}.title h1{font-size:36px;color:#07152f;letter-spacing:-.9px}.title p{font-size:17px;color:#516179;font-weight:700}.pill{height:48px;display:flex;align-items:center;border-radius:999px;border-color:#eef2f7;background:#fff;box-shadow:0 12px 30px rgba(12,34,69,.07);color:#07152f}.hero{min-height:124px;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(120deg,#082756 0%,#123f8a 48%,#b7872f 100%);border-radius:28px;padding:28px 34px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.22)}.hero:before{content:"";position:absolute;right:52%;top:-130px;width:420px;height:420px;background:radial-gradient(circle,rgba(255,255,255,.13),transparent 66%);border-radius:50%}.hero h2{font-size:28px}.hero p{font-size:17px;color:#e7f0ff;font-weight:800}.grid{grid-template-columns:repeat(5,minmax(170px,1fr));gap:18px}.kpi{min-height:126px;border-radius:22px;background:rgba(255,255,255,.92);box-shadow:var(--shadow);border:1px solid var(--line);padding:20px 20px 18px;isolation:isolate}.kpi:before{height:0}.kpi:after{content:"";position:absolute;top:22px;left:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#eff6ff,#dbeafe);z-index:-1}.kpi:nth-child(1):after{background:linear-gradient(135deg,#eff6ff,#bfdbfe)}.kpi:nth-child(2):after{background:linear-gradient(135deg,#ecfdf5,#bbf7d0)}.kpi:nth-child(3):after{background:linear-gradient(135deg,#fff7ed,#fed7aa)}.kpi:nth-child(4):after{background:linear-gradient(135deg,#fff1f2,#fecdd3)}.kpi:nth-child(5):after{background:linear-gradient(135deg,#f5f3ff,#ddd6fe)}.kpi span{font-weight:900;color:#65748a}.kpi b{font-size:27px;color:#07152f;direction:ltr;text-align:right}.card{border-radius:26px;background:rgba(255,255,255,.94);border:1px solid var(--line);box-shadow:var(--shadow);padding:22px}.card h2{font-size:25px;color:#07152f}.form{gap:16px}.field label,label{font-weight:900;color:#1f2f46}input,select,textarea{border-radius:15px;border-color:#d9e3f1;background:#fff;padding:14px 16px}input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.10)}.btn{border-radius:14px;padding:12px 17px;transition:.18s}.btn.primary{background:linear-gradient(135deg,#0b4fb3,#0b1f3f);color:white;box-shadow:0 12px 28px rgba(11,79,179,.22)}.btn.gold{background:linear-gradient(135deg,#d3aa54,#9b6a18)}.btn.green{background:linear-gradient(135deg,#059669,#22c55e)}.btn.blue{background:linear-gradient(135deg,#2563eb,#0ea5e9)}.table-wrap{border-radius:20px;border-color:#e7edf6;background:#fff}table{border-collapse:separate;border-spacing:0;min-width:1080px}th{background:#f8fbff;color:#48607c;font-weight:900;padding:15px 14px;border-bottom:1px solid #e8eef7}td{padding:14px;border-bottom:1px solid #edf2f7}tr:hover td{background:#f8fbff}.badge{border-radius:999px;padding:7px 12px}.premium-grid{display:grid;grid-template-columns:1fr 1.05fr .95fr;gap:18px;margin:18px 0}.premium-panel{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);padding:22px;min-height:230px}.premium-panel h3{margin:0 0 16px;color:#07152f;font-size:22px}.gauge{width:172px;height:172px;border-radius:50%;margin:8px auto 12px;background:conic-gradient(#1463d9 var(--pct,0deg),#e8eef7 0);display:grid;place-items:center;position:relative}.gauge:after{content:"";position:absolute;inset:16px;background:#fff;border-radius:50%;box-shadow:inset 0 0 0 1px #eef2f7}.gauge b{z-index:1;font-size:31px;color:#0b3b82;direction:ltr}.gauge span{z-index:1;display:block;font-size:13px;color:#69778c;font-weight:900}.metric-line{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #edf2f7;padding:10px 0;font-weight:900}.metric-line .value{direction:ltr;color:#0b3b82}.aging-row{display:grid;grid-template-columns:150px 1fr 60px;gap:10px;align-items:center;margin:14px 0;font-weight:900;color:#344054}.aging-bar{height:10px;border-radius:999px;background:#eef2f7;overflow:hidden}.aging-bar i{display:block;height:100%;border-radius:999px;background:#13a36a;width:0}.aging-row:nth-child(3) .aging-bar i{background:#f59e0b}.aging-row:nth-child(4) .aging-bar i{background:#f97316}.aging-row:nth-child(5) .aging-bar i{background:#ef4444}.alert-item{display:grid;grid-template-columns:1fr 54px;gap:12px;align-items:center;border:1px solid #edf2f7;border-radius:18px;padding:13px 14px;margin:10px 0;background:#fff}.alert-item b{color:#07152f}.alert-item span{display:block;color:#6b7b92;font-size:13px;font-weight:800;margin-top:3px}.alert-ico{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#fee2e2;color:#dc2626;font-size:22px}.quickbar{position:fixed;right:342px;left:34px;bottom:18px;background:linear-gradient(135deg,#061b3d,#082f67);border:1px solid rgba(255,255,255,.12);border-radius:20px;box-shadow:0 22px 60px rgba(6,27,61,.22);display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:12px;z-index:15}.quickbar button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);color:#fff;border-radius:16px;padding:12px;font-weight:900}.quickbar button:hover{background:rgba(255,255,255,.14)}.hint,.importBox{background:#f8fbff;border-color:#dbe7fb;color:#344054}.modalBox{border-radius:28px;box-shadow:0 30px 90px rgba(6,27,61,.28)}@media(max-width:1180px){.grid,.premium-grid{grid-template-columns:1fr 1fr}.quickbar{position:static;margin-top:16px;grid-template-columns:1fr 1fr;right:auto;left:auto}}@media(max-width:1000px){.app{grid-template-columns:1fr}.premium-grid,.grid{grid-template-columns:1fr}.quickbar{grid-template-columns:1fr}.side{height:auto;position:relative}.top{grid-template-columns:1fr}.title h1{font-size:29px}main{padding:18px 16px 40px}}
 
-</style></head><body><div class="receiptPrint"><div class="logo">${org}</div><div class="city">${city}</div><div class="box"><h1 class="title">سند قبض</h1><div class="row"><b>رقم السند</b><span>${r.id}</span></div><div class="row"><b>التاريخ</b><span>${r.date}</span></div><div class="row"><b>استلمنا من</b><span>${r.client}</span></div><div class="row"><b>المبلغ رقماً</b><span>${money(r.amount)}</span></div><div class="row"><b>المبلغ كتابةً</b><span>${tafqeet(r.amount)}</span></div><div class="row"><b>طريقة الدفع</b><span>${r.pay}</span></div><div class="row"><b>المتبقي</b><span>${money(r.remain)}</span></div><div class="row"><b>رقم المرجع</b><span>${r.ref||'-'}</span></div><div class="row"><b>الحالة</b><span class="status">${r.status==='approved'?'معتمد':'بانتظار الاعتماد'}</span></div><p><b>البيان:</b> ${r.note||'سداد من حساب العميل'}</p><p><b>المحصل:</b> ${r.collector||manager}</p><div class="signs"><div class="stamp">توقيع المحصل<br><br>____________</div><div class="stamp">توقيع العميل<br><br>____________</div><div class="stamp">اعتماد المدير<br><br>____________</div></div></div><br><button onclick="print()" style="padding:12px 25px;border:0;border-radius:12px;background:#0b1f3f;color:white;font-weight:bold">طباعة</button></div><script>setTimeout(()=>print(),300)<\/script></body></html>`)}
+</style></head><body><div class="receiptPrint"><div class="logo">${org}</div><div class="city">${city}</div><div class="box"><h1 class="title">سند قبض</h1><div class="row"><b>رقم السند</b><span>${r.id}</span></div><div class="row"><b>التاريخ</b><span>${r.date}</span></div><div class="row"><b>استلمنا من</b><span>${r.client}</span></div><div class="row"><b>المبلغ رقماً</b><span>${money(r.amount)}</span></div><div class="row"><b>المبلغ كتابةً</b><span>${tafqeet(r.amount)}</span></div><div class="row"><b>طريقة الدفع</b><span>${r.pay}</span></div><div class="row"><b>المتبقي</b><span>${money(r.remain)}</span></div><div class="row"><b>رقم المرجع</b><span>${r.ref||'-'}</span></div><div class="row"><b>الحالة</b><span class="status">${r.status==='approved'?'معتمد':'بانتظار الاعتماد'}</span></div><p><b>البيان:</b> ${r.note||'سداد من حساب العميل'}</p><p><b>المحصل:</b> ${r.collector||manager}</p><div class="signs"><div class="stamp">توقيع المحصل<br><br>____________</div><div class="stamp">توقيع العميل<br><br>____________</div><div class="stamp">اعتماد المدير<br><br>____________</div></div></div><br><button onclick="print()" style="padding:12px 25px;border:0;border-radius:12px;background:#0b1f3f;color:white;font-weight:bold">طباعة</button></div><script>setTimeout(()=>print(),300)<\/script>
+<script>
+/* ===== Sanabel OS Cloud Connector V7 - Supabase ===== */
+const SANABEL_SUPABASE_URL = 'https://rueapdmdkjytsxkfumpw.supabase.co';
+const SANABEL_SUPABASE_KEY = 'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
+const SANABEL_TENANT_CODE = 'SANABEL';
+const SANABEL_MODULE_ID = 'receivables';
+const cloud = window.supabase.createClient(SANABEL_SUPABASE_URL, SANABEL_SUPABASE_KEY);
+let cloudTenant=null, cloudUser=null, cloudPayments=[];
+
+function cloudToast(msg){
+  let t=document.getElementById('cloudToast');
+  if(!t){t=document.createElement('div');t.id='cloudToast';t.style.cssText='position:fixed;left:24px;bottom:24px;background:#061b3d;color:#fff;border-radius:18px;padding:14px 18px;z-index:99999;box-shadow:0 18px 45px rgba(0,0,0,.25);font-weight:900';document.body.appendChild(t)}
+  t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3500)
+}
+function cloudLoginUI(){
+  let div=document.createElement('div');div.id='cloudLogin';div.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#061b3d,#08295c);z-index:999999;display:grid;place-items:center;padding:20px';
+  div.innerHTML=`<div style="width:min(460px,100%);background:#fff;border-radius:28px;padding:26px;box-shadow:0 30px 90px rgba(0,0,0,.35);font-family:Tajawal,Tahoma,Arial">
+    <h1 style="margin:0 0 8px;color:#07152f">سنابل OS</h1>
+    <p style="margin:0 0 18px;color:#64748b;font-weight:800">تسجيل دخول إدارة الذمم السحابية</p>
+    <label style="font-weight:900">البريد الإلكتروني</label><input id="cloudEmail" style="width:100%;padding:14px;border:1px solid #d9e3f1;border-radius:14px;margin:8px 0 14px" placeholder="email@example.com">
+    <label style="font-weight:900">كلمة المرور</label><input id="cloudPass" type="password" style="width:100%;padding:14px;border:1px solid #d9e3f1;border-radius:14px;margin:8px 0 14px">
+    <button id="cloudLoginBtn" style="width:100%;border:0;border-radius:16px;padding:14px;background:linear-gradient(135deg,#0b4fb3,#061b3d);color:#fff;font-weight:900;font-size:17px">دخول</button>
+    <div id="cloudLoginMsg" style="margin-top:12px;color:#dc2626;font-weight:800"></div>
+  </div>`;
+  document.body.appendChild(div);
+  document.getElementById('cloudLoginBtn').onclick=async()=>{
+    let email=cloudEmail.value.trim(), password=cloudPass.value;
+    cloudLoginMsg.textContent='جاري تسجيل الدخول...';
+    const {error}=await cloud.auth.signInWithPassword({email,password});
+    if(error){cloudLoginMsg.textContent='خطأ: '+error.message;return}
+    div.remove(); await cloudInit();
+  }
+}
+async function cloudRequireAuth(){
+  const {data:{session}}=await cloud.auth.getSession();
+  if(!session){cloudLoginUI();return false}
+  cloudUser=session.user;return true;
+}
+async function cloudInit(){
+  try{
+    if(!(await cloudRequireAuth()))return;
+    let {data:t,error:te}=await cloud.from('tenants').select('*').eq('code',SANABEL_TENANT_CODE).single();
+    if(te) throw te; cloudTenant=t;
+    let {data:p,error:pe}=await cloud.from('os_payment_methods').select('*').eq('tenant_id',cloudTenant.id).order('name');
+    if(pe) throw pe; cloudPayments=p||[];
+    rPay.innerHTML=cloudPayments.map(x=>`<option>${x.name}</option>`).join('')||rPay.innerHTML;
+    ePay.innerHTML=rPay.innerHTML; fPay.innerHTML='<option value="">الكل</option>'+rPay.innerHTML;
+    await cloudLoadAll();
+    cloudToast('تم الاتصال بالسحابة بنجاح');
+  }catch(err){console.error(err);cloudToast('تعذر الاتصال بالسحابة: '+(err.message||err));}
+}
+function cloudPayId(name){let p=cloudPayments.find(x=>x.name===name);return p?.id||null}
+function cloudPayName(id){let p=cloudPayments.find(x=>x.id===id);return p?.name||'-'}
+async function cloudLoadAll(){
+  if(!cloudTenant)return;
+  const {data:cs,error:ce}=await cloud.from('os_customers').select('*').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:true});
+  if(ce) throw ce;
+  const {data:rs,error:re}=await cloud.from('os_receipts').select('*, customer:os_customers(name,phone), payment:os_payment_methods(name,type)').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:true});
+  if(re) throw re;
+  db.clients=(cs||[]).map(c=>({cloud_id:c.id,name:c.name,phone:c.phone||'',note:c.notes||'',opening_balance:c.opening_balance||0}));
+  db.receipts=(rs||[]).map(r=>({cloud_id:r.id,id:r.receipt_no,date:r.receipt_date,client:r.customer?.name||'-',customer_id:r.customer_id,amount:Number(r.amount||0),pay:r.payment?.name||cloudPayName(r.payment_method_id),remain:Number(r.remaining||0),ref:r.reference_no||'',collector:r.collector_name||'',note:r.notes||'',status:r.status||'pending',createdAt:r.created_at,updatedAt:r.updated_at,fileName:''}));
+  renderAll();
+}
+async function cloudGetOrCreateCustomer(name,phone='',note=''){
+  name=norm(name); if(!name) throw new Error('اسم العميل مطلوب');
+  let {data:found,error:fe}=await cloud.from('os_customers').select('*').eq('tenant_id',cloudTenant.id).eq('name',name).maybeSingle();
+  if(fe) throw fe;
+  if(found) return found;
+  let {data,error}=await cloud.from('os_customers').insert({tenant_id:cloudTenant.id,name,phone,notes:note}).select().single();
+  if(error) throw error; return data;
+}
+async function cloudNextReceiptNo(){
+  let {data}=await cloud.from('os_receipts').select('receipt_no').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:false}).limit(1);
+  let mx=0;(data||[]).forEach(r=>{let m=String(r.receipt_no||'').match(/(\d+)$/);if(m)mx=Math.max(mx,Number(m[1]))});
+  return 'RC-'+String(mx+1).padStart(6,'0');
+}
+
+// إلغاء الحفظ المحلي كمصدر أساسي
+save=function(){renderAll()};
+addClient=async function(){try{let name=cName.value.trim();if(!name)return alert('اكتب اسم العميل');await cloudGetOrCreateCustomer(name,cPhone.value,cNote.value);cName.value=cPhone.value=cNote.value='';await cloudLoadAll();cloudToast('تم حفظ العميل في السحابة')}catch(e){alert('خطأ حفظ العميل: '+(e.message||e))}}
+addClientFromModal=async function(){try{let name=mName.value.trim();if(!name)return alert('اكتب اسم العميل');await cloudGetOrCreateCustomer(name,mPhone.value,mNote.value||'أضيف من سند القبض');rClient.value=name;closeClientModal();await cloudLoadAll()}catch(e){alert('خطأ حفظ العميل: '+(e.message||e))}}
+saveReceipt=async function(){try{let client=rClient.value.trim(),amount=Number(rAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let c=await cloudGetOrCreateCustomer(client,'','أضيف تلقائياً من سند قبض');let no=await cloudNextReceiptNo();let payload={tenant_id:cloudTenant.id,module_id:SANABEL_MODULE_ID,customer_id:c.id,receipt_no:no,receipt_date:rDate.value||todayISO(),amount,remaining:Number(rRemain.value)||0,payment_method_id:cloudPayId(rPay.value),reference_no:rRef.value||null,collector_name:rCollector.value||null,notes:rNote.value||null,status:'pending'};let {error}=await cloud.from('os_receipts').insert(payload);if(error)throw error;clearReceipt();await cloudLoadAll();alert('تم حفظ السند في السحابة وظهر في التقارير')}catch(e){console.error(e);alert('خطأ حفظ السند: '+(e.message||e))}}
+approve=async function(id){try{let r=db.receipts.find(x=>x.id===id);if(!r?.cloud_id)return;let {error}=await cloud.from('os_receipts').update({status:'approved',updated_at:new Date().toISOString()}).eq('id',r.cloud_id);if(error)throw error;await cloudLoadAll()}catch(e){alert('خطأ الاعتماد: '+(e.message||e))}}
+delReceipt=async function(id){try{if(!confirm('سيتم إلغاء السند كنص محاسبي ولن يحذف نهائياً'))return;let r=db.receipts.find(x=>x.id===id);if(!r?.cloud_id)return;let {error}=await cloud.from('os_receipts').update({status:'deleted',updated_at:new Date().toISOString()}).eq('id',r.cloud_id);if(error)throw error;await cloudLoadAll()}catch(e){alert('خطأ الإلغاء: '+(e.message||e))}}
+saveEditReceipt=async function(){try{let r=db.receipts.find(x=>x.id===eId.value);if(!r?.cloud_id)return alert('لم يتم العثور على السند');let client=eClient.value.trim(),amount=Number(eAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let c=await cloudGetOrCreateCustomer(client,'','أضيف من تعديل سند');let payload={customer_id:c.id,receipt_date:eDate.value||todayISO(),amount,remaining:Number(eRemain.value)||0,payment_method_id:cloudPayId(ePay.value),reference_no:eRef.value||null,collector_name:eCollector.value||null,notes:eNote.value||null,status:eStatus.value,updated_at:new Date().toISOString()};let {error}=await cloud.from('os_receipts').update(payload).eq('id',r.cloud_id);if(error)throw error;closeEditModal();await cloudLoadAll();alert('تم تعديل السند في السحابة')}catch(e){alert('خطأ تعديل السند: '+(e.message||e))}}
+importClientsExcel=async function(ev){let f=ev.target.files[0];if(!f)return;let reader=new FileReader();reader.onload=async e=>{try{let wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]],json=XLSX.utils.sheet_to_json(ws,{defval:''});let added=0,updated=0,ignored=0;for(const row of json){let name=row['اسم العميل']||row['العميل']||row['Name']||row['Customer']||row['customer']||row['name'];let phone=row['الجوال']||row['رقم الجوال']||row['Phone']||row['Mobile']||row['phone'];let note=row['ملاحظة']||row['Notes']||row['Note']||row['note'];if(!norm(name)){ignored++;continue}let before=db.clients.some(c=>norm(c.name)===norm(name));await cloudGetOrCreateCustomer(name,phone,note);before?updated++:added++}await cloudLoadAll();importResult.innerHTML=`تمت قراءة الملف: <b>${f.name}</b><br>إضافة: <b>${added.toLocaleString('en-US')}</b> | موجود سابقًا: <b>${updated.toLocaleString('en-US')}</b> | بدون اسم: <b>${ignored.toLocaleString('en-US')}</b>`;alert('تم استيراد العملاء إلى السحابة')}catch(err){console.error(err);alert('تعذر قراءة ملف Excel: '+err.message)}};reader.readAsArrayBuffer(f)}
+
+// شريط حالة السحابة وزر خروج
+window.addEventListener('load',()=>{
+  let b=document.createElement('div');b.style.cssText='position:fixed;left:24px;top:18px;z-index:9999;display:flex;gap:8px;align-items:center';
+  b.innerHTML='<button id="cloudRefresh" class="btn blue">☁️ تحديث السحابة</button><button id="cloudLogout" class="btn">خروج</button>';
+  document.body.appendChild(b);
+  cloudRefresh.onclick=cloudLoadAll;
+  cloudLogout.onclick=async()=>{await cloud.auth.signOut();location.reload()};
+  cloudInit();
+});
+</script>
+
+</body></html>`)}
 function hasActiveReceipt(clientName){return db.receipts.some(r=>r.status!=='deleted' && norm(r.client)===norm(clientName))}
 function overdueClients(){return db.clients.filter(c=>!hasActiveReceipt(c.name))}
 function renderOverdue(){let q=norm(document.getElementById('overdueSearch')?.value).toLowerCase();let rows=overdueClients().filter(c=>!q || norm(c.name).toLowerCase().includes(q) || norm(c.phone).toLowerCase().includes(q));if(document.getElementById('overdueSummary'))overdueSummary.innerHTML=`عدد العملاء المتأخرين: <b>${rows.length.toLocaleString('en-US')}</b> من أصل <b>${db.clients.length.toLocaleString('en-US')}</b> عميل`;if(document.getElementById('overdueRows'))overdueRows.innerHTML=rows.map((c,i)=>`<tr><td>${(i+1).toLocaleString('en-US')}</td><td>${c.name}</td><td>${c.phone||'-'}</td><td>${c.note||'-'}</td><td><span class="badge del">متأخر</span></td><td><button class="btn primary" onclick="rClient.value='${String(c.name).replaceAll("'","\\'")}';show('receipt',document.querySelectorAll('.nav button')[1])">إصدار سند</button></td></tr>`).join('')||'<tr><td colspan="6">لا يوجد عملاء متأخرون</td></tr>'}
@@ -143,7 +441,106 @@ function printOverdue(){renderOverdue();let rows=overdueClients();let w=window.o
 :root{--bg:#f6f9ff;--surface:#ffffff;--ink:#061225;--muted:#69778c;--nav:#061b3d;--nav2:#08295c;--brand:#0b3b82;--brand2:#1463d9;--gold:#c99b3f;--line:#e8eef7;--red:#ef4444;--green:#13a36a;--blue:#2563eb;--yellow:#f59e0b;--purple:#7c3aed;--cyan:#06b6d4;--shadow:0 18px 45px rgba(12,34,69,.08);--soft:0 14px 38px rgba(11,59,130,.14);--radius:26px}
 html,body{background:linear-gradient(180deg,#fbfdff 0%,#f4f8ff 100%)!important;color:var(--ink);font-family:Tajawal,Tahoma,Arial,sans-serif;font-size:16.5px;font-variant-numeric:tabular-nums}.app{grid-template-columns:318px minmax(0,1fr);background:transparent}.side{background:linear-gradient(180deg,#061b3d 0%,#072a5d 56%,#041328 100%);padding:24px 18px;border-left:1px solid rgba(255,255,255,.10);box-shadow:-24px 0 70px rgba(6,27,61,.18)}.logoBox{padding:4px 2px 18px;margin-bottom:15px;border-bottom:1px solid rgba(255,255,255,.08)}.mark{width:58px;height:58px;border-radius:22px;background:linear-gradient(135deg,#fff1c2,#c99b3f);font-size:24px;color:#07152f}.logo{font-size:27px}.subLogo{color:#dbeafe;font-weight:700}.org{border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);padding:18px;margin:4px 0 24px}.org b{display:block;font-size:18px;color:#fff}.org span{color:#dbeafe}.nav button{height:52px;border-radius:16px;padding:0 14px;font-weight:900;color:#eaf2ff;display:flex;align-items:center;justify-content:flex-start;gap:10px;margin:7px 0}.nav button.active{background:linear-gradient(135deg,#0b4fb3,#144a91);box-shadow:0 14px 34px rgba(20,99,217,.28);border:1px solid rgba(255,255,255,.12)}.nav button:hover{background:rgba(255,255,255,.09);transform:translateX(-4px)}main{padding:30px 34px 110px}.top{display:grid;grid-template-columns:1fr auto;align-items:start}.title h1{font-size:36px;color:#07152f;letter-spacing:-.9px}.title p{font-size:17px;color:#516179;font-weight:700}.pill{height:48px;display:flex;align-items:center;border-radius:999px;border-color:#eef2f7;background:#fff;box-shadow:0 12px 30px rgba(12,34,69,.07);color:#07152f}.hero{min-height:124px;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(120deg,#082756 0%,#123f8a 48%,#b7872f 100%);border-radius:28px;padding:28px 34px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.22)}.hero:before{content:"";position:absolute;right:52%;top:-130px;width:420px;height:420px;background:radial-gradient(circle,rgba(255,255,255,.13),transparent 66%);border-radius:50%}.hero h2{font-size:28px}.hero p{font-size:17px;color:#e7f0ff;font-weight:800}.grid{grid-template-columns:repeat(5,minmax(170px,1fr));gap:18px}.kpi{min-height:126px;border-radius:22px;background:rgba(255,255,255,.92);box-shadow:var(--shadow);border:1px solid var(--line);padding:20px 20px 18px;isolation:isolate}.kpi:before{height:0}.kpi:after{content:"";position:absolute;top:22px;left:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#eff6ff,#dbeafe);z-index:-1}.kpi:nth-child(1):after{background:linear-gradient(135deg,#eff6ff,#bfdbfe)}.kpi:nth-child(2):after{background:linear-gradient(135deg,#ecfdf5,#bbf7d0)}.kpi:nth-child(3):after{background:linear-gradient(135deg,#fff7ed,#fed7aa)}.kpi:nth-child(4):after{background:linear-gradient(135deg,#fff1f2,#fecdd3)}.kpi:nth-child(5):after{background:linear-gradient(135deg,#f5f3ff,#ddd6fe)}.kpi span{font-weight:900;color:#65748a}.kpi b{font-size:27px;color:#07152f;direction:ltr;text-align:right}.card{border-radius:26px;background:rgba(255,255,255,.94);border:1px solid var(--line);box-shadow:var(--shadow);padding:22px}.card h2{font-size:25px;color:#07152f}.form{gap:16px}.field label,label{font-weight:900;color:#1f2f46}input,select,textarea{border-radius:15px;border-color:#d9e3f1;background:#fff;padding:14px 16px}input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.10)}.btn{border-radius:14px;padding:12px 17px;transition:.18s}.btn.primary{background:linear-gradient(135deg,#0b4fb3,#0b1f3f);color:white;box-shadow:0 12px 28px rgba(11,79,179,.22)}.btn.gold{background:linear-gradient(135deg,#d3aa54,#9b6a18)}.btn.green{background:linear-gradient(135deg,#059669,#22c55e)}.btn.blue{background:linear-gradient(135deg,#2563eb,#0ea5e9)}.table-wrap{border-radius:20px;border-color:#e7edf6;background:#fff}table{border-collapse:separate;border-spacing:0;min-width:1080px}th{background:#f8fbff;color:#48607c;font-weight:900;padding:15px 14px;border-bottom:1px solid #e8eef7}td{padding:14px;border-bottom:1px solid #edf2f7}tr:hover td{background:#f8fbff}.badge{border-radius:999px;padding:7px 12px}.premium-grid{display:grid;grid-template-columns:1fr 1.05fr .95fr;gap:18px;margin:18px 0}.premium-panel{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);padding:22px;min-height:230px}.premium-panel h3{margin:0 0 16px;color:#07152f;font-size:22px}.gauge{width:172px;height:172px;border-radius:50%;margin:8px auto 12px;background:conic-gradient(#1463d9 var(--pct,0deg),#e8eef7 0);display:grid;place-items:center;position:relative}.gauge:after{content:"";position:absolute;inset:16px;background:#fff;border-radius:50%;box-shadow:inset 0 0 0 1px #eef2f7}.gauge b{z-index:1;font-size:31px;color:#0b3b82;direction:ltr}.gauge span{z-index:1;display:block;font-size:13px;color:#69778c;font-weight:900}.metric-line{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #edf2f7;padding:10px 0;font-weight:900}.metric-line .value{direction:ltr;color:#0b3b82}.aging-row{display:grid;grid-template-columns:150px 1fr 60px;gap:10px;align-items:center;margin:14px 0;font-weight:900;color:#344054}.aging-bar{height:10px;border-radius:999px;background:#eef2f7;overflow:hidden}.aging-bar i{display:block;height:100%;border-radius:999px;background:#13a36a;width:0}.aging-row:nth-child(3) .aging-bar i{background:#f59e0b}.aging-row:nth-child(4) .aging-bar i{background:#f97316}.aging-row:nth-child(5) .aging-bar i{background:#ef4444}.alert-item{display:grid;grid-template-columns:1fr 54px;gap:12px;align-items:center;border:1px solid #edf2f7;border-radius:18px;padding:13px 14px;margin:10px 0;background:#fff}.alert-item b{color:#07152f}.alert-item span{display:block;color:#6b7b92;font-size:13px;font-weight:800;margin-top:3px}.alert-ico{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#fee2e2;color:#dc2626;font-size:22px}.quickbar{position:fixed;right:342px;left:34px;bottom:18px;background:linear-gradient(135deg,#061b3d,#082f67);border:1px solid rgba(255,255,255,.12);border-radius:20px;box-shadow:0 22px 60px rgba(6,27,61,.22);display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:12px;z-index:15}.quickbar button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);color:#fff;border-radius:16px;padding:12px;font-weight:900}.quickbar button:hover{background:rgba(255,255,255,.14)}.hint,.importBox{background:#f8fbff;border-color:#dbe7fb;color:#344054}.modalBox{border-radius:28px;box-shadow:0 30px 90px rgba(6,27,61,.28)}@media(max-width:1180px){.grid,.premium-grid{grid-template-columns:1fr 1fr}.quickbar{position:static;margin-top:16px;grid-template-columns:1fr 1fr;right:auto;left:auto}}@media(max-width:1000px){.app{grid-template-columns:1fr}.premium-grid,.grid{grid-template-columns:1fr}.quickbar{grid-template-columns:1fr}.side{height:auto;position:relative}.top{grid-template-columns:1fr}.title h1{font-size:29px}main{padding:18px 16px 40px}}
 
-</style></head><body><h1>تقرير العملاء المتأخرين</h1><div class="meta">كل عميل لم يصدر له سند قبض يعتبر متأخرًا</div><table><thead><tr><th>#</th><th>اسم العميل</th><th>الجوال</th><th>ملاحظة</th></tr></thead><tbody>${rows.map((c,i)=>`<tr><td>${(i+1).toLocaleString('en-US')}</td><td>${c.name}</td><td>${c.phone||'-'}</td><td>${c.note||'-'}</td></tr>`).join('')||'<tr><td colspan="4">لا توجد بيانات</td></tr>'}</tbody></table><script>print()<\/script></body></html>`)}
+</style></head><body><h1>تقرير العملاء المتأخرين</h1><div class="meta">كل عميل لم يصدر له سند قبض يعتبر متأخرًا</div><table><thead><tr><th>#</th><th>اسم العميل</th><th>الجوال</th><th>ملاحظة</th></tr></thead><tbody>${rows.map((c,i)=>`<tr><td>${(i+1).toLocaleString('en-US')}</td><td>${c.name}</td><td>${c.phone||'-'}</td><td>${c.note||'-'}</td></tr>`).join('')||'<tr><td colspan="4">لا توجد بيانات</td></tr>'}</tbody></table><script>print()<\/script>
+<script>
+/* ===== Sanabel OS Cloud Connector V7 - Supabase ===== */
+const SANABEL_SUPABASE_URL = 'https://rueapdmdkjytsxkfumpw.supabase.co';
+const SANABEL_SUPABASE_KEY = 'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
+const SANABEL_TENANT_CODE = 'SANABEL';
+const SANABEL_MODULE_ID = 'receivables';
+const cloud = window.supabase.createClient(SANABEL_SUPABASE_URL, SANABEL_SUPABASE_KEY);
+let cloudTenant=null, cloudUser=null, cloudPayments=[];
+
+function cloudToast(msg){
+  let t=document.getElementById('cloudToast');
+  if(!t){t=document.createElement('div');t.id='cloudToast';t.style.cssText='position:fixed;left:24px;bottom:24px;background:#061b3d;color:#fff;border-radius:18px;padding:14px 18px;z-index:99999;box-shadow:0 18px 45px rgba(0,0,0,.25);font-weight:900';document.body.appendChild(t)}
+  t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3500)
+}
+function cloudLoginUI(){
+  let div=document.createElement('div');div.id='cloudLogin';div.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#061b3d,#08295c);z-index:999999;display:grid;place-items:center;padding:20px';
+  div.innerHTML=`<div style="width:min(460px,100%);background:#fff;border-radius:28px;padding:26px;box-shadow:0 30px 90px rgba(0,0,0,.35);font-family:Tajawal,Tahoma,Arial">
+    <h1 style="margin:0 0 8px;color:#07152f">سنابل OS</h1>
+    <p style="margin:0 0 18px;color:#64748b;font-weight:800">تسجيل دخول إدارة الذمم السحابية</p>
+    <label style="font-weight:900">البريد الإلكتروني</label><input id="cloudEmail" style="width:100%;padding:14px;border:1px solid #d9e3f1;border-radius:14px;margin:8px 0 14px" placeholder="email@example.com">
+    <label style="font-weight:900">كلمة المرور</label><input id="cloudPass" type="password" style="width:100%;padding:14px;border:1px solid #d9e3f1;border-radius:14px;margin:8px 0 14px">
+    <button id="cloudLoginBtn" style="width:100%;border:0;border-radius:16px;padding:14px;background:linear-gradient(135deg,#0b4fb3,#061b3d);color:#fff;font-weight:900;font-size:17px">دخول</button>
+    <div id="cloudLoginMsg" style="margin-top:12px;color:#dc2626;font-weight:800"></div>
+  </div>`;
+  document.body.appendChild(div);
+  document.getElementById('cloudLoginBtn').onclick=async()=>{
+    let email=cloudEmail.value.trim(), password=cloudPass.value;
+    cloudLoginMsg.textContent='جاري تسجيل الدخول...';
+    const {error}=await cloud.auth.signInWithPassword({email,password});
+    if(error){cloudLoginMsg.textContent='خطأ: '+error.message;return}
+    div.remove(); await cloudInit();
+  }
+}
+async function cloudRequireAuth(){
+  const {data:{session}}=await cloud.auth.getSession();
+  if(!session){cloudLoginUI();return false}
+  cloudUser=session.user;return true;
+}
+async function cloudInit(){
+  try{
+    if(!(await cloudRequireAuth()))return;
+    let {data:t,error:te}=await cloud.from('tenants').select('*').eq('code',SANABEL_TENANT_CODE).single();
+    if(te) throw te; cloudTenant=t;
+    let {data:p,error:pe}=await cloud.from('os_payment_methods').select('*').eq('tenant_id',cloudTenant.id).order('name');
+    if(pe) throw pe; cloudPayments=p||[];
+    rPay.innerHTML=cloudPayments.map(x=>`<option>${x.name}</option>`).join('')||rPay.innerHTML;
+    ePay.innerHTML=rPay.innerHTML; fPay.innerHTML='<option value="">الكل</option>'+rPay.innerHTML;
+    await cloudLoadAll();
+    cloudToast('تم الاتصال بالسحابة بنجاح');
+  }catch(err){console.error(err);cloudToast('تعذر الاتصال بالسحابة: '+(err.message||err));}
+}
+function cloudPayId(name){let p=cloudPayments.find(x=>x.name===name);return p?.id||null}
+function cloudPayName(id){let p=cloudPayments.find(x=>x.id===id);return p?.name||'-'}
+async function cloudLoadAll(){
+  if(!cloudTenant)return;
+  const {data:cs,error:ce}=await cloud.from('os_customers').select('*').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:true});
+  if(ce) throw ce;
+  const {data:rs,error:re}=await cloud.from('os_receipts').select('*, customer:os_customers(name,phone), payment:os_payment_methods(name,type)').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:true});
+  if(re) throw re;
+  db.clients=(cs||[]).map(c=>({cloud_id:c.id,name:c.name,phone:c.phone||'',note:c.notes||'',opening_balance:c.opening_balance||0}));
+  db.receipts=(rs||[]).map(r=>({cloud_id:r.id,id:r.receipt_no,date:r.receipt_date,client:r.customer?.name||'-',customer_id:r.customer_id,amount:Number(r.amount||0),pay:r.payment?.name||cloudPayName(r.payment_method_id),remain:Number(r.remaining||0),ref:r.reference_no||'',collector:r.collector_name||'',note:r.notes||'',status:r.status||'pending',createdAt:r.created_at,updatedAt:r.updated_at,fileName:''}));
+  renderAll();
+}
+async function cloudGetOrCreateCustomer(name,phone='',note=''){
+  name=norm(name); if(!name) throw new Error('اسم العميل مطلوب');
+  let {data:found,error:fe}=await cloud.from('os_customers').select('*').eq('tenant_id',cloudTenant.id).eq('name',name).maybeSingle();
+  if(fe) throw fe;
+  if(found) return found;
+  let {data,error}=await cloud.from('os_customers').insert({tenant_id:cloudTenant.id,name,phone,notes:note}).select().single();
+  if(error) throw error; return data;
+}
+async function cloudNextReceiptNo(){
+  let {data}=await cloud.from('os_receipts').select('receipt_no').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:false}).limit(1);
+  let mx=0;(data||[]).forEach(r=>{let m=String(r.receipt_no||'').match(/(\d+)$/);if(m)mx=Math.max(mx,Number(m[1]))});
+  return 'RC-'+String(mx+1).padStart(6,'0');
+}
+
+// إلغاء الحفظ المحلي كمصدر أساسي
+save=function(){renderAll()};
+addClient=async function(){try{let name=cName.value.trim();if(!name)return alert('اكتب اسم العميل');await cloudGetOrCreateCustomer(name,cPhone.value,cNote.value);cName.value=cPhone.value=cNote.value='';await cloudLoadAll();cloudToast('تم حفظ العميل في السحابة')}catch(e){alert('خطأ حفظ العميل: '+(e.message||e))}}
+addClientFromModal=async function(){try{let name=mName.value.trim();if(!name)return alert('اكتب اسم العميل');await cloudGetOrCreateCustomer(name,mPhone.value,mNote.value||'أضيف من سند القبض');rClient.value=name;closeClientModal();await cloudLoadAll()}catch(e){alert('خطأ حفظ العميل: '+(e.message||e))}}
+saveReceipt=async function(){try{let client=rClient.value.trim(),amount=Number(rAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let c=await cloudGetOrCreateCustomer(client,'','أضيف تلقائياً من سند قبض');let no=await cloudNextReceiptNo();let payload={tenant_id:cloudTenant.id,module_id:SANABEL_MODULE_ID,customer_id:c.id,receipt_no:no,receipt_date:rDate.value||todayISO(),amount,remaining:Number(rRemain.value)||0,payment_method_id:cloudPayId(rPay.value),reference_no:rRef.value||null,collector_name:rCollector.value||null,notes:rNote.value||null,status:'pending'};let {error}=await cloud.from('os_receipts').insert(payload);if(error)throw error;clearReceipt();await cloudLoadAll();alert('تم حفظ السند في السحابة وظهر في التقارير')}catch(e){console.error(e);alert('خطأ حفظ السند: '+(e.message||e))}}
+approve=async function(id){try{let r=db.receipts.find(x=>x.id===id);if(!r?.cloud_id)return;let {error}=await cloud.from('os_receipts').update({status:'approved',updated_at:new Date().toISOString()}).eq('id',r.cloud_id);if(error)throw error;await cloudLoadAll()}catch(e){alert('خطأ الاعتماد: '+(e.message||e))}}
+delReceipt=async function(id){try{if(!confirm('سيتم إلغاء السند كنص محاسبي ولن يحذف نهائياً'))return;let r=db.receipts.find(x=>x.id===id);if(!r?.cloud_id)return;let {error}=await cloud.from('os_receipts').update({status:'deleted',updated_at:new Date().toISOString()}).eq('id',r.cloud_id);if(error)throw error;await cloudLoadAll()}catch(e){alert('خطأ الإلغاء: '+(e.message||e))}}
+saveEditReceipt=async function(){try{let r=db.receipts.find(x=>x.id===eId.value);if(!r?.cloud_id)return alert('لم يتم العثور على السند');let client=eClient.value.trim(),amount=Number(eAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let c=await cloudGetOrCreateCustomer(client,'','أضيف من تعديل سند');let payload={customer_id:c.id,receipt_date:eDate.value||todayISO(),amount,remaining:Number(eRemain.value)||0,payment_method_id:cloudPayId(ePay.value),reference_no:eRef.value||null,collector_name:eCollector.value||null,notes:eNote.value||null,status:eStatus.value,updated_at:new Date().toISOString()};let {error}=await cloud.from('os_receipts').update(payload).eq('id',r.cloud_id);if(error)throw error;closeEditModal();await cloudLoadAll();alert('تم تعديل السند في السحابة')}catch(e){alert('خطأ تعديل السند: '+(e.message||e))}}
+importClientsExcel=async function(ev){let f=ev.target.files[0];if(!f)return;let reader=new FileReader();reader.onload=async e=>{try{let wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]],json=XLSX.utils.sheet_to_json(ws,{defval:''});let added=0,updated=0,ignored=0;for(const row of json){let name=row['اسم العميل']||row['العميل']||row['Name']||row['Customer']||row['customer']||row['name'];let phone=row['الجوال']||row['رقم الجوال']||row['Phone']||row['Mobile']||row['phone'];let note=row['ملاحظة']||row['Notes']||row['Note']||row['note'];if(!norm(name)){ignored++;continue}let before=db.clients.some(c=>norm(c.name)===norm(name));await cloudGetOrCreateCustomer(name,phone,note);before?updated++:added++}await cloudLoadAll();importResult.innerHTML=`تمت قراءة الملف: <b>${f.name}</b><br>إضافة: <b>${added.toLocaleString('en-US')}</b> | موجود سابقًا: <b>${updated.toLocaleString('en-US')}</b> | بدون اسم: <b>${ignored.toLocaleString('en-US')}</b>`;alert('تم استيراد العملاء إلى السحابة')}catch(err){console.error(err);alert('تعذر قراءة ملف Excel: '+err.message)}};reader.readAsArrayBuffer(f)}
+
+// شريط حالة السحابة وزر خروج
+window.addEventListener('load',()=>{
+  let b=document.createElement('div');b.style.cssText='position:fixed;left:24px;top:18px;z-index:9999;display:flex;gap:8px;align-items:center';
+  b.innerHTML='<button id="cloudRefresh" class="btn blue">☁️ تحديث السحابة</button><button id="cloudLogout" class="btn">خروج</button>';
+  document.body.appendChild(b);
+  cloudRefresh.onclick=cloudLoadAll;
+  cloudLogout.onclick=async()=>{await cloud.auth.signOut();location.reload()};
+  cloudInit();
+});
+</script>
+
+</body></html>`)}
 function renderAll(){let active=db.receipts.filter(r=>r.status!=='deleted');kTotal.textContent=money(active.reduce((s,r)=>s+Number(r.amount||0),0));kRemain.textContent=money(active.reduce((s,r)=>s+Number(r.remain||0),0));kToday.textContent=active.filter(r=>r.date===todayISO()).length.toLocaleString('en-US');kPending.textContent=db.receipts.filter(r=>r.status==='pending').length.toLocaleString('en-US');kOverdue.textContent=overdueClients().length.toLocaleString('en-US');clientsList.innerHTML=db.clients.map(c=>`<option value="${String(c.name).replaceAll('"','&quot;')}">`).join('');clientsRows.innerHTML=db.clients.map((c,i)=>`<tr><td>${c.name}</td><td>${c.phone||'-'}</td><td>${c.note||'-'}</td><td><button class="btn" onclick="rClient.value='${String(c.name).replaceAll("'","\\'")}';show('receipt',document.querySelectorAll('.nav button')[1])">سند</button> <button class="btn danger" onclick="db.clients.splice(${i},1);save()">حذف</button></td></tr>`).join('')||'<tr><td colspan="4">لا يوجد عملاء</td></tr>';latestRows.innerHTML=db.receipts.slice(-8).reverse().map(r=>`<tr><td>${r.id}</td><td>${r.date}</td><td>${r.client}</td><td>${money(r.amount)}</td><td>${r.pay}</td><td>${money(r.remain)}</td><td>${badge(r.status)}</td><td>${actionButtons(r.id)}</td></tr>`).join('')||'<tr><td colspan="8">لا توجد سندات</td></tr>';approvalRows.innerHTML=db.receipts.filter(r=>r.status==='pending').map(r=>`<tr><td>${r.id}</td><td>${r.date}</td><td>${r.client}</td><td>${money(r.amount)}</td><td>${r.pay}</td><td>${money(r.remain)}</td><td><button class="btn green" onclick="approve('${r.id}')">اعتماد</button> <button class="btn" onclick="printReceipt('${r.id}')">طباعة</button> <button class="btn gold" onclick="openEditReceipt('${r.id}')">تعديل</button></td></tr>`).join('')||'<tr><td colspan="7">لا توجد سندات بانتظار الاعتماد</td></tr>';renderReports();renderOverdue();if(document.getElementById('statement').classList.contains('active'))renderStatement()}
 function exportData(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sanabel_clients_payments_backup_v3.json';a.click()}function importData(e){let f=e.target.files[0];if(!f)return;let reader=new FileReader();reader.onload=()=>{try{db=JSON.parse(reader.result);db.clients=db.clients||[];db.receipts=db.receipts||[];db.seq=db.seq||calcSeq();save();alert('تم الاستيراد')}catch{alert('ملف غير صحيح')}};reader.readAsText(f)}
 function saveSettings(){db.settings={org:setOrg.value,city:setCity.value,manager:setManager.value};save();alert('تم حفظ الإعدادات')}function resetAll(){if(confirm('مسح بيانات التجربة؟')){db={clients:[],receipts:[],settings:{},seq:0};save()}}
@@ -170,4 +567,103 @@ let __sanabelOldRenderAll=renderAll;renderAll=function(){__sanabelOldRenderAll()
 
 renderAll();
 </script>
+
+<script>
+/* ===== Sanabel OS Cloud Connector V7 - Supabase ===== */
+const SANABEL_SUPABASE_URL = 'https://rueapdmdkjytsxkfumpw.supabase.co';
+const SANABEL_SUPABASE_KEY = 'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
+const SANABEL_TENANT_CODE = 'SANABEL';
+const SANABEL_MODULE_ID = 'receivables';
+const cloud = window.supabase.createClient(SANABEL_SUPABASE_URL, SANABEL_SUPABASE_KEY);
+let cloudTenant=null, cloudUser=null, cloudPayments=[];
+
+function cloudToast(msg){
+  let t=document.getElementById('cloudToast');
+  if(!t){t=document.createElement('div');t.id='cloudToast';t.style.cssText='position:fixed;left:24px;bottom:24px;background:#061b3d;color:#fff;border-radius:18px;padding:14px 18px;z-index:99999;box-shadow:0 18px 45px rgba(0,0,0,.25);font-weight:900';document.body.appendChild(t)}
+  t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3500)
+}
+function cloudLoginUI(){
+  let div=document.createElement('div');div.id='cloudLogin';div.style.cssText='position:fixed;inset:0;background:linear-gradient(135deg,#061b3d,#08295c);z-index:999999;display:grid;place-items:center;padding:20px';
+  div.innerHTML=`<div style="width:min(460px,100%);background:#fff;border-radius:28px;padding:26px;box-shadow:0 30px 90px rgba(0,0,0,.35);font-family:Tajawal,Tahoma,Arial">
+    <h1 style="margin:0 0 8px;color:#07152f">سنابل OS</h1>
+    <p style="margin:0 0 18px;color:#64748b;font-weight:800">تسجيل دخول إدارة الذمم السحابية</p>
+    <label style="font-weight:900">البريد الإلكتروني</label><input id="cloudEmail" style="width:100%;padding:14px;border:1px solid #d9e3f1;border-radius:14px;margin:8px 0 14px" placeholder="email@example.com">
+    <label style="font-weight:900">كلمة المرور</label><input id="cloudPass" type="password" style="width:100%;padding:14px;border:1px solid #d9e3f1;border-radius:14px;margin:8px 0 14px">
+    <button id="cloudLoginBtn" style="width:100%;border:0;border-radius:16px;padding:14px;background:linear-gradient(135deg,#0b4fb3,#061b3d);color:#fff;font-weight:900;font-size:17px">دخول</button>
+    <div id="cloudLoginMsg" style="margin-top:12px;color:#dc2626;font-weight:800"></div>
+  </div>`;
+  document.body.appendChild(div);
+  document.getElementById('cloudLoginBtn').onclick=async()=>{
+    let email=cloudEmail.value.trim(), password=cloudPass.value;
+    cloudLoginMsg.textContent='جاري تسجيل الدخول...';
+    const {error}=await cloud.auth.signInWithPassword({email,password});
+    if(error){cloudLoginMsg.textContent='خطأ: '+error.message;return}
+    div.remove(); await cloudInit();
+  }
+}
+async function cloudRequireAuth(){
+  const {data:{session}}=await cloud.auth.getSession();
+  if(!session){cloudLoginUI();return false}
+  cloudUser=session.user;return true;
+}
+async function cloudInit(){
+  try{
+    if(!(await cloudRequireAuth()))return;
+    let {data:t,error:te}=await cloud.from('tenants').select('*').eq('code',SANABEL_TENANT_CODE).single();
+    if(te) throw te; cloudTenant=t;
+    let {data:p,error:pe}=await cloud.from('os_payment_methods').select('*').eq('tenant_id',cloudTenant.id).order('name');
+    if(pe) throw pe; cloudPayments=p||[];
+    rPay.innerHTML=cloudPayments.map(x=>`<option>${x.name}</option>`).join('')||rPay.innerHTML;
+    ePay.innerHTML=rPay.innerHTML; fPay.innerHTML='<option value="">الكل</option>'+rPay.innerHTML;
+    await cloudLoadAll();
+    cloudToast('تم الاتصال بالسحابة بنجاح');
+  }catch(err){console.error(err);cloudToast('تعذر الاتصال بالسحابة: '+(err.message||err));}
+}
+function cloudPayId(name){let p=cloudPayments.find(x=>x.name===name);return p?.id||null}
+function cloudPayName(id){let p=cloudPayments.find(x=>x.id===id);return p?.name||'-'}
+async function cloudLoadAll(){
+  if(!cloudTenant)return;
+  const {data:cs,error:ce}=await cloud.from('os_customers').select('*').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:true});
+  if(ce) throw ce;
+  const {data:rs,error:re}=await cloud.from('os_receipts').select('*, customer:os_customers(name,phone), payment:os_payment_methods(name,type)').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:true});
+  if(re) throw re;
+  db.clients=(cs||[]).map(c=>({cloud_id:c.id,name:c.name,phone:c.phone||'',note:c.notes||'',opening_balance:c.opening_balance||0}));
+  db.receipts=(rs||[]).map(r=>({cloud_id:r.id,id:r.receipt_no,date:r.receipt_date,client:r.customer?.name||'-',customer_id:r.customer_id,amount:Number(r.amount||0),pay:r.payment?.name||cloudPayName(r.payment_method_id),remain:Number(r.remaining||0),ref:r.reference_no||'',collector:r.collector_name||'',note:r.notes||'',status:r.status||'pending',createdAt:r.created_at,updatedAt:r.updated_at,fileName:''}));
+  renderAll();
+}
+async function cloudGetOrCreateCustomer(name,phone='',note=''){
+  name=norm(name); if(!name) throw new Error('اسم العميل مطلوب');
+  let {data:found,error:fe}=await cloud.from('os_customers').select('*').eq('tenant_id',cloudTenant.id).eq('name',name).maybeSingle();
+  if(fe) throw fe;
+  if(found) return found;
+  let {data,error}=await cloud.from('os_customers').insert({tenant_id:cloudTenant.id,name,phone,notes:note}).select().single();
+  if(error) throw error; return data;
+}
+async function cloudNextReceiptNo(){
+  let {data}=await cloud.from('os_receipts').select('receipt_no').eq('tenant_id',cloudTenant.id).order('created_at',{ascending:false}).limit(1);
+  let mx=0;(data||[]).forEach(r=>{let m=String(r.receipt_no||'').match(/(\d+)$/);if(m)mx=Math.max(mx,Number(m[1]))});
+  return 'RC-'+String(mx+1).padStart(6,'0');
+}
+
+// إلغاء الحفظ المحلي كمصدر أساسي
+save=function(){renderAll()};
+addClient=async function(){try{let name=cName.value.trim();if(!name)return alert('اكتب اسم العميل');await cloudGetOrCreateCustomer(name,cPhone.value,cNote.value);cName.value=cPhone.value=cNote.value='';await cloudLoadAll();cloudToast('تم حفظ العميل في السحابة')}catch(e){alert('خطأ حفظ العميل: '+(e.message||e))}}
+addClientFromModal=async function(){try{let name=mName.value.trim();if(!name)return alert('اكتب اسم العميل');await cloudGetOrCreateCustomer(name,mPhone.value,mNote.value||'أضيف من سند القبض');rClient.value=name;closeClientModal();await cloudLoadAll()}catch(e){alert('خطأ حفظ العميل: '+(e.message||e))}}
+saveReceipt=async function(){try{let client=rClient.value.trim(),amount=Number(rAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let c=await cloudGetOrCreateCustomer(client,'','أضيف تلقائياً من سند قبض');let no=await cloudNextReceiptNo();let payload={tenant_id:cloudTenant.id,module_id:SANABEL_MODULE_ID,customer_id:c.id,receipt_no:no,receipt_date:rDate.value||todayISO(),amount,remaining:Number(rRemain.value)||0,payment_method_id:cloudPayId(rPay.value),reference_no:rRef.value||null,collector_name:rCollector.value||null,notes:rNote.value||null,status:'pending'};let {error}=await cloud.from('os_receipts').insert(payload);if(error)throw error;clearReceipt();await cloudLoadAll();alert('تم حفظ السند في السحابة وظهر في التقارير')}catch(e){console.error(e);alert('خطأ حفظ السند: '+(e.message||e))}}
+approve=async function(id){try{let r=db.receipts.find(x=>x.id===id);if(!r?.cloud_id)return;let {error}=await cloud.from('os_receipts').update({status:'approved',updated_at:new Date().toISOString()}).eq('id',r.cloud_id);if(error)throw error;await cloudLoadAll()}catch(e){alert('خطأ الاعتماد: '+(e.message||e))}}
+delReceipt=async function(id){try{if(!confirm('سيتم إلغاء السند كنص محاسبي ولن يحذف نهائياً'))return;let r=db.receipts.find(x=>x.id===id);if(!r?.cloud_id)return;let {error}=await cloud.from('os_receipts').update({status:'deleted',updated_at:new Date().toISOString()}).eq('id',r.cloud_id);if(error)throw error;await cloudLoadAll()}catch(e){alert('خطأ الإلغاء: '+(e.message||e))}}
+saveEditReceipt=async function(){try{let r=db.receipts.find(x=>x.id===eId.value);if(!r?.cloud_id)return alert('لم يتم العثور على السند');let client=eClient.value.trim(),amount=Number(eAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let c=await cloudGetOrCreateCustomer(client,'','أضيف من تعديل سند');let payload={customer_id:c.id,receipt_date:eDate.value||todayISO(),amount,remaining:Number(eRemain.value)||0,payment_method_id:cloudPayId(ePay.value),reference_no:eRef.value||null,collector_name:eCollector.value||null,notes:eNote.value||null,status:eStatus.value,updated_at:new Date().toISOString()};let {error}=await cloud.from('os_receipts').update(payload).eq('id',r.cloud_id);if(error)throw error;closeEditModal();await cloudLoadAll();alert('تم تعديل السند في السحابة')}catch(e){alert('خطأ تعديل السند: '+(e.message||e))}}
+importClientsExcel=async function(ev){let f=ev.target.files[0];if(!f)return;let reader=new FileReader();reader.onload=async e=>{try{let wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]],json=XLSX.utils.sheet_to_json(ws,{defval:''});let added=0,updated=0,ignored=0;for(const row of json){let name=row['اسم العميل']||row['العميل']||row['Name']||row['Customer']||row['customer']||row['name'];let phone=row['الجوال']||row['رقم الجوال']||row['Phone']||row['Mobile']||row['phone'];let note=row['ملاحظة']||row['Notes']||row['Note']||row['note'];if(!norm(name)){ignored++;continue}let before=db.clients.some(c=>norm(c.name)===norm(name));await cloudGetOrCreateCustomer(name,phone,note);before?updated++:added++}await cloudLoadAll();importResult.innerHTML=`تمت قراءة الملف: <b>${f.name}</b><br>إضافة: <b>${added.toLocaleString('en-US')}</b> | موجود سابقًا: <b>${updated.toLocaleString('en-US')}</b> | بدون اسم: <b>${ignored.toLocaleString('en-US')}</b>`;alert('تم استيراد العملاء إلى السحابة')}catch(err){console.error(err);alert('تعذر قراءة ملف Excel: '+err.message)}};reader.readAsArrayBuffer(f)}
+
+// شريط حالة السحابة وزر خروج
+window.addEventListener('load',()=>{
+  let b=document.createElement('div');b.style.cssText='position:fixed;left:24px;top:18px;z-index:9999;display:flex;gap:8px;align-items:center';
+  b.innerHTML='<button id="cloudRefresh" class="btn blue">☁️ تحديث السحابة</button><button id="cloudLogout" class="btn">خروج</button>';
+  document.body.appendChild(b);
+  cloudRefresh.onclick=cloudLoadAll;
+  cloudLogout.onclick=async()=>{await cloud.auth.signOut();location.reload()};
+  cloudInit();
+});
+</script>
+
 </body></html>
