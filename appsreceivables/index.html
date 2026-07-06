@@ -139,59 +139,148 @@ function pickByHeaders(obj, keys){
   return '';
 }
 async function importClientsExcel(event){
-  let file=event.target.files[0];
-  if(!file)return;
-  let reader=new FileReader();
-  reader.onload=async e=>{
-    try{
-      let wb=XLSX.read(e.target.result,{type:'binary'});
-      let ws=wb.Sheets[wb.SheetNames[0]];
-      let matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
-      matrix=matrix.filter(r=>r.some(c=>String(c||'').trim()!==''));
-      let added=0,skipped=0,updated=0;
-      if(!matrix.length){importResult.innerHTML='الملف فارغ';return;}
-      let useHeader=looksLikeHeader(matrix[0]);
-      let rows=[];
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  if(!tenantId){
+    alert('اختر المؤسسة أولاً');
+    event.target.value='';
+    return;
+  }
+
+  importResult.innerHTML='جاري قراءة ملف Excel...';
+  const normalizeKey = v => cleanExcelText(v)
+    .replace(/\s+/g,' ')
+    .replace(/[ـ:：]/g,'')
+    .trim()
+    .toLowerCase();
+
+  const headerNameKeys = ['اسم العميل','العميل','اسم','name','customer','client','customer name','client name'].map(normalizeKey);
+  const headerPhoneKeys = ['الجوال','الهاتف','رقم الجوال','رقم الهاتف','mobile','phone','tel','telephone'].map(normalizeKey);
+  const headerNoteKeys = ['ملاحظة','ملاحظات','البيان','note','notes','remark','remarks'].map(normalizeKey);
+
+  const getHeaderValue = (obj, wanted) => {
+    const keys = Object.keys(obj || {});
+    for(const k of keys){
+      if(wanted.includes(normalizeKey(k))){
+        const v = obj[k];
+        if(v!==undefined && v!==null && String(v).trim()!=='') return v;
+      }
+    }
+    return '';
+  };
+
+  const hasHeader = row => {
+    const keys = (row || []).map(normalizeKey);
+    return keys.some(k => headerNameKeys.includes(k) || headerPhoneKeys.includes(k) || headerNoteKeys.includes(k));
+  };
+
+  const existingKeys = new Set();
+  (customers || []).forEach(c=>{
+    if(norm(c.name)) existingKeys.add('name:'+norm(c.name).toLowerCase());
+    if(norm(c.phone)) existingKeys.add('phone:'+norm(c.phone));
+  });
+
+  const fileKeys = new Set();
+  let prepared = [];
+  let skipped = 0;
+
+  try{
+    const buffer = await file.arrayBuffer();
+    const wb = XLSX.read(buffer,{type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    let matrix = XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,blankrows:false})
+      .map(r => (r || []).map(c => cleanExcelText(c)))
+      .filter(r => r.some(c => String(c||'').trim() !== ''));
+
+    if(!matrix.length){
+      importResult.innerHTML='الملف فارغ';
+      event.target.value='';
+      return;
+    }
+
+    let rows = [];
+    const useHeader = hasHeader(matrix[0]);
+    if(useHeader){
+      rows = XLSX.utils.sheet_to_json(ws,{defval:'',raw:false,blankrows:false});
+    }else{
+      rows = matrix.map(r => ({__name:r[0]||'', __phone:r[1]||'', __notes:r[2]||''}));
+    }
+
+    for(const row of rows){
+      let name, phone, notes;
       if(useHeader){
-        rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});
+        name = getHeaderValue(row, headerNameKeys);
+        phone = getHeaderValue(row, headerPhoneKeys);
+        notes = getHeaderValue(row, headerNoteKeys);
       }else{
-        rows=matrix.map(r=>({__name:r[0]||'',__phone:r[1]||'',__notes:r[2]||''}));
+        name = row.__name;
+        phone = row.__phone;
+        notes = row.__notes;
       }
-      for(const row of rows){
-        let name,phone,notes;
-        if(useHeader){
-          name=pickByHeaders(row,['اسم العميل','العميل','اسم','Name','Customer','customer','CLIENT','Client']);
-          phone=pickByHeaders(row,['الجوال','الهاتف','رقم الجوال','Phone','Mobile','mobile','phone']);
-          notes=pickByHeaders(row,['ملاحظة','ملاحظات','Note','Notes','note','notes']);
-        }else{
-          name=row.__name; phone=row.__phone; notes=row.__notes;
-        }
-        name=cleanExcelText(name);
-        phone=cleanPhone(phone);
-        notes=cleanExcelText(notes);
-        if(!name){skipped++;continue;}
-        let existing=customers.find(c=>norm(c.name)===norm(name) || (phone&&norm(c.phone)===norm(phone)));
-        if(existing){
-          let patch={};
-          if(phone && !existing.phone) patch.phone=phone;
-          if(notes && !existing.notes) patch.notes=notes;
-          if(Object.keys(patch).length){
-            let {error}=await sb.from('os_customers').update(patch).eq('id',existing.id);
-            if(error) skipped++; else {updated++; Object.assign(existing,patch);} 
-          }else skipped++;
-          continue;
-        }
-        let {error}=await sb.from('os_customers').insert({tenant_id:tenantId,name,phone,notes});
-        if(error) skipped++; else added++;
+
+      name = cleanExcelText(name);
+      phone = cleanPhone(phone);
+      notes = cleanExcelText(notes);
+
+      if(!name){
+        skipped++;
+        continue;
       }
-      importResult.innerHTML=`تمت الإضافة: <b>${added.toLocaleString('en-US')}</b> | تم التحديث: <b>${updated.toLocaleString('en-US')}</b> | تم التجاهل: <b>${skipped.toLocaleString('en-US')}</b>`;
+
+      const nameKey = 'name:'+norm(name).toLowerCase();
+      const phoneKey = phone ? 'phone:'+norm(phone) : '';
+      if(existingKeys.has(nameKey) || (phoneKey && existingKeys.has(phoneKey)) || fileKeys.has(nameKey) || (phoneKey && fileKeys.has(phoneKey))){
+        skipped++;
+        continue;
+      }
+
+      fileKeys.add(nameKey);
+      if(phoneKey) fileKeys.add(phoneKey);
+
+      prepared.push({
+        tenant_id: tenantId,
+        name,
+        phone: phone || null,
+        notes: notes || null,
+        is_active: true
+      });
+    }
+
+    if(!prepared.length){
+      importResult.innerHTML=`لم تتم إضافة أي عميل. تم تجاهل <b>${skipped.toLocaleString('en-US')}</b> سجل لأنها مكررة أو بدون اسم.`;
       event.target.value='';
       await loadAll();
-    }catch(err){
-      alert('تعذر قراءة الملف: '+err.message);
+      return;
     }
-  };
-  reader.readAsBinaryString(file);
+
+    importResult.innerHTML=`تم تجهيز <b>${prepared.length.toLocaleString('en-US')}</b> عميل. جاري الرفع إلى السحابة...`;
+
+    let added = 0;
+    const chunkSize = 200;
+    for(let i=0;i<prepared.length;i+=chunkSize){
+      const chunk = prepared.slice(i,i+chunkSize);
+      const {error} = await sb.from('os_customers').insert(chunk);
+      if(error){
+        console.error('Import chunk error', error, chunk);
+        alert('تعذر استيراد جزء من الملف: '+error.message);
+        importResult.innerHTML=`تمت إضافة <b>${added.toLocaleString('en-US')}</b> قبل حدوث خطأ. السبب: ${escapeHtml(error.message)}`;
+        event.target.value='';
+        await loadAll();
+        return;
+      }
+      added += chunk.length;
+      importResult.innerHTML=`جاري الاستيراد... تمت إضافة <b>${added.toLocaleString('en-US')}</b> من <b>${prepared.length.toLocaleString('en-US')}</b>`;
+    }
+
+    importResult.innerHTML=`تم الاستيراد بنجاح ✅ تمت إضافة: <b>${added.toLocaleString('en-US')}</b> | تم تجاهل: <b>${skipped.toLocaleString('en-US')}</b>`;
+    event.target.value='';
+    await loadAll();
+  }catch(err){
+    console.error('Excel import error', err);
+    alert('تعذر قراءة الملف: '+(err && err.message ? err.message : err));
+    importResult.innerHTML='فشل الاستيراد. افتح Console لمعرفة التفاصيل.';
+    event.target.value='';
+  }
 }
 async function saveReceipt(){let client=rClient.value.trim(),amount=Number(rAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let cid=customerIdByName(client);if(!cid){if(confirm('العميل غير موجود. هل تريد إضافته تلقائيًا؟')){let {data,error}=await sb.from('os_customers').insert({tenant_id:tenantId,name:client,notes:'أضيف تلقائيًا من سند قبض'}).select().single();if(error)return alert('خطأ إضافة العميل: '+error.message);cid=data.id;await loadCustomers()}else return}let payId=paymentIdByName(rPay.value);let receipt_no='RC-'+Date.now().toString().slice(-8);const payload={tenant_id:tenantId,module_id:'receivables',customer_id:cid,receipt_no,receipt_date:rDate.value||todayISO(),amount,remaining:Number(rRemain.value)||0,payment_method_id:payId,reference_no:rRef.value.trim()||null,collector_name:rCollector.value.trim()||null,notes:rNote.value.trim()||null,status:'pending'};const {error}=await sb.from('os_receipts').insert(payload);if(error){alert('خطأ حفظ السند: '+error.message);return}clearReceipt();toast('تم حفظ السند في السحابة');await loadAll()}
 function clearReceipt(){rClient.value='';rDate.value=todayISO();rAmount.value='';rRemain.value='';rRef.value='';rCollector.value='';rNote.value=''}
