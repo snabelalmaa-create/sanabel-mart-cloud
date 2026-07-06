@@ -62,7 +62,7 @@
     <div class="full"><label>ملاحظة / البيان</label><textarea id="rNote" placeholder="مثال: سداد جزء من مديونية العميل"></textarea></div>
   </div><div class="actions"><button class="btn primary" onclick="saveReceipt()">حفظ السند</button><button class="btn" onclick="clearReceipt()">تنظيف</button></div></div></section>
 
-  <section id="clients" class="section"><div class="card"><h2>إضافة / استيراد العملاء</h2><div class="form"><div><label>اسم العميل</label><input id="cName"></div><div><label>الجوال</label><input id="cPhone"></div><div><label>ملاحظة</label><input id="cNote"></div></div><div class="actions"><button class="btn primary" onclick="addClient()">إضافة عميل</button><label class="btn gold">استيراد Excel<input type="file" hidden accept=".xlsx,.xls,.csv" onchange="importClientsExcel(event)"></label><button class="btn" onclick="loadAll()">تحديث</button></div><div class="importBox"><b>طريقة ملف Excel:</b><div class="mini">يكفي وجود عمود باسم العميل أو Name أو Customer. ويفضل أعمدة: اسم العميل، الجوال، ملاحظة.</div><div id="importResult" class="mini"></div></div></div><div class="card"><h2>قائمة العملاء</h2><div class="table-wrap"><table><thead><tr><th>الاسم</th><th>الجوال</th><th>ملاحظة</th><th>إجراء</th></tr></thead><tbody id="clientsRows"></tbody></table></div></div></section>
+  <section id="clients" class="section"><div class="card"><h2>إضافة / استيراد العملاء</h2><div class="form"><div><label>اسم العميل</label><input id="cName"></div><div><label>الجوال</label><input id="cPhone"></div><div><label>ملاحظة</label><input id="cNote"></div></div><div class="actions"><button class="btn primary" onclick="addClient()">إضافة عميل</button><label class="btn gold">استيراد Excel<input type="file" hidden accept=".xlsx,.xls,.csv" onchange="importClientsExcel(event)"></label><button class="btn" onclick="loadAll()">تحديث</button></div><div class="importBox"><b>طريقة ملف Excel:</b><div class="mini">يقبل الملف بعناوين أو بدون عناوين: العمود الأول اسم العميل، الثاني الجوال، الثالث ملاحظة. ويحوّل أرقام الجوال العربية إلى إنجليزية تلقائيًا.</div><div id="importResult" class="mini"></div></div></div><div class="card"><h2>قائمة العملاء</h2><div class="table-wrap"><table><thead><tr><th>الاسم</th><th>الجوال</th><th>ملاحظة</th><th>إجراء</th></tr></thead><tbody id="clientsRows"></tbody></table></div></div></section>
 
   <section id="overdue" class="section"><div class="card"><h2>العملاء المتأخرون</h2><div class="hint">أي عميل موجود في قائمة العملاء ولم يصدر له أي سند قبض غير ملغي يعتبر متأخر تلقائيًا.</div><br><div class="form"><div><label>بحث باسم العميل أو الجوال</label><input id="overdueSearch" oninput="renderOverdue()" placeholder="اكتب للبحث"></div></div><div class="actions"><button class="btn primary" onclick="renderOverdue()">تحديث القائمة</button><button class="btn" onclick="printOverdue()">طباعة المتأخرين</button></div></div><div class="card printable"><h2>قائمة العملاء بدون سند</h2><div id="overdueSummary" class="muted"></div><br><div class="table-wrap"><table><thead><tr><th>#</th><th>اسم العميل</th><th>الجوال</th><th>ملاحظة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody id="overdueRows"></tbody></table></div></div></section>
 
@@ -113,7 +113,86 @@ function selectReceiptClient(id){rClient.value=customers.find(c=>c.id===id)?.nam
 async function addClient(){let name=cName.value.trim();if(!name)return alert('اكتب اسم العميل');const {error}=await sb.from('os_customers').insert({tenant_id:tenantId,name,phone:cPhone.value.trim()||null,notes:cNote.value.trim()||null});if(error){alert('خطأ حفظ العميل: '+error.message);return}cName.value=cPhone.value=cNote.value='';toast('تم حفظ العميل في السحابة');await loadAll()}
 function openClientModal(){mName.value=rClient.value.trim();mPhone.value='';mNote.value='';clientModal.classList.add('active');setTimeout(()=>mName.focus(),80)}function closeClientModal(){clientModal.classList.remove('active')}
 async function addClientFromModal(){let name=mName.value.trim();if(!name)return alert('اكتب اسم العميل');const {data,error}=await sb.from('os_customers').insert({tenant_id:tenantId,name,phone:mPhone.value.trim()||null,notes:mNote.value.trim()||'أضيف من سند القبض'}).select().single();if(error){alert('خطأ: '+error.message);return}closeClientModal();await loadAll();rClient.value=data.name;toast('تم حفظ العميل واختياره')}
-async function importClientsExcel(event){let file=event.target.files[0];if(!file)return;let reader=new FileReader();reader.onload=async e=>{try{let wb=XLSX.read(e.target.result,{type:'binary'});let ws=wb.Sheets[wb.SheetNames[0]];let rows=XLSX.utils.sheet_to_json(ws,{defval:''});let added=0,skipped=0;for(const row of rows){let name=row['اسم العميل']||row['العميل']||row['Name']||row['Customer']||row['customer']||'';let phone=row['الجوال']||row['الهاتف']||row['Phone']||'';let notes=row['ملاحظة']||row['ملاحظات']||row['Note']||'';name=String(name).trim();if(!name){skipped++;continue}if(customers.some(c=>norm(c.name)===norm(name)|| (phone&&norm(c.phone)===norm(phone)))){skipped++;continue}let {error}=await sb.from('os_customers').insert({tenant_id:tenantId,name,phone:String(phone||''),notes:String(notes||'')});if(error)skipped++;else added++}importResult.innerHTML=`تمت الإضافة: <b>${added}</b> | تم التجاهل: <b>${skipped}</b>`;await loadAll()}catch(err){alert('تعذر قراءة الملف: '+err.message)}};reader.readAsBinaryString(file)}
+function toEnglishDigits(value){
+  const map={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9','۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
+  return String(value??'').replace(/[٠-٩۰-۹]/g,d=>map[d]||d);
+}
+function cleanExcelText(value){
+  let v=toEnglishDigits(value).trim();
+  if(/^\d+\.0+$/.test(v)) v=v.replace(/\.0+$/,'');
+  return v;
+}
+function cleanPhone(value){
+  let v=cleanExcelText(value);
+  v=v.replace(/[^0-9+]/g,'');
+  if(v.startsWith('+966')) v='0'+v.slice(4);
+  if(v.startsWith('966') && v.length===12) v='0'+v.slice(3);
+  if(v.startsWith('5') && v.length===9) v='0'+v;
+  return v;
+}
+function looksLikeHeader(row){
+  const txt=row.map(x=>String(x||'').trim().toLowerCase()).join('|');
+  return /(اسم العميل|العميل|الجوال|الهاتف|ملاحظة|ملاحظات|name|customer|phone|mobile|note)/i.test(txt);
+}
+function pickByHeaders(obj, keys){
+  for(const k of keys){ if(obj[k]!==undefined && obj[k]!==null && String(obj[k]).trim()!=='') return obj[k]; }
+  return '';
+}
+async function importClientsExcel(event){
+  let file=event.target.files[0];
+  if(!file)return;
+  let reader=new FileReader();
+  reader.onload=async e=>{
+    try{
+      let wb=XLSX.read(e.target.result,{type:'binary'});
+      let ws=wb.Sheets[wb.SheetNames[0]];
+      let matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+      matrix=matrix.filter(r=>r.some(c=>String(c||'').trim()!==''));
+      let added=0,skipped=0,updated=0;
+      if(!matrix.length){importResult.innerHTML='الملف فارغ';return;}
+      let useHeader=looksLikeHeader(matrix[0]);
+      let rows=[];
+      if(useHeader){
+        rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});
+      }else{
+        rows=matrix.map(r=>({__name:r[0]||'',__phone:r[1]||'',__notes:r[2]||''}));
+      }
+      for(const row of rows){
+        let name,phone,notes;
+        if(useHeader){
+          name=pickByHeaders(row,['اسم العميل','العميل','اسم','Name','Customer','customer','CLIENT','Client']);
+          phone=pickByHeaders(row,['الجوال','الهاتف','رقم الجوال','Phone','Mobile','mobile','phone']);
+          notes=pickByHeaders(row,['ملاحظة','ملاحظات','Note','Notes','note','notes']);
+        }else{
+          name=row.__name; phone=row.__phone; notes=row.__notes;
+        }
+        name=cleanExcelText(name);
+        phone=cleanPhone(phone);
+        notes=cleanExcelText(notes);
+        if(!name){skipped++;continue;}
+        let existing=customers.find(c=>norm(c.name)===norm(name) || (phone&&norm(c.phone)===norm(phone)));
+        if(existing){
+          let patch={};
+          if(phone && !existing.phone) patch.phone=phone;
+          if(notes && !existing.notes) patch.notes=notes;
+          if(Object.keys(patch).length){
+            let {error}=await sb.from('os_customers').update(patch).eq('id',existing.id);
+            if(error) skipped++; else {updated++; Object.assign(existing,patch);} 
+          }else skipped++;
+          continue;
+        }
+        let {error}=await sb.from('os_customers').insert({tenant_id:tenantId,name,phone,notes});
+        if(error) skipped++; else added++;
+      }
+      importResult.innerHTML=`تمت الإضافة: <b>${added.toLocaleString('en-US')}</b> | تم التحديث: <b>${updated.toLocaleString('en-US')}</b> | تم التجاهل: <b>${skipped.toLocaleString('en-US')}</b>`;
+      event.target.value='';
+      await loadAll();
+    }catch(err){
+      alert('تعذر قراءة الملف: '+err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+}
 async function saveReceipt(){let client=rClient.value.trim(),amount=Number(rAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let cid=customerIdByName(client);if(!cid){if(confirm('العميل غير موجود. هل تريد إضافته تلقائيًا؟')){let {data,error}=await sb.from('os_customers').insert({tenant_id:tenantId,name:client,notes:'أضيف تلقائيًا من سند قبض'}).select().single();if(error)return alert('خطأ إضافة العميل: '+error.message);cid=data.id;await loadCustomers()}else return}let payId=paymentIdByName(rPay.value);let receipt_no='RC-'+Date.now().toString().slice(-8);const payload={tenant_id:tenantId,module_id:'receivables',customer_id:cid,receipt_no,receipt_date:rDate.value||todayISO(),amount,remaining:Number(rRemain.value)||0,payment_method_id:payId,reference_no:rRef.value.trim()||null,collector_name:rCollector.value.trim()||null,notes:rNote.value.trim()||null,status:'pending'};const {error}=await sb.from('os_receipts').insert(payload);if(error){alert('خطأ حفظ السند: '+error.message);return}clearReceipt();toast('تم حفظ السند في السحابة');await loadAll()}
 function clearReceipt(){rClient.value='';rDate.value=todayISO();rAmount.value='';rRemain.value='';rRef.value='';rCollector.value='';rNote.value=''}
 function filterRows(prefix){let rows=receipts.slice();let from=document.getElementById(prefix+'From')?.value,to=document.getElementById(prefix+'To')?.value,client=document.getElementById(prefix+'Client')?.value?.trim(),pay=document.getElementById(prefix+'Pay')?.value,status=document.getElementById(prefix+'Status')?.value;if(from)rows=rows.filter(r=>r.date>=from);if(to)rows=rows.filter(r=>r.date<=to);if(client)rows=rows.filter(r=>String(r.client).includes(client));if(pay)rows=rows.filter(r=>r.pay===pay);if(status)rows=rows.filter(r=>r.status===status);return rows}
