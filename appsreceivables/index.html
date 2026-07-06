@@ -19,7 +19,7 @@
     <div class="hint">استخدم البريد وكلمة المرور التي أنشأتها في Supabase. بعد الدخول ستظهر بيانات المؤسسة من قاعدة سنابل OS.</div>
     <div class="field"><label>البريد الإلكتروني</label><input id="loginEmail" type="email" placeholder="example@email.com"></div>
     <div class="field"><label>كلمة المرور</label><input id="loginPass" type="password" placeholder="••••••••"></div>
-    <div class="actions"><button class="btn primary" onclick="login()">دخول</button></div>
+    <div class="actions"><button class="btn primary" onclick="doLogin()">دخول</button></div>
     <div class="mini" id="loginMsg"></div>
   </div>
 </div>
@@ -93,10 +93,10 @@ function customerIdByName(name){return customers.find(c=>norm(c.name)===norm(nam
 function paymentIdByName(name){return paymentMethods.find(p=>norm(p.name)===norm(name))?.id}
 function receiptToRow(r){return {id:r.id, receipt_no:r.receipt_no, date:r.receipt_date, client:customerName(r.customer_id), client_id:r.customer_id, amount:Number(r.amount||0), pay:paymentName(r.payment_method_id), payment_method_id:r.payment_method_id, remain:Number(r.remaining||0), ref:r.reference_no||'', collector:r.collector_name||'', note:r.notes||'', status:r.status||'pending'}}
 async function init(){today.textContent=new Date().toLocaleDateString('ar-SA-u-nu-latn',{weekday:'long',year:'numeric',month:'long',day:'numeric'});rDate.value=todayISO();const {data}=await sb.auth.getSession();session=data.session;if(session) await enterApp();else showLogin();}
-function showLogin(){login.classList.remove('hide');app.classList.add('hide')}
-async function login(){loginMsg.textContent='جاري تسجيل الدخول...';const {data,error}=await sb.auth.signInWithPassword({email:loginEmail.value.trim(),password:loginPass.value});if(error){loginMsg.textContent='خطأ: '+error.message;return}session=data.session;await enterApp()}
+function showLogin(){document.getElementById('login').classList.remove('hide');document.getElementById('app').classList.add('hide')}
+async function doLogin(){loginMsg.textContent='جاري تسجيل الدخول...';const {data,error}=await sb.auth.signInWithPassword({email:loginEmail.value.trim(),password:loginPass.value});if(error){loginMsg.textContent='خطأ: '+error.message;return}session=data.session;await enterApp()}
 async function logout(){await sb.auth.signOut();session=null;showLogin()}
-async function enterApp(){login.classList.add('hide');app.classList.remove('hide');userEmail.textContent=session.user.email;await loadTenants();await loadAll()}
+async function enterApp(){document.getElementById('login').classList.add('hide');document.getElementById('app').classList.remove('hide');userEmail.textContent=session.user.email;await loadTenants();await loadAll()}
 async function loadTenants(){const {data,error}=await sb.from('tenants').select('*').order('name');if(error){toast('تعذر تحميل المؤسسات: '+error.message);return}tenants=data||[];tenantSelect.innerHTML=tenants.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');tenantId=tenantId||tenants[0]?.id;if(tenantId)tenantSelect.value=tenantId;updateTenantLabel()}
 function updateTenantLabel(){const t=tenants.find(x=>x.id===tenantId);tenantName.textContent=t?.name||'لا توجد مؤسسة'}
 async function switchTenant(){tenantId=tenantSelect.value;updateTenantLabel();await loadAll()}
