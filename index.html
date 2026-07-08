@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sanabel OS 2.0.1 Foundation - Design</title>
+<title>Sanabel OS V8 Enterprise Foundation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -40,13 +40,19 @@ html,body{min-height:100%;background:#f6f9ff!important;overflow-x:hidden}.app{gr
 .workspace-card.hidden-workspace{opacity:.55;filter:grayscale(.2)}
 @media(max-width:800px){.workspace-manager-grid{grid-template-columns:1fr}.workspace-manager-row{grid-template-columns:42px 1fr}.workspace-manager-row .row-actions{grid-column:1/-1;justify-content:stretch}.workspace-manager-row .row-actions button{flex:1}}
 
+
+
+/* ===== Sanabel OS V8 Enterprise Additions: Backup + Performance ===== */
+.v8-badge{display:inline-flex;align-items:center;gap:8px;border-radius:999px;background:#ecfdf5;color:#166534;border:1px solid #86efac;padding:8px 12px;font-weight:900}
+.v8-blueprint{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:14px}.v8-tile{background:#fff;border:1px solid var(--os-line);border-radius:22px;padding:16px;box-shadow:var(--os-shadow);min-height:135px}.v8-tile .ico{font-size:30px}.v8-tile h3{margin:8px 0 5px}.v8-tile p{margin:0;color:#64748b;font-weight:800;line-height:1.7}.backup-step{display:grid;grid-template-columns:54px 1fr auto;gap:12px;align-items:center;background:#fff;border:1px solid var(--os-line);border-radius:18px;padding:12px;margin:10px 0}.backup-step .num{width:46px;height:46px;border-radius:16px;background:#eef2ff;color:#4338ca;display:grid;place-items:center;font-weight:900;font-size:20px}.backup-step.done .num{background:#dcfce7;color:#166534}.backup-step.warn .num{background:#ffedd5;color:#c2410c}.progress-track{height:12px;border-radius:999px;background:#eef2ff;overflow:hidden}.progress-track span{display:block;height:100%;border-radius:999px;background:linear-gradient(135deg,#2563eb,#22c55e)}.v8-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.v8-code{direction:ltr;text-align:left;white-space:pre-wrap;background:#0f172a;color:#e2e8f0;border-radius:18px;padding:14px;overflow:auto;font-family:Consolas,monospace;font-size:13px;line-height:1.7}.perf-card{border-radius:20px;padding:15px;background:linear-gradient(135deg,#fff,#f8fbff);border:1px solid var(--os-line);font-weight:900}.perf-card b{display:block;font-size:22px;margin-bottom:6px;color:#0f3d87}.hidden-file-input{display:none!important}
+
 </style>
 </head>
 <body>
 <div id="login" class="login">
   <div class="login-card">
     <div class="brand"><div class="logo">🌿</div><div><h1>Sanabel OS</h1><p>Business Operating System - نظام تشغيل الأعمال</p></div></div>
-    <div class="notice">Sanabel OS 2.0.1 Foundation — تصميم جديد لمساحات العمل مع بحث عالمي ولوحة تشغيل.</div>
+    <div class="notice">Sanabel OS V8 Enterprise — منصة أم قابلة للتوسع مع مركز نسخ احتياطي وأداء سريع.</div>
     <div class="field"><label>اختر المستخدم</label><select id="loginUser"><option>جاري تحميل المستخدمين...</option></select></div>
     <div class="field"><label>الرقم السري PIN</label><input id="loginPin" type="password" placeholder="ادخل الرقم السري"></div>
     <div class="actions"><button class="btn" onclick="login()">دخول للنظام</button><button class="btn light" onclick="loadUsers()">تحديث المستخدمين</button></div>
@@ -70,7 +76,7 @@ html,body{min-height:100%;background:#f6f9ff!important;overflow-x:hidden}.app{gr
     <section id="workspaceCenter" class="section active">
       <div class="workspace-hero">
         <div>
-          <span class="workspace-tag">Sanabel OS 2.0.1 Foundation</span>
+          <span class="workspace-tag">Sanabel OS V8 Enterprise</span>
           <h2>مرحباً بك في <span style="color:#67e8a6">Sanabel OS</span></h2>
           <p>نظام إدارة متكامل وذكي يدير أعمالك بكفاءة واحترافية، مع عزل كامل لمساحات العمل.</p>
         </div>
@@ -483,6 +489,44 @@ SM-20260630-222222,980.00,61"></textarea></div>
       </div>
     </section>
 
+
+
+    <section id="platformCore" class="section">
+      <div class="card">
+        <div class="panel-title">
+          <div><span class="v8-badge">Sanabel OS V8 Enterprise Core</span><h2>مركز المنصة والنسخ الاحتياطي</h2><div class="sub">هذه الشاشة تحوّل Sanabel OS من ملف تشغيل فقط إلى منصة منظمة: مساحات عمل، حماية، نسخ احتياطي، وإصدارات قابلة للاسترجاع.</div></div>
+          <div class="actions" style="margin:0"><button class="btn light" onclick="renderPlatformCore()">تحديث</button><button class="btn ok" onclick="downloadProjectSnapshot()">تحميل نسخة HTML</button></div>
+        </div>
+        <div class="notice">قاعدة العمل المعتمدة: لا نعتمد أي نسخة قبل حفظ نسخة تشغيل + نسخة بيانات + سجل تغييرات. الهدف حماية المشروع لو تعطل الكمبيوتر أو تغير الجهاز.</div>
+      </div>
+      <div class="grid cards" id="platformKpis"></div>
+      <div class="grid two">
+        <div class="card">
+          <div class="panel-title"><h3>خطة الحماية 3-2-1</h3><span class="badge ok">معتمدة</span></div>
+          <div id="backupPlanBox"></div>
+          <div class="v8-toolbar"><button class="btn ok" onclick="downloadSanabelBackup()">تحميل نسخة بيانات JSON</button><button class="btn light" onclick="document.getElementById('restoreBackupFile').click()">استعادة بيانات</button><input id="restoreBackupFile" class="hidden-file-input" type="file" accept="application/json" onchange="restoreSanabelBackup(this.files)"></div>
+        </div>
+        <div class="card">
+          <div class="panel-title"><h3>قواعد الأداء المعتمدة</h3><span class="badge blue">Performance First</span></div>
+          <div class="v8-blueprint" id="performanceRulesBox"></div>
+        </div>
+      </div>
+      <div class="grid two" style="margin-top:16px">
+        <div class="card">
+          <div class="panel-title"><h3>هيكلة المشروع المقترحة</h3><button class="btn light" onclick="copyProjectStructure()">نسخ الهيكلة</button></div>
+          <pre class="v8-code" id="projectStructureBox"></pre>
+        </div>
+        <div class="card">
+          <div class="panel-title"><h3>سجل الإصدارات</h3><button class="btn light" onclick="copyChangeLog()">نسخ السجل</button></div>
+          <div class="table-wrap"><table id="changeLogTable"></table></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="panel-title"><h3>مخطط Sanabel Core</h3><span class="small">الخدمات المشتركة التي تستفيد منها كل البرامج</span></div>
+        <div class="v8-blueprint" id="coreServicesBox"></div>
+      </div>
+    </section>
+
     <section id="users" class="section">
       <div class="card">
         <div class="panel-title"><h2>إدارة المستخدمين والصلاحيات</h2><button class="btn light" onclick="loadUsers();renderUsers()">تحديث</button></div>
@@ -502,7 +546,7 @@ SM-20260630-222222,980.00,61"></textarea></div>
     </section>
   </main>
 </div>
-<div class="os-footer no-print"><span><b>Sanabel OS 2.0.1 Foundation</b> © جميع الحقوق محفوظة</span><span>🟢 النظام يعمل بكفاءة</span><span>آخر مزامنة: منذ دقيقة واحدة 🔄</span></div>
+<div class="os-footer no-print"><span><b>Sanabel OS V8 Enterprise Foundation</b> © جميع الحقوق محفوظة</span><span>🟢 النظام يعمل بكفاءة</span><span>آخر مزامنة: منذ دقيقة واحدة 🔄</span></div>
 <div id="toast" class="toast"></div>
 <div id="imageModal" class="modal"><div class="modal-inner"><div class="modal-toolbar"><button onclick="prevAttachment()">السابق</button><button onclick="nextAttachment()">التالي</button><button onclick="zoomAttachment(0.2)">تكبير +</button><button onclick="zoomAttachment(-0.2)">تصغير -</button><button onclick="closeAttachmentViewer()" class="danger-link">إغلاق</button></div><div class="modal-stage"><img id="modalImg" src=""></div><div class="small" id="modalCaption" style="color:white;text-align:center"></div></div></div>
 
@@ -553,7 +597,7 @@ function visibleWorkspaces(){return WORKSPACES.filter(w=>w.visible!==false)}
 let currentWorkspaceId=localStorage.getItem('sanabel_os_workspace')||'retail';
 const ACCOUNTANT_WHATSAPP_KEY="sanabel_accountant_whatsapp";
 const roleMap={owner:'مدير عام',manager:'مدير',accountant:'محاسب',cashier:'كاشير',purchase_manager:'مدير مشتريات',receiver:'موظف استلام'};
-const tabsAll=[['workspaceCenter','🌿','مساحات العمل',['owner','manager','accountant','purchase_manager','cashier','receiver']],['dashboard','🏠','لوحة المدير',['owner','manager','accountant','purchase_manager']],['enterpriseDashboard','🏢','لوحة Enterprise',['owner','manager','accountant']],['financeCenter','💰','المركز المالي',['owner','manager','accountant']],['securityAudit','🔐','الصلاحيات والرقابة',['owner','manager']],['liveControl','📡','مركز الرقابة المباشر',['owner','manager','accountant']],['accountantApproval','🧾','اعتماد المحاسب',['owner','manager','accountant']],['mobileShift','📱','إغلاق وردية الجوال',['cashier','owner']],['managerReview','✅','اعتماد المدير',['owner','manager','accountant']],['smartLink','🔗','ربط سمارت ERP',['owner','manager','accountant']],['mobileApp','📲','تطبيق الجوال',['owner','manager','accountant']],['alertsCenter','🚨','مركز التنبيهات',['owner','manager','accountant']],['reports','📊','التقارير',['owner','manager','accountant']],['networkMatch','🏦','مطابقة الشبكة',['owner','manager','accountant']],['posDevices','💳','أجهزة الشبكة',['owner','manager','accountant']],['receiving','📦','استلام البضاعة',['receiver','purchase_manager','owner']],['users','👥','المستخدمون',['owner','manager']]];
+const tabsAll=[['workspaceCenter','🌿','مساحات العمل',['owner','manager','accountant','purchase_manager','cashier','receiver']],['platformCore','🛡️','مركز المنصة V8',['owner','manager']],['dashboard','🏠','لوحة المدير',['owner','manager','accountant','purchase_manager']],['enterpriseDashboard','🏢','لوحة Enterprise',['owner','manager','accountant']],['financeCenter','💰','المركز المالي',['owner','manager','accountant']],['securityAudit','🔐','الصلاحيات والرقابة',['owner','manager']],['liveControl','📡','مركز الرقابة المباشر',['owner','manager','accountant']],['accountantApproval','🧾','اعتماد المحاسب',['owner','manager','accountant']],['mobileShift','📱','إغلاق وردية الجوال',['cashier','owner']],['managerReview','✅','اعتماد المدير',['owner','manager','accountant']],['smartLink','🔗','ربط سمارت ERP',['owner','manager','accountant']],['mobileApp','📲','تطبيق الجوال',['owner','manager','accountant']],['alertsCenter','🚨','مركز التنبيهات',['owner','manager','accountant']],['reports','📊','التقارير',['owner','manager','accountant']],['networkMatch','🏦','مطابقة الشبكة',['owner','manager','accountant']],['posDevices','💳','أجهزة الشبكة',['owner','manager','accountant']],['receiving','📦','استلام البضاعة',['receiver','purchase_manager','owner']],['users','👥','المستخدمون',['owner','manager']]];
 function byId(id){return document.getElementById(id)}
 function n(v){return Number(v||0)}
 function money(v){return n(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ر.س'}
@@ -646,7 +690,7 @@ async function switchWorkspace(id){
   receiving=filterRowsByWorkspace(allReceiving,'retail');
   posDevices=filterRowsByWorkspace(allPosDevices,'retail');
   networkMatches=filterRowsByWorkspace(allNetworkMatches,'retail');
-  renderDashboard();renderShifts();renderAlertsCenter();renderReports();renderSmartDashboard();renderAccountantApproval();renderLiveControlCenter();renderEnterpriseDashboard();renderFinanceCenter();renderSecurityCenter();renderPosDevices();fillDeviceSelect();renderNetworkMatches();
+  renderDashboard();renderShifts();renderAlertsCenter();renderReports();renderSmartDashboard();renderAccountantApproval();renderLiveControlCenter();renderEnterpriseDashboard();renderFinanceCenter();renderSecurityCenter();renderPlatformCore();renderPosDevices();fillDeviceSelect();renderNetworkMatches();
   toast('تم التبديل إلى '+currentWorkspace().name);
 }
 function copyWorkspaceSQL(){copyText(byId('workspaceSql')?.textContent||'')}
@@ -657,7 +701,7 @@ function shiftStage(s){if(!s)return 'pending'; if(s.status==='approved')return '
 async function loadUsers(){byId('loginMsg').textContent='جاري تحميل المستخدمين...';const {data,error}=await db.from('app_users').select('*').eq('organization_id',ORG_ID).order('full_name');if(error){byId('loginMsg').textContent='خطأ في تحميل المستخدمين: '+error.message;return}users=data||[];const active=users.filter(u=>u.is_active!==false);byId('loginUser').innerHTML=active.map(u=>`<option value="${u.id}">${u.full_name} - ${roleMap[u.role]||u.role}</option>`).join('');const qp=new URLSearchParams(location.search);const uid=qp.get('user');if(uid&&active.some(u=>u.id===uid))byId('loginUser').value=uid;byId('loginMsg').textContent=active.length?'تم تحميل المستخدمين.':'لا يوجد مستخدمون نشطون.';renderUsers();renderSecurityCenter()}
 async function login(){const id=byId('loginUser').value,pin=byId('loginPin').value;const u=users.find(x=>x.id===id);if(!u)return alert('اختر المستخدم');if(String(u.pin)!==String(pin)){logSecurityEvent('محاولة دخول فاشلة',u.full_name||id,'PIN غير صحيح','danger');return alert('الرقم السري غير صحيح')}currentUser=u;logSecurityEvent('تسجيل دخول',u.full_name,'دخول ناجح للنظام','ok');localStorage.setItem('sanabel_cloud_user',JSON.stringify(u));startApp()}
 function logout(){localStorage.removeItem('sanabel_cloud_user');location.reload()}
-async function startApp(){byId('login').classList.add('hide');byId('app').classList.remove('hide');byId('sideUser').textContent=currentUser.full_name;byId('sideRole').textContent=roleMap[currentUser.role]||currentUser.role;byId('todayPill').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});byId('shDate').value=new Date().toLocaleString('ar-SA');byId('recDate').value=today(); if(byId('nwDate'))byId('nwDate').value=today(); if(byId('smImportDate'))byId('smImportDate').value=today(); if(byId('repTo'))byId('repTo').value=today(); attachShiftTotalEvents();loadSmartSettings();renderWorkspaceSwitcher();renderNav();await loadAll();renderMobileLinks();runMobileReadiness();renderSecurityCenter();subscribeRealtime()}
+async function startApp(){byId('login').classList.add('hide');byId('app').classList.remove('hide');byId('sideUser').textContent=currentUser.full_name;byId('sideRole').textContent=roleMap[currentUser.role]||currentUser.role;byId('todayPill').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});byId('shDate').value=new Date().toLocaleString('ar-SA');byId('recDate').value=today(); if(byId('nwDate'))byId('nwDate').value=today(); if(byId('smImportDate'))byId('smImportDate').value=today(); if(byId('repTo'))byId('repTo').value=today(); attachShiftTotalEvents();loadSmartSettings();renderWorkspaceSwitcher();renderNav();await loadAll();renderMobileLinks();runMobileReadiness();renderSecurityCenter();renderPlatformCore();subscribeRealtime()}
 function renderNav(){const tabs=tabsAll.filter(t=>t[3].includes(currentUser.role));byId('nav').innerHTML=tabs.map((t,i)=>`<button class="${i?'':'active'}" onclick="show('${t[0]}',this)"><span>${t[1]}</span><span>${t[2]}</span></button>`).join('');show(tabs[0][0],byId('nav').querySelector('button'))}
 function show(id,btn){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));byId(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');const tab=tabsAll.find(t=>t[0]===id);byId('pageTitle').textContent=tab?tab[2]:'Sanabel OS'; if(byId('pageSub')) byId('pageSub').textContent=id==='workspaceCenter'?'منصة واحدة، جميع أعمالك في مكان واحد':'مساحة العمل الحالية: '+currentWorkspace().name}
 async function loadAll(){await Promise.all([loadShifts(),loadReceiving(),loadPosDevices(),loadNetworkMatches()]);renderDashboard();renderSmartDashboard();renderReports();renderLiveControlCenter();renderEnterpriseDashboard();renderFinanceCenter();renderSecurityCenter();}
@@ -1254,6 +1298,51 @@ function copyFinanceSummary(){const t=financeTotals();const msg=`سنابل ما
 function printFinanceCenter(){const w=window.open('','_blank','width=1200,height=800');w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>المركز المالي</title><style>body{font-family:Arial,Tahoma,sans-serif;direction:rtl;padding:20px}h2{text-align:center}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.box{border:1px solid #ccc;border-radius:12px;padding:12px;text-align:center}table{width:100%;border-collapse:collapse;margin-top:15px}th,td{border:1px solid #ccc;padding:8px;text-align:center}th{background:#0f172a;color:white}
 .workspace-switch{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:12px;margin-top:14px}.workspace-switch label{display:block;color:#dbeafe;font-weight:900;margin-bottom:8px}.workspace-switch select{width:100%;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:11px;background:#0f172a;color:white;font-weight:900}.workspace-hero{background:linear-gradient(135deg,#07152f,#123e8a 48%,#065f46);color:white;border-radius:32px;padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden}.workspace-hero:after{content:"";position:absolute;width:220px;height:220px;left:-70px;bottom:-85px;background:rgba(255,255,255,.10);border-radius:50%}.workspace-hero h2{margin:0;font-size:34px}.workspace-hero p{margin:8px 0 0;color:#dbeafe;font-weight:800}.workspace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}.workspace-card{background:white;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:18px;cursor:pointer;transition:.18s}.workspace-card:hover{transform:translateY(-2px);border-color:#93c5fd}.workspace-card.active{outline:4px solid rgba(34,197,94,.18);border-color:#22c55e}.workspace-card .ico{font-size:32px}.workspace-card h3{margin:8px 0 4px}.workspace-card p{margin:0;color:var(--muted);font-weight:800}.workspace-tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#ecfdf5;color:#166534;border:1px solid #86efac;padding:6px 10px;font-weight:900;font-size:13px}.foundation-list{display:grid;gap:10px}.foundation-item{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);background:#fff;border-radius:18px;padding:12px;font-weight:900}.foundation-item span:last-child{color:#64748b}.sql-box{direction:ltr;text-align:left;white-space:pre-wrap;background:#0f172a;color:#e2e8f0;border-radius:18px;padding:14px;overflow:auto;font-family:Consolas,monospace;font-size:13px}
 </style></head><body><h2>سنابل مارت - المركز المالي</h2>${byId('financeStats')?.outerHTML||''}<h3>التدفقات النقدية</h3>${byId('financeCashflowTable')?.outerHTML||''}<h3>طرق الدفع</h3>${byId('financePayMethodsTable')?.outerHTML||''}</body></html>`);w.document.close();setTimeout(()=>w.print(),250);}
+
+
+/* ===== Sanabel OS V8 Enterprise Core ===== */
+const SANABEL_V8_VERSION='V8.0 Enterprise Foundation';
+const SANABEL_CHANGELOG=[
+  {version:'V8.0',date:'2026-07-08',title:'تأسيس مركز المنصة',items:['إضافة مركز النسخ الاحتياطي والاستعادة','اعتماد قاعدة الأداء أولاً','تجهيز المنصة لمساحات عمل متعددة','إضافة مخطط Sanabel Core للخدمات المشتركة']},
+  {version:'V7.x',date:'2026-07-08',title:'نسخة الأساس المرفوعة',items:['مساحات عمل','لوحات رقابة','اعتماد الورديات','مطابقة الشبكة','المركز المالي','الصلاحيات']}
+];
+function renderPlatformCore(){
+  if(!byId('platformKpis'))return;
+  const workspaceCount=(WORKSPACES||[]).length;
+  const visibleCount=visibleWorkspaces().length;
+  const localKeys=Object.keys(localStorage||{}).filter(k=>k.startsWith('sanabel')).length;
+  const approxSize=Math.round((new Blob([JSON.stringify(localStorage)]).size||0)/1024);
+  byId('platformKpis').innerHTML=stat('إصدار المنصة',SANABEL_V8_VERSION,'النسخة المعتمدة للتوسع')+stat('مساحات العمل',workspaceCount,'الظاهر منها: '+visibleCount)+stat('مفاتيح التخزين المحلي',localKeys,'إعدادات ونسخ وتهيئة')+stat('حجم البيانات المحلي',approxSize+' KB','تقريبي داخل المتصفح');
+  byId('backupPlanBox').innerHTML=[
+    ['1','نسخة العمل على الكمبيوتر','المجلد الحالي الذي تعمل عليه يومياً','done','جاهز'],
+    ['2','نسخة سحابية GitHub خاص','تحفظ تاريخ كل تعديل وتسمح بالرجوع لأي إصدار','warn','يفضّل تفعيلها'],
+    ['3','نسخة Google Drive / OneDrive','رفع ZIP بعد كل إصدار مهم','warn','يدوي حالياً'],
+    ['4','هاردسك خارجي أسبوعي','حماية إضافية لو تعطل الجهاز أو الحساب','warn','مطلوب']
+  ].map(x=>`<div class="backup-step ${x[3]}"><div class="num">${x[0]}</div><div><b>${x[1]}</b><div class="small">${x[2]}</div></div><span class="badge ${x[3]==='done'?'ok':'warn'}">${x[4]}</span></div>`).join('');
+  const rules=[['⚡','تحميل حسب الحاجة','لا يتم تحميل كل السجلات مرة واحدة، خصوصاً التقارير والبيانات القديمة.'],['🗂️','أرشفة شهرية','البيانات القديمة تبقى محفوظة لكنها لا تفتح إلا عند الطلب.'],['🔎','بحث مفهرس','أي شاشة فيها بحث كثير نجهز لها فهارس وفلترة سريعة.'],['🖼️','ضغط المرفقات','الصور والمرفقات لا نخزنها بحجم يثقل النظام.'],['🧩','تقسيم الوحدات','كل برنامج داخل المنصة كتطبيق مستقل حتى لا يثقل الباقي.'],['☁️','ترقية عند الحاجة','عند تضخم البيانات ننتقل تدريجياً إلى Supabase/IndexedDB/أرشفة.']];
+  byId('performanceRulesBox').innerHTML=rules.map(r=>`<div class="perf-card"><b>${r[0]} ${r[1]}</b><span class="small">${r[2]}</span></div>`).join('');
+  byId('projectStructureBox').textContent=getProjectStructureText();
+  byId('changeLogTable').innerHTML=rowsTable(['الإصدار','التاريخ','العنوان','أهم التغييرات'],SANABEL_CHANGELOG.map(c=>`<tr><td><b>${c.version}</b></td><td>${c.date}</td><td>${c.title}</td><td>${c.items.map(i=>'• '+i).join('<br>')}</td></tr>`));
+  const core=[['🔐','Identity & Permissions','تسجيل الدخول، المستخدمين، الصلاحيات، سجل العمليات.'],['🏢','Workspaces','مؤسسات وبرامج مستقلة مع عزل البيانات ومسارات التشغيل.'],['📎','Attachments','مرفقات موحدة لكل التطبيقات مع ضغط وحفظ منظم.'],['🖨️','Print & Export','طباعة وتصدير موحد للسندات والتقارير.'],['📊','Reports Engine','تقارير موحدة تجمع من جميع التطبيقات بدون تكرار.'],['🔔','Notifications','تنبيهات مركزية للورديات، العقود، السداد، والمخزون.'],['⚡','Performance Layer','تحميل ذكي، أرشفة، وفهارس للبحث.'],['☁️','Backup & Restore','نسخ احتياطي، استعادة، وسجل إصدارات.']];
+  byId('coreServicesBox').innerHTML=core.map(r=>`<div class="v8-tile"><div class="ico">${r[0]}</div><h3>${r[1]}</h3><p>${r[2]}</p></div>`).join('');
+}
+function getProjectStructureText(){return `Sanabel OS\n│\n├── Source Code\n│   ├── index.html\n│   ├── apps/\n│   │   ├── alshuraimi/\n│   │   ├── receivables/\n│   │   ├── cashier/\n│   │   └── property/\n│   └── shared/\n│       ├── core/\n│       ├── ui/\n│       ├── reports/\n│       └── backup/\n│\n├── Database\n│   ├── schema.sql\n│   └── policies.sql\n│\n├── Assets\n│   ├── logos/\n│   ├── icons/\n│   └── documents/\n│\n├── Releases\n│   ├── V8.0/\n│   ├── V8.1/\n│   └── V9.0/\n│\n├── Backup\n│   ├── daily/\n│   ├── weekly/\n│   └── before-updates/\n│\n└── Change Log\n    └── CHANGELOG.md`;}
+function collectSanabelBackup(){
+  const local={}; Object.keys(localStorage||{}).forEach(k=>{if(k.startsWith('sanabel')||k.includes('workspace'))local[k]=localStorage.getItem(k)});
+  return {app:'Sanabel OS',version:SANABEL_V8_VERSION,created_at:new Date().toISOString(),workspace:currentWorkspaceId,workspaces:WORKSPACES,users_count:(users||[]).length,shifts_count:(shifts||[]).length,localStorage:local,changelog:SANABEL_CHANGELOG};
+}
+function downloadBlob(filename,content,type='application/json;charset=utf-8'){
+  const blob=new Blob([content],{type}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},200);
+}
+function downloadSanabelBackup(){const stamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');downloadBlob(`SanabelOS_Backup_${stamp}.json`,JSON.stringify(collectSanabelBackup(),null,2));toast('تم تحميل نسخة البيانات الاحتياطية');}
+function downloadProjectSnapshot(){const stamp=new Date().toISOString().slice(0,10);const html='<!doctype html>\n'+document.documentElement.outerHTML;downloadBlob(`SanabelOS_${stamp}_${SANABEL_V8_VERSION.replaceAll(' ','_')}.html`,html,'text/html;charset=utf-8');toast('تم تحميل نسخة HTML تشغيلية');}
+async function restoreSanabelBackup(files){
+  const file=files&&files[0]; if(!file)return;
+  if(!confirm('سيتم استعادة إعدادات Sanabel OS من النسخة المختارة داخل هذا المتصفح. هل تريد المتابعة؟'))return;
+  try{const txt=await file.text();const data=JSON.parse(txt);if(!data.localStorage)throw new Error('ملف غير صحيح');Object.entries(data.localStorage).forEach(([k,v])=>localStorage.setItem(k,v));if(data.workspaces){WORKSPACES=data.workspaces;saveWorkspaceConfig()}toast('تمت الاستعادة، سيتم تحديث الصفحة');setTimeout(()=>location.reload(),800)}catch(e){alert('تعذر الاستعادة: '+e.message)}
+}
+function copyProjectStructure(){navigator.clipboard?.writeText(getProjectStructureText());toast('تم نسخ هيكلة المشروع');}
+function copyChangeLog(){const txt=SANABEL_CHANGELOG.map(c=>`${c.version} - ${c.date}\n${c.title}\n${c.items.map(i=>'- '+i).join('\n')}`).join('\n\n');navigator.clipboard?.writeText(txt);toast('تم نسخ سجل الإصدارات');}
 
 function renderUsers(){if(!byId('usersTable'))return;byId('usersTable').innerHTML=rowsTable(['الاسم','الجوال','الدور','PIN','الحالة','رابط الدخول','إجراء'],users.map(u=>{const link=location.href.split('?')[0]+'?user='+u.id;return `<tr><td><b>${u.full_name}</b></td><td>${u.phone||'-'}</td><td>${roleMap[u.role]||u.role}</td><td>${u.pin||'-'}</td><td>${u.is_active!==false?'<span class="badge ok">نشط</span>':'<span class="badge danger">موقوف</span>'}</td><td><button class="btn light" onclick="copyText('${link}')">نسخ QR</button></td><td><button class="btn light" onclick="editUser('${u.id}')">تعديل</button> <button class="btn warn" onclick="toggleUser('${u.id}')">${u.is_active!==false?'إيقاف':'تفعيل'}</button> <button class="btn ok" onclick="whatsappUser('${u.id}')">واتساب</button></td></tr>`}))}
 function resetUserForm(){if(!byId('usrId'))return;usrId.value='';usrName.value='';usrPhone.value='';usrPin.value='';usrRole.value='cashier'}
