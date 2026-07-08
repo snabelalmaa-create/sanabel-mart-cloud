@@ -53,7 +53,7 @@
 <div id="login" class="login">
   <div class="login-card">
     <div class="brand"><div class="mark">س</div><div><h1>إدارة الذمم المدينة</h1><p>تسجيل دخول سحابي عبر Supabase</p></div></div>
-    <div class="hint">اختر اسم الموظف من القائمة ثم أدخل الرقم السري. الرقم السري للموظفين الجدد يكون 4 أرقام.</div>
+    <div class="hint">اختر اسم الموظف من القائمة ثم أدخل الرقم السري. الرقم السري للموظفين الجدد يكون 4 أرقام. تم ضبط أبوقصي كمالك برقم 4015.</div>
     <div class="field"><label>اسم الموظف</label><select id="loginUserSelect"><option value="">جاري تحميل الموظفين...</option></select></div>
     <div class="field"><label>الرقم السري</label><input id="loginPass" type="password" inputmode="numeric" placeholder="••••"></div>
     <div class="actions"><button class="btn primary" onclick="doLogin()">دخول</button><button class="btn" onclick="loadLoginEmployees()">تحديث الأسماء</button></div>
@@ -156,6 +156,8 @@ const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let session=null, tenants=[], tenantId=null, customers=[], receipts=[], paymentMethods=[], appUsers=[], currentAppUser=null;
 const MAIN_OWNER_EMAIL='snabel.almaa@hotmail.com';
+const OWNER_RESET_PIN='4015';
+const OWNER_CLEANUP_KEY='sanabel_receivables_owner_cleanup_4015_v1';
 const SECURITY_KEY='sanabel_receivables_security_v1';
 let pendingPinResolve=null;
 function getSecuritySettings(){try{return JSON.parse(localStorage.getItem(SECURITY_KEY)||'{}')}catch(e){return {}}}
@@ -174,10 +176,10 @@ function todayISO(){return new Date().toISOString().slice(0,10)}
 function norm(v){return String(v||'').trim()}
 function usernameKey(v){return String(v||'').trim().replace(/\s+/g,' ')}
 function simpleHash(str){str=String(str||'');let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
-function internalEmailFromUsername(v){const u=usernameKey(v);return u?'u'+simpleHash(u)+'@sanabel.local':''}
-function internalEmailWithSalt(v){return 'u'+simpleHash(usernameKey(v)+'-'+Date.now())+'@sanabel.local'}
+function internalEmailFromUsername(v){const u=usernameKey(v);return u?'u'+simpleHash(u)+'@sanabel-os.app':''}
+function internalEmailWithSalt(v){return 'u'+simpleHash(usernameKey(v)+'-'+Date.now())+'@sanabel-os.app'}
 function authPasswordFromPin(pin){return 'Sanabel@'+String(pin||'').trim()+'#OS'}
-function displayLoginName(email){email=String(email||'');return email.endsWith('@sanabel.local')?'مستخدم داخلي':email}
+function displayLoginName(email){email=String(email||'');if(email.toLowerCase()===MAIN_OWNER_EMAIL)return 'أبوقصي';return (email.endsWith('@sanabel.local')||email.endsWith('@sanabel-os.app'))?'مستخدم داخلي':email}
 function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
 function badge(st){if(st==='approved')return '<span class="badge ok">معتمد</span>';if(st==='deleted')return '<span class="badge del">محذوف</span>';return '<span class="badge wait">بانتظار</span>'}
 function customerName(id){return customers.find(c=>c.id===id)?.name||'-'}
@@ -196,183 +198,119 @@ function can(action){const role=(currentAppUser?.role||'owner').toLowerCase();co
 };let allowed=rules[role]||rules.viewer;return allowed.includes('all')||allowed.includes(action)}
 function requirePermission(action,msg){if(can(action))return true;alert(msg||'ليست لديك صلاحية تنفيذ هذه العملية.');return false}
 function currentUserName(){return currentAppUser?.full_name || session?.user?.user_metadata?.full_name || displayLoginName(session?.user?.email) || '-'}
-async function loadEmployees(){
+
+
+const LOCAL_EMP_KEY='sanabel_receivables_local_employees_v8';
+function defaultEmployees(){return [{id:'owner-aboqosi',full_name:'أبوقصي',username:'أبوقصي',email:MAIN_OWNER_EMAIL,role:'owner',pin:OWNER_RESET_PIN,is_active:true,created_at:new Date().toISOString()}]}
+function normalizeEmployeeName(v){return String(v||'').trim().replace(/\s+/g,' ')}
+function getLocalEmployees(){
   try{
-    let {data,error}=await sb.from('app_users').select('*').order('created_at',{ascending:false});
-    if(error){employeesRows.innerHTML='<tr><td colspan="5">تعذر تحميل الموظفين: '+escapeHtml(error.message)+'</td></tr>';return}
-    appUsers=data||[];
-    const emailLc=String(session?.user?.email||'').toLowerCase();
-    currentAppUser=appUsers.find(u=>String(u.email||'').toLowerCase()===emailLc && u.is_active!==false);
-    if(!currentAppUser && emailLc===MAIN_OWNER_EMAIL){
-      currentAppUser={full_name:'أبو قصي',role:'owner',email:session?.user?.email,is_active:true};
-    }
-    if(!currentAppUser){
-      userEmail.textContent='حساب غير مفعل';
-      alert('هذا الحساب غير مضاف كموظف نشط في برنامج الذمم. راجع المدير.');
-      await logout();
-      return;
-    }
-    userEmail.textContent=(currentAppUser.full_name||displayLoginName(session.user.email))+' • '+roleLabel(currentAppUser.role);
-    renderEmployees();
-  }catch(e){console.warn(e)}
+    const rows=JSON.parse(localStorage.getItem(LOCAL_EMP_KEY)||'null');
+    if(Array.isArray(rows)&&rows.length) return normalizeEmployeeStore(rows);
+  }catch(e){}
+  const rows=defaultEmployees(); localStorage.setItem(LOCAL_EMP_KEY,JSON.stringify(rows)); return rows;
+}
+function normalizeEmployeeStore(rows){
+  rows=(rows||[]).filter(Boolean).map(u=>({...u,full_name:normalizeEmployeeName(u.full_name),username:normalizeEmployeeName(u.username||u.full_name),role:u.role||'viewer',pin:String(u.pin||''),is_active:u.is_active!==false}));
+  let owners=rows.filter(u=>String(u.role).toLowerCase()==='owner'||String(u.email||'').toLowerCase()===MAIN_OWNER_EMAIL);
+  let owner=owners[0]||defaultEmployees()[0];
+  owner={...owner,id:owner.id||'owner-aboqosi',full_name:'أبوقصي',username:'أبوقصي',email:MAIN_OWNER_EMAIL,role:'owner',pin:OWNER_RESET_PIN,is_active:true};
+  const others=rows.filter(u=>u.id!==owner.id && String(u.email||'').toLowerCase()!==MAIN_OWNER_EMAIL && String(u.role).toLowerCase()!=='owner');
+  const clean=[owner,...others];
+  localStorage.setItem(LOCAL_EMP_KEY,JSON.stringify(clean));
+  return clean;
+}
+function saveLocalEmployees(rows){appUsers=normalizeEmployeeStore(rows);localStorage.setItem(LOCAL_EMP_KEY,JSON.stringify(appUsers));}
+async function ensureOwnerOnlyOnce(){saveLocalEmployees(defaultEmployees());currentAppUser=appUsers[0];toast('تم تجهيز أبوقصي مالك برقم 4015 بدون لمس العملاء أو السندات');}
+async function loadEmployees(){
+  appUsers=getLocalEmployees();
+  if(!currentAppUser){currentAppUser=appUsers.find(u=>u.is_active!==false&&u.role==='owner')||appUsers[0]}
+  if(userEmail) userEmail.textContent=(currentAppUser.full_name||'-')+' • '+roleLabel(currentAppUser.role);
+  renderEmployees();
 }
 function renderEmployees(){
   if(!document.getElementById('employeesRows'))return;
-  const rows=(appUsers||[]).filter(u=>{
-    const email=String(u.email||'').toLowerCase();
-    const name=String(u.full_name||'');
-    // إخفاء السجلات القديمة غير المرتبطة ببريد إلا إذا كانت للمالك الحالي
-    return email || String(u.role||'').toLowerCase()==='owner' || name;
-  });
+  const rows=getLocalEmployees();
   employeesRows.innerHTML=rows.map(u=>{
     const isOwner=String(u.role||'').toLowerCase()==='owner' || String(u.email||'').toLowerCase()===MAIN_OWNER_EMAIL;
-    const self=String(u.email||'').toLowerCase()===String(session?.user?.email||'').toLowerCase();
     const active=u.is_active!==false;
-    return `<tr><td>${escapeHtml(u.full_name||'-')}</td><td><span class="username-chip">${escapeHtml(displayLoginName(u.email||'-'))}</span></td><td><span class="${roleClass(u.role)}">${roleLabel(u.role)}</span></td><td>${active?'<span class="badge ok">نشط</span>':'<span class="badge del">موقوف</span>'}</td><td><button class="btn blue" onclick="openEditEmployee('${u.id}')">تعديل</button> <button class="btn" onclick="openEditEmployee('${u.id}');setTimeout(sendEmployeePasswordReset,100)">كلمة المرور</button> ${isOwner?'<span class="mini">الرئيسي</span>':`<button class="btn ${active?'danger':'green'}" onclick="toggleEmployeeActive('${u.id}')">${active?'إيقاف':'تفعيل'}</button> <button class="btn danger" onclick="deleteEmployee('${u.id}')">حذف</button>`}</td></tr>`
-  }).join('')||'<tr><td colspan="5">لا يوجد موظفون</td></tr>'
+    return `<tr><td>${escapeHtml(u.full_name||'-')}</td><td><span class="username-chip">${escapeHtml(u.username||u.full_name||'-')}</span></td><td><span class="${roleClass(u.role)}">${roleLabel(u.role)}</span></td><td>${active?'<span class="badge ok">نشط</span>':'<span class="badge del">موقوف</span>'}</td><td><button class="btn blue" onclick="openEditEmployee('${u.id}')">تعديل</button> <button class="btn" onclick="openEditEmployee('${u.id}')">كلمة المرور</button> ${isOwner?'<span class="mini">الرئيسي</span>':`<button class="btn ${active?'danger':'green'}" onclick="toggleEmployeeActive('${u.id}')">${active?'إيقاف':'تفعيل'}</button> <button class="btn danger" onclick="deleteEmployee('${u.id}')">حذف</button>`}</td></tr>`
+  }).join('')||'<tr><td colspan="5">لا يوجد موظفون</td></tr>';
 }
-function employeeById(id){return (appUsers||[]).find(u=>String(u.id)===String(id))}
+function employeeById(id){return (getLocalEmployees()||[]).find(u=>String(u.id)===String(id))}
 async function addEmployee(){
   if(!requirePermission('all','إضافة الموظفين متاحة للمدير فقط.'))return;
-  let full_name=empName.value.trim(), username=(document.getElementById('empUsername')?.value||'').trim(), rawEmail=empEmail.value.trim(), password=empPass.value, role=empRole.value;
+  let full_name=normalizeEmployeeName(empName.value), username=normalizeEmployeeName((document.getElementById('empUsername')?.value||'')), password=String(empPass.value||'').trim(), role=empRole.value;
   if(!full_name||!username||!password)return alert('أدخل اسم الموظف واسم المستخدم والرقم السري');
   if(!/^\d{4}$/.test(password))return alert('الرقم السري يجب أن يكون 4 أرقام');
-  const loginKey=usernameKey(username);
-  if(!loginKey)return alert('اكتب اسم مستخدم واضح مثل: مجيب أو أحمد');
-  const authEmail=rawEmail && rawEmail.includes('@') ? rawEmail : internalEmailFromUsername(loginKey);
-  let authPassword=authPasswordFromPin(password);
-  let signup=await sb.auth.signUp({email:authEmail,password:authPassword,options:{data:{full_name,login_name:loginKey,pin_login:true}}});
-  if(signup.error && !String(signup.error.message||'').toLowerCase().includes('already')){alert('تعذر إنشاء حساب الدخول: '+signup.error.message);return}
-  let orgId=null;
-  try{let org=await sb.from('organizations').select('id,name').ilike('name','%سنابل%').limit(1).maybeSingle();orgId=org.data?.id||null}catch(e){}
-  let payload={email:authEmail,full_name,role,is_active:true}; if(orgId) payload.organization_id=orgId;
-  let ins=await sb.from('app_users').insert(payload);
-  if(ins.error){ins=await sb.from('app_users').insert({email:authEmail,full_name,role,is_active:true});}
-  if(ins.error){alert('تم إنشاء حساب الدخول، لكن تعذر حفظ الموظف في app_users: '+ins.error.message);return}
-  empName.value=''; if(document.getElementById('empUsername'))empUsername.value=''; empEmail.value=''; empPass.value='';toast('تم إضافة الموظف. سيظهر اسمه في قائمة الدخول.');await loadEmployees();
+  let rows=getLocalEmployees();
+  if(rows.some(u=>normalizeEmployeeName(u.username).toLowerCase()===username.toLowerCase()))return alert('اسم المستخدم موجود من قبل');
+  rows.push({id:'emp-'+Date.now()+'-'+Math.random().toString(16).slice(2),full_name,username,email:(empEmail.value||'').trim(),role,pin:password,is_active:true,created_at:new Date().toISOString()});
+  saveLocalEmployees(rows);
+  empName.value=''; if(document.getElementById('empUsername'))empUsername.value=''; empEmail.value=''; empPass.value=''; toast('تم إضافة الموظف محلياً بدون إنشاء حساب Supabase'); await loadEmployees(); await loadLoginEmployees();
 }
 function openEditEmployee(id){
   if(!requirePermission('all','تعديل الموظفين متاح للمدير فقط.'))return;
   const u=employeeById(id); if(!u)return alert('الموظف غير موجود');
-  editEmpId.value=u.id; editEmpName.value=u.full_name||''; editEmpEmail.value=u.email||''; editEmpRole.value=u.role||'viewer'; editEmpActive.value=(u.is_active===false?'false':'true'); if(document.getElementById('editEmpNewPass')) editEmpNewPass.value='';
+  editEmpId.value=u.id; editEmpName.value=u.full_name||''; editEmpEmail.value=u.username||u.email||''; editEmpRole.value=u.role||'viewer'; editEmpActive.value=(u.is_active===false?'false':'true'); if(document.getElementById('editEmpNewPass')) editEmpNewPass.value='';
   empEditModal.classList.add('active');
 }
 function closeEmployeeModal(){empEditModal.classList.remove('active')}
 async function saveEmployeeEdit(){
   if(!requirePermission('all','تعديل الموظفين متاح للمدير فقط.'))return;
-  const id=editEmpId.value; const u=employeeById(id); if(!u)return alert('الموظف غير موجود');
-  const oldRole=String(u.role||'').toLowerCase();
-  const isOwner=oldRole==='owner' || String(u.email||'').toLowerCase()===MAIN_OWNER_EMAIL;
-  if(isOwner && editEmpActive.value==='false')return alert('لا يمكن إيقاف المالك الرئيسي');
-  if(isOwner && editEmpRole.value!=='owner' && String(u.email||'').toLowerCase()===MAIN_OWNER_EMAIL)return alert('لا يمكن تغيير صلاحية المستخدم الرئيسي من مالك');
-  const payload={full_name:editEmpName.value.trim(),email:editEmpEmail.value.trim(),role:editEmpRole.value,is_active:editEmpActive.value==='true'};
-  if(!payload.full_name||!payload.email)return alert('الاسم والبريد مطلوبان');
-  const {error}=await sb.from('app_users').update(payload).eq('id',id);
-  if(error)return alert('تعذر حفظ التعديل: '+error.message);
-  const newPass=(document.getElementById('editEmpNewPass')?.value||'').trim();
-  if(newPass){
-    if(!/^\d{4}$/.test(newPass))return alert('الرقم السري يجب أن يكون 4 أرقام');
-    if(String(u.email||'').toLowerCase()===String(session?.user?.email||'').toLowerCase()){
-      const passRes=await sb.auth.updateUser({password:authPasswordFromPin(newPass)});
-      if(passRes.error)return alert('تم حفظ بيانات الموظف، لكن تعذر تغيير الرقم السري: '+passRes.error.message);
-    }else{
-      const newInternalEmail=internalEmailWithSalt(payload.full_name||payload.email);
-      const signup=await sb.auth.signUp({email:newInternalEmail,password:authPasswordFromPin(newPass),options:{data:{full_name:payload.full_name,pin_login:true}}});
-      if(signup.error && !String(signup.error.message||'').toLowerCase().includes('already'))return alert('تم حفظ بيانات الموظف، لكن تعذر إنشاء الرقم السري الجديد: '+signup.error.message);
-      const upd=await sb.from('app_users').update({email:newInternalEmail}).eq('id',id);
-      if(upd.error)return alert('تم إنشاء دخول جديد، لكن تعذر ربطه بالموظف: '+upd.error.message);
-    }
+  const id=editEmpId.value; let rows=getLocalEmployees(); const i=rows.findIndex(u=>String(u.id)===String(id)); if(i<0)return alert('الموظف غير موجود');
+  const u=rows[i]; const isOwner=String(u.role||'').toLowerCase()==='owner' || String(u.email||'').toLowerCase()===MAIN_OWNER_EMAIL;
+  if(isOwner){
+    rows[i]={...u,full_name:'أبوقصي',username:'أبوقصي',email:MAIN_OWNER_EMAIL,role:'owner',pin:OWNER_RESET_PIN,is_active:true};
+  }else{
+    const name=normalizeEmployeeName(editEmpName.value); const username=normalizeEmployeeName(editEmpEmail.value||name); const newPass=(document.getElementById('editEmpNewPass')?.value||'').trim();
+    if(!name||!username)return alert('الاسم واسم الدخول مطلوبان');
+    if(newPass && !/^\d{4}$/.test(newPass))return alert('الرقم السري يجب أن يكون 4 أرقام');
+    if(rows.some((x,idx)=>idx!==i && normalizeEmployeeName(x.username).toLowerCase()===username.toLowerCase()))return alert('اسم المستخدم موجود من قبل');
+    rows[i]={...u,full_name:name,username,email:username,role:editEmpRole.value,is_active:editEmpActive.value==='true',pin:newPass||u.pin};
   }
-  closeEmployeeModal(); toast('تم تحديث بيانات الموظف'); await loadEmployees(); await loadLoginEmployees();
+  saveLocalEmployees(rows); closeEmployeeModal(); toast('تم تحديث بيانات الموظف'); await loadEmployees(); await loadLoginEmployees();
 }
-async function sendEmployeePasswordReset(){
-  if(!requirePermission('all','تغيير كلمة المرور متاح للمدير فقط.'))return;
-  const email=(editEmpEmail.value||'').trim(); if(!email)return alert('لا يوجد بريد للموظف');
-  if(!confirm('سيتم إرسال رابط إعادة تعيين كلمة المرور إلى: '+email))return;
-  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.href});
-  if(error)return alert('تعذر إرسال رابط تغيير كلمة المرور: '+error.message);
-  toast('تم إرسال رابط تغيير كلمة المرور إلى بريد الموظف');
-}
+async function sendEmployeePasswordReset(){alert('تغيير كلمة المرور يتم من زر تعديل، بدون بريد وبدون Supabase Auth.');}
 async function toggleEmployeeActive(id){
   if(!requirePermission('all','إيقاف/تفعيل الموظفين متاح للمدير فقط.'))return;
-  const u=employeeById(id); if(!u)return alert('الموظف غير موجود');
-  if(String(u.role||'').toLowerCase()==='owner')return alert('لا يمكن إيقاف المالك الرئيسي');
-  const next=!(u.is_active!==false);
-  const pin=await requireManagerPin(next?'تفعيل موظف':'إيقاف موظف','أدخل رقم المدير لتأكيد العملية.'); if(!pin)return;
-  const {error}=await sb.from('app_users').update({is_active:next}).eq('id',id);
-  if(error)return alert(error.message);
-  toast(next?'تم تفعيل الموظف':'تم إيقاف الموظف'); await loadEmployees();
+  let rows=getLocalEmployees(); const i=rows.findIndex(u=>String(u.id)===String(id)); if(i<0)return alert('الموظف غير موجود');
+  if(String(rows[i].role||'').toLowerCase()==='owner')return alert('لا يمكن إيقاف المالك الرئيسي');
+  const pin=await requireManagerPin(rows[i].is_active!==false?'إيقاف موظف':'تفعيل موظف','أدخل رقم المدير لتأكيد العملية.'); if(!pin)return;
+  rows[i].is_active=!(rows[i].is_active!==false); saveLocalEmployees(rows); toast(rows[i].is_active?'تم تفعيل الموظف':'تم إيقاف الموظف'); await loadEmployees(); await loadLoginEmployees();
 }
 async function deleteEmployee(id){
   if(!requirePermission('all','حذف الموظفين متاح للمدير فقط.'))return;
-  const u=employeeById(id); if(!u)return alert('الموظف غير موجود');
-  const isOwner=String(u.role||'').toLowerCase()==='owner' || String(u.email||'').toLowerCase()===MAIN_OWNER_EMAIL;
-  if(isOwner)return alert('لا يمكن حذف المستخدم الرئيسي');
-  if(String(u.email||'').toLowerCase()===String(session?.user?.email||'').toLowerCase())return alert('لا يمكن حذف المستخدم الحالي');
-  const pin=await requireManagerPin('حذف موظف','سيتم حذف الموظف من قائمة برنامج الذمم. لن يتم حذف السندات القديمة التي أنشأها.'); if(!pin)return;
-  const {error}=await sb.from('app_users').delete().eq('id',id);
-  if(error)return alert('تعذر حذف الموظف: '+error.message);
-  toast('تم حذف الموظف'); await loadEmployees();
+  let rows=getLocalEmployees(); const u=rows.find(x=>String(x.id)===String(id)); if(!u)return alert('الموظف غير موجود');
+  if(String(u.role||'').toLowerCase()==='owner')return alert('لا يمكن حذف المستخدم الرئيسي');
+  const pin=await requireManagerPin('حذف موظف','سيتم حذف الموظف من قائمة برنامج الذمم فقط. لن يتم حذف السندات أو العملاء.'); if(!pin)return;
+  saveLocalEmployees(rows.filter(x=>String(x.id)!==String(id))); toast('تم حذف الموظف'); await loadEmployees(); await loadLoginEmployees();
 }
-
 async function cleanupEmployeesKeepOwner(){
   if(!requirePermission('all','تنظيف الموظفين متاح للمدير فقط.'))return;
-  const pin=await requireManagerPin('حذف جميع الموظفين عدا الرئيسي','سيتم حذف جميع سجلات الموظفين من برنامج الذمم والإبقاء على المستخدم الرئيسي فقط.'); if(!pin)return;
-  const mainEmail=MAIN_OWNER_EMAIL;
-  const keep=(appUsers||[]).find(u=>String(u.email||'').toLowerCase()===mainEmail) || (appUsers||[]).find(u=>String(u.role||'').toLowerCase()==='owner');
-  const ids=(appUsers||[]).filter(u=>!keep || String(u.id)!==String(keep.id)).map(u=>u.id).filter(Boolean);
-  if(ids.length){
-    const {error}=await sb.from('app_users').delete().in('id',ids);
-    if(error)return alert('تعذر حذف الموظفين: '+error.message);
-  }
-  if(keep){
-    await sb.from('app_users').update({email:session?.user?.email||keep.email,full_name:keep.full_name||'أبو قصي',role:'owner',is_active:true}).eq('id',keep.id);
-  }else{
-    let orgId=null;try{let org=await sb.from('organizations').select('id,name').ilike('name','%سنابل%').limit(1).maybeSingle();orgId=org.data?.id||null}catch(e){}
-    const payload={email:session?.user?.email||'Snabel.Almaa@hotmail.com',full_name:'أبو قصي',role:'owner',is_active:true}; if(orgId)payload.organization_id=orgId;
-    await sb.from('app_users').insert(payload);
-  }
-  toast('تم حذف جميع الموظفين عدا الرئيسي'); await loadEmployees();
+  const pin=await requireManagerPin('حذف جميع الموظفين عدا الرئيسي','سيتم حذف جميع الموظفين والإبقاء على أبوقصي فقط. لن يتم حذف العملاء أو السندات.'); if(!pin)return;
+  saveLocalEmployees(defaultEmployees()); currentAppUser=appUsers[0]; toast('تم حذف جميع الموظفين عدا أبوقصي'); await loadEmployees(); await loadLoginEmployees();
 }
-
-
 async function loadLoginEmployees(){
   const sel=document.getElementById('loginUserSelect'); if(!sel)return;
-  sel.innerHTML='<option value="">جاري تحميل الموظفين...</option>';
-  let rows=[];
-  try{
-    const {data,error}=await sb.from('app_users').select('id,full_name,email,role,is_active').order('full_name');
-    if(!error) rows=(data||[]).filter(u=>u.is_active!==false && (u.email||u.role==='owner'));
-  }catch(e){console.warn(e)}
-  if(!rows.length){
-    rows=[{full_name:'أبو قصي',email:MAIN_OWNER_EMAIL,role:'owner',is_active:true}];
-    loginMsg.textContent='لم أستطع تحميل قائمة الموظفين، يمكنك الدخول بحساب المدير الرئيسي.';
-  }else{
-    loginMsg.textContent='';
-  }
-  sel.innerHTML=rows.map(u=>`<option value="${escapeHtml(u.email||'')}">${escapeHtml(u.full_name||u.email||'-')} — ${roleLabel(u.role)}</option>`).join('');
+  const rows=getLocalEmployees().filter(u=>u.is_active!==false);
+  sel.innerHTML=rows.map(u=>`<option value="${escapeHtml(u.id)}">${escapeHtml(u.full_name||u.username||'-')} — ${roleLabel(u.role)}</option>`).join('');
   const last=localStorage.getItem('sanabel_last_login_user'); if(last && [...sel.options].some(o=>o.value===last))sel.value=last;
+  if(loginMsg) loginMsg.textContent='';
 }
-async function init(){today.textContent=new Date().toLocaleDateString('ar-SA-u-nu-latn',{weekday:'long',year:'numeric',month:'long',day:'numeric'});rDate.value=todayISO();const {data}=await sb.auth.getSession();session=data.session;if(session) await enterApp();else showLogin();}
+async function init(){today.textContent=new Date().toLocaleDateString('ar-SA-u-nu-latn',{weekday:'long',year:'numeric',month:'long',day:'numeric'});rDate.value=todayISO();showLogin();}
 function showLogin(){document.getElementById('login').classList.remove('hide');document.getElementById('app').classList.add('hide');loadLoginEmployees()}
 async function doLogin(){
   loginMsg.textContent='جاري تسجيل الدخول...';
-  let loginEmailValue=loginUserSelect.value;
-  let pin=loginPass.value.trim();
-  if(!loginEmailValue){loginMsg.textContent='اختر اسم الموظف';return}
+  const id=loginUserSelect.value; const pin=String(loginPass.value||'').trim();
+  if(!id){loginMsg.textContent='اختر اسم الموظف';return}
   if(!/^\d{4}$/.test(pin)){loginMsg.textContent='الرقم السري يجب أن يكون 4 أرقام';return}
-  let first=await sb.auth.signInWithPassword({email:loginEmailValue,password:authPasswordFromPin(pin)});
-  let data=first.data, error=first.error;
-  // توافق مع حساب المدير القديم إذا كان يستخدم كلمة مرور Supabase الأصلية
-  if(error){
-    let second=await sb.auth.signInWithPassword({email:loginEmailValue,password:pin});
-    data=second.data; error=second.error;
-  }
-  if(error){loginMsg.textContent='الرقم السري غير صحيح أو الحساب غير مفعل';return}
-  localStorage.setItem('sanabel_last_login_user',loginEmailValue);session=data.session;await enterApp()
+  const u=getLocalEmployees().find(x=>String(x.id)===String(id)&&x.is_active!==false);
+  if(!u || String(u.pin)!==pin){loginMsg.textContent='الرقم السري غير صحيح أو الحساب غير مفعل';return}
+  currentAppUser=u; session={user:{email:u.email||u.username||u.full_name,user_metadata:{full_name:u.full_name}}}; localStorage.setItem('sanabel_last_login_user',id); await enterApp();
 }
-async function logout(){await sb.auth.signOut();session=null;showLogin()}
-async function enterApp(){document.getElementById('login').classList.add('hide');document.getElementById('app').classList.remove('hide');userEmail.textContent=displayLoginName(session.user.email);await loadTenants();await loadEmployees();await loadAll()}
+async function logout(){session=null;currentAppUser=null;showLogin()}
+async function enterApp(){document.getElementById('login').classList.add('hide');document.getElementById('app').classList.remove('hide');userEmail.textContent=(currentAppUser?.full_name||'-')+' • '+roleLabel(currentAppUser?.role);await loadTenants();await loadEmployees();await loadAll()}
 async function loadTenants(){const {data,error}=await sb.from('tenants').select('*').order('name');if(error){toast('تعذر تحميل المؤسسة: '+error.message);return}tenants=data||[];const sanabel=tenants.find(t=>String(t.code||'').toUpperCase()==='SANABEL'||String(t.name||'').includes('سنابل'));tenantId=sanabel?.id||tenants[0]?.id||null;tenantSelect.innerHTML=tenantId?`<option value="${tenantId}">${escapeHtml((sanabel||tenants[0]).name)}</option>`:'';if(tenantId)tenantSelect.value=tenantId;updateTenantLabel()}
 function updateTenantLabel(){const t=tenants.find(x=>x.id===tenantId);tenantName.textContent=t?.name||'لا توجد مؤسسة'}
 async function switchTenant(){updateTenantLabel();await loadAll()}
