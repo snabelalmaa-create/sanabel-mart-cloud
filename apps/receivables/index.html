@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>سنابل OS - إدارة الذمم المدينة V7.2 Employees Manage</title>
+<title>سنابل OS - إدارة الذمم المدينة V7.2.5 PIN Fix</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -43,12 +43,9 @@
 /* ===== V7.2 Employees Manage ===== */
 .emp-actions{display:flex;gap:6px;flex-wrap:wrap}.emp-actions .btn{padding:8px 10px;font-size:13px}.status-active{color:#166534;background:#dcfce7;border-radius:999px;padding:6px 10px;font-weight:900}.status-stopped{color:#991b1b;background:#fee2e2;border-radius:999px;padding:6px 10px;font-weight:900}.edit-note{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:16px;padding:12px;font-weight:800;line-height:1.8;margin-top:10px}
 
-/* ===== V7.2.2 Customer Names + Gear Actions ===== */
-.btn.gear{background:linear-gradient(135deg,#0b4fb3,#0ea5e9);color:#fff;min-width:54px;font-size:20px;padding:10px 14px}
-.action-menu-grid{display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:12px;margin-top:12px}
-.action-menu-grid .btn{width:100%;min-height:48px}
-.action-menu-note{background:#f8fbff;border:1px solid #dbe7fb;border-radius:16px;padding:12px;color:#344054;font-weight:800;line-height:1.7}
-@media(max-width:700px){.action-menu-grid{grid-template-columns:1fr}}
+
+/* ===== V7.2.3 Manager Dashboard + Gear Actions + Username Login ===== */
+.manager-grid{display:grid;grid-template-columns:repeat(4,minmax(170px,1fr));gap:14px;margin-bottom:16px}.manager-card{background:linear-gradient(135deg,#ffffff,#f8fbff);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:var(--shadow);position:relative;overflow:hidden}.manager-card strong{display:block;color:#65748a;font-weight:900;margin-bottom:8px}.manager-card b{display:block;font-size:26px;color:#07152f;direction:ltr;text-align:right}.manager-card.good{border-color:#bbf7d0}.manager-card.warn{border-color:#fde68a}.manager-card.danger-soft{border-color:#fecaca}.manager-split{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}.mini-list{display:grid;gap:8px}.mini-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f8fbff;border:1px solid #e8eef7;border-radius:15px;padding:10px 12px;font-weight:900}.mini-row span{color:#667085;font-size:13px}.gear-menu{position:relative;display:inline-block}.gear-btn{width:42px;height:38px;border-radius:14px;background:#eef6ff;color:#0b3b82;font-weight:900}.gear-list{display:none;position:absolute;top:42px;left:0;background:#fff;border:1px solid #e8eef7;border-radius:16px;box-shadow:0 18px 45px rgba(12,34,69,.15);padding:8px;min-width:150px;z-index:30}.gear-list.open{display:grid;gap:6px}.gear-list button{width:100%;text-align:right;border-radius:12px;padding:9px 11px;background:#f8fbff;color:#07152f;font-weight:900}.gear-list button:hover{background:#eef6ff}.gear-list button.danger-action{background:#fff1f2;color:#b91c1c}.username-chip{direction:ltr;display:inline-block;background:#eef6ff;color:#0b3b82;border-radius:999px;padding:6px 10px;font-weight:900;font-size:13px}@media(max-width:1180px){.manager-grid,.manager-split{grid-template-columns:1fr 1fr}}@media(max-width:700px){.manager-grid,.manager-split{grid-template-columns:1fr}.gear-list{left:auto;right:0}}
 
 </style>
 </head>
@@ -56,10 +53,10 @@
 <div id="login" class="login">
   <div class="login-card">
     <div class="brand"><div class="mark">س</div><div><h1>إدارة الذمم المدينة</h1><p>تسجيل دخول سحابي عبر Supabase</p></div></div>
-    <div class="hint">استخدم البريد وكلمة المرور التي أنشأتها في Supabase. بعد الدخول ستظهر بيانات المؤسسة من قاعدة سنابل OS.</div>
-    <div class="field"><label>البريد الإلكتروني</label><input id="loginEmail" type="email" placeholder="example@email.com"></div>
-    <div class="field"><label>كلمة المرور</label><input id="loginPass" type="password" placeholder="••••••••"></div>
-    <div class="actions"><button class="btn primary" onclick="doLogin()">دخول</button></div>
+    <div class="hint">اختر اسم الموظف من القائمة ثم أدخل الرقم السري. الرقم السري للموظفين الجدد يكون 4 أرقام.</div>
+    <div class="field"><label>اسم الموظف</label><select id="loginUserSelect"><option value="">جاري تحميل الموظفين...</option></select></div>
+    <div class="field"><label>الرقم السري</label><input id="loginPass" type="password" inputmode="numeric" placeholder="••••"></div>
+    <div class="actions"><button class="btn primary" onclick="doLogin()">دخول</button><button class="btn" onclick="loadLoginEmployees()">تحديث الأسماء</button></div>
     <div class="mini" id="loginMsg"></div>
   </div>
 </div>
@@ -88,6 +85,7 @@
   <div class="grid"><div class="kpi"><span>إجمالي المقبوضات</span><b id="kTotal">0</b></div><div class="kpi"><span>سندات اليوم</span><b id="kToday">0</b></div><div class="kpi"><span>بانتظار الاعتماد</span><b id="kPending">0</b></div><div class="kpi"><span>إجمالي المتبقي</span><b id="kRemain">0</b></div><div class="kpi"><span>عملاء متأخرون</span><b id="kOverdue">0</b></div></div>
 
   <section id="dashboard" class="section active">
+    <div class="card"><h2>لوحة المدير</h2><div class="manager-grid"><div class="manager-card good"><strong>تحصيل اليوم</strong><b id="mgrTodayTotal">0</b></div><div class="manager-card warn"><strong>بانتظار الاعتماد</strong><b id="mgrPendingCount">0</b></div><div class="manager-card"><strong>عدد سندات اليوم</strong><b id="mgrTodayCount">0</b></div><div class="manager-card danger-soft"><strong>المحذوفات</strong><b id="mgrDeletedCount">0</b></div></div><div class="manager-split"><div><h2 style="font-size:20px;margin-bottom:10px">أداء المحصلين اليوم</h2><div id="mgrCollectors" class="mini-list"></div></div><div><h2 style="font-size:20px;margin-bottom:10px">آخر العمليات</h2><div id="mgrActivity" class="mini-list"></div></div></div></div>
     <div class="card"><h2>آخر السندات</h2><div class="table-wrap"><table><thead><tr><th>رقم السند</th><th>التاريخ</th><th>العميل</th><th>المبلغ</th><th>طريقة الدفع</th><th>المتبقي</th><th>المحصل</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody id="latestRows"></tbody></table></div></div>
     <div class="quickbar no-print"><button onclick="show('receipt',document.querySelectorAll('.nav button')[1])">💳 سند قبض جديد</button><button onclick="show('clients',document.querySelectorAll('.nav button')[2])">📥 استيراد Excel</button><button onclick="show('overdue',document.querySelectorAll('.nav button')[3])">⏳ العملاء المتأخرون</button><button onclick="show('statement',document.querySelectorAll('.nav button')[5])">📋 كشف حساب</button><button onclick="show('reports',document.querySelectorAll('.nav button')[4])">📊 التقارير</button></div>
   </section>
@@ -109,7 +107,7 @@
 
   <section id="reports" class="section printable"><div class="card no-print"><h2>فلترة التقارير</h2><div class="form"><div><label>من تاريخ</label><input type="date" id="fFrom"></div><div><label>إلى تاريخ</label><input type="date" id="fTo"></div><div><label>العميل</label><input list="clientsList" id="fClient"></div><div><label>طريقة الدفع</label><select id="fPay"><option value="">الكل</option></select></div><div><label>الحالة</label><select id="fStatus"><option value="">الكل</option><option value="pending">بانتظار الاعتماد</option><option value="approved">معتمد</option></select></div><div><label>بحث سريع</label><input id="fSearch" placeholder="رقم السند / المرجع / المحصل" oninput="renderReports()"></div></div><div class="actions"><button class="btn primary" onclick="renderReports()">عرض التقرير</button><button class="btn gold" onclick="printDailySummary()">ملخص اليومية</button><button class="btn" onclick="window.print()">طباعة / PDF</button></div></div><div class="card"><div class="print-title">تقرير المقبوضات</div><h2>تقرير المقبوضات</h2><div id="reportSummary" class="muted"></div><div id="reportKpis" class="report-kpis"></div><h2>ملخص حسب طريقة الدفع</h2><div id="paymentSummary" class="payment-summary"></div><div id="dailyMatchBox" class="daily-match"></div><br><div class="table-wrap"><table><thead><tr><th>رقم</th><th>التاريخ</th><th>العميل</th><th>المبلغ</th><th>الدفع</th><th>المتبقي</th><th>مرجع</th><th>المحصل</th><th>الحالة</th><th class="no-print">إجراء</th></tr></thead><tbody id="reportsRows"></tbody></table></div></div></section>
 
-  <section id="statement" class="section printable"><div class="card no-print"><h2>كشف حساب عميل</h2><div class="form"><div><label>اختر العميل</label><input list="clientsList" id="sClient"></div><div><label>من تاريخ</label><input type="date" id="sFrom"></div><div><label>إلى تاريخ</label><input type="date" id="sTo"></div></div><div class="actions"><button class="btn primary" onclick="renderStatement()">عرض الكشف</button><button class="btn" onclick="window.print()">طباعة الكشف</button></div></div><div class="card"><h2 id="statementTitle">كشف الحساب</h2><div id="statementTotals" class="statement-totals"></div><div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>رقم السند</th><th>العميل</th><th>المبلغ</th><th>طريقة الدفع</th><th>المتبقي</th><th>الملاحظة</th><th>الحالة</th><th class="no-print">إجراء</th></tr></thead><tbody id="statementRows"></tbody></table></div></div></section>
+  <section id="statement" class="section printable"><div class="card no-print"><h2>كشف حساب عميل</h2><div class="form"><div><label>اختر العميل</label><input list="clientsList" id="sClient"></div><div><label>من تاريخ</label><input type="date" id="sFrom"></div><div><label>إلى تاريخ</label><input type="date" id="sTo"></div></div><div class="actions"><button class="btn primary" onclick="renderStatement()">عرض الكشف</button><button class="btn" onclick="window.print()">طباعة الكشف</button></div></div><div class="card"><h2 id="statementTitle">كشف الحساب</h2><div id="statementTotals" class="statement-totals"></div><div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>رقم السند</th><th>المبلغ</th><th>طريقة الدفع</th><th>المتبقي</th><th>الملاحظة</th><th>الحالة</th><th class="no-print">إجراء</th></tr></thead><tbody id="statementRows"></tbody></table></div></div></section>
 
   <section id="approval" class="section"><div class="card"><h2>السندات بانتظار الاعتماد</h2><div class="table-wrap"><table><thead><tr><th>رقم</th><th>التاريخ</th><th>العميل</th><th>المبلغ</th><th>الدفع</th><th>المتبقي</th><th>إجراء</th></tr></thead><tbody id="approvalRows"></tbody></table></div></div></section>
   <section id="trash" class="section"><div class="card"><h2>سلة المحذوفات</h2><div class="hint">السندات المحذوفة لا تختفي نهائيًا، وتبقى محفوظة للمراجعة. الاستعادة تحتاج رقم المدير.</div><br><div class="table-wrap"><table><thead><tr><th>رقم</th><th>التاريخ</th><th>العميل</th><th>المبلغ</th><th>الدفع</th><th>المتبقي</th><th>المحصل</th><th>إجراء</th></tr></thead><tbody id="trashRows"></tbody></table></div></div></section>
@@ -117,16 +115,17 @@
   <div class="card"><h2>🔐 أمان النظام</h2><div class="hint">ضع رقمًا سريًا للمدير لاستخدامه في العمليات الحساسة مثل حذف السند أو استعادته من سلة المحذوفات.</div><br><div class="form"><div><label>الرقم السري للمدير</label><input id="secPin" type="password" placeholder="اكتب الرقم السري"></div><div><label>تأكيد الرقم السري</label><input id="secPin2" type="password" placeholder="أعد كتابة الرقم"></div><div><label>حالة الحماية</label><input id="secStatus" readonly value="غير محفوظ"></div><div><label><input id="secDeleteReceipt" type="checkbox" style="width:auto;margin-left:8px"> طلب الرقم عند حذف السند</label></div><div><label><input id="secRestoreReceipt" type="checkbox" style="width:auto;margin-left:8px"> طلب الرقم عند استعادة السند</label></div><div><label><input id="secEditApproved" type="checkbox" style="width:auto;margin-left:8px"> طلب الرقم عند تعديل سند معتمد</label></div></div><div class="actions"><button class="btn primary" onclick="saveSecuritySettings()">حفظ إعدادات الأمان</button><button class="btn danger" onclick="clearSecuritySettings()">مسح الرقم السري</button></div></div>
   
   <div class="card"><h2>👥 إدارة الموظفين والصلاحيات</h2>
-    <div class="hint">أضف الموظف من هنا ليعمل على النظام بحسابه. يتم حفظ بيانات الموظف في Supabase، وتظهر أسماء الموظفين في السندات والتقارير. ملاحظة: إذا كان تأكيد البريد مفعلًا في Supabase فقد يحتاج الموظف لتأكيد بريده أول مرة.</div><br>
+    <div class="hint">أضف الموظف من هنا ليعمل على النظام بحسابه. يتم حفظ بيانات الموظف في Supabase، وتظهر أسماء الموظفين في السندات والتقارير. الدخول للموظف يكون من القائمة المنسدلة باسم الموظف والرقم السري المكون من 4 أرقام.</div><br>
     <div class="form">
       <div><label>اسم الموظف</label><input id="empName" placeholder="مثال: أحمد الشريمي"></div>
-      <div><label>البريد الإلكتروني</label><input id="empEmail" placeholder="name@example.com"></div>
-      <div><label>كلمة مرور مؤقتة</label><input id="empPass" type="password" placeholder="لا تقل عن 6 أحرف"></div>
+      <div><label>اسم المستخدم للدخول</label><input id="empUsername" placeholder="مثال: مجيب أو أحمد"></div>
+      <div><label>البريد الإلكتروني (اختياري)</label><input id="empEmail" placeholder="اختياري"></div>
+      <div><label>رقم سري 4 أرقام</label><input id="empPass" type="password" inputmode="numeric" maxlength="4" placeholder="مثال: 2580"></div>
       <div><label>الدور / الصلاحية</label><select id="empRole"><option value="manager">مدير</option><option value="accountant">محاسب</option><option value="collector">تحصيل</option><option value="viewer">مشاهدة فقط</option></select></div>
     </div>
     <div class="actions"><button class="btn primary" onclick="addEmployee()">إضافة موظف</button><button class="btn" onclick="loadEmployees()">تحديث القائمة</button><button class="btn danger" onclick="cleanupEmployeesKeepOwner()">حذف كل الموظفين عدا الرئيسي</button></div>
-    <div class="hint"><b>الصلاحيات:</b> المدير يستطيع إضافة وتعديل وحذف الموظفين، وتنظيف القائمة وإبقاء المستخدم الرئيسي فقط. كلمة المرور يتم تغييرها للمستخدم الحالي أو بإرسال رابط إعادة تعيين للبريد. المحاسب يضيف العملاء والسندات ويطبع التقارير. التحصيل يصدر سندات فقط. المشاهدة يعرض التقارير بدون تعديل.</div><br>
-    <div class="table-wrap"><table><thead><tr><th>الاسم</th><th>البريد</th><th>الدور</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody id="employeesRows"></tbody></table></div>
+    <div class="hint"><b>الصلاحيات:</b> المدير يستطيع إضافة وتعديل وحذف الموظفين، وتنظيف القائمة وإبقاء المستخدم الرئيسي فقط. الرقم السري يكون 4 أرقام، ويمكن للمدير تعديله من زر تعديل الموظف. المحاسب يضيف العملاء والسندات ويطبع التقارير. التحصيل يصدر سندات فقط. المشاهدة يعرض التقارير بدون تعديل.</div><br>
+    <div class="table-wrap"><table><thead><tr><th>الاسم</th><th>اسم الدخول</th><th>الدور</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody id="employeesRows"></tbody></table></div>
   </div>
 <div class="card"><h2>♻️ إعادة التهيئة</h2><div class="hint">هذه الأدوات مخصصة عند بداية تشغيل فعلي أو تنظيف بيانات التجربة. جميع العمليات تحتاج رقم المدير.</div><div class="danger-zone"><h3>مسح السندات فقط</h3><p>يحذف جميع سندات القبض وسلة المحذوفات، مع الإبقاء على العملاء وبياناتهم. بعد المسح تصبح المقبوضات والأرصدة الناتجة من السندات صفرًا.</p><button class="btn danger" onclick="resetReceiptsOnly()">مسح جميع السندات فقط</button></div><div class="danger-zone"><h3>مسح كامل لبيانات الذمم</h3><p>يحذف جميع السندات وجميع العملاء. استخدمه فقط إذا كنت تريد بدء برنامج الذمم من جديد ببيانات نظيفة.</p><button class="btn danger" onclick="resetReceivablesAll()">مسح السندات والعملاء</button></div></div></section>
 </main></div>
@@ -136,8 +135,6 @@
 
 <div class="modal" id="creditModal"><div class="modalBox"><div class="modalHead"><h2 id="creditModalTitle">تحليل العميل</h2><button class="x" onclick="closeCreditModal()">×</button></div><div id="creditModalBody"></div><div class="actions"><button class="btn primary" onclick="openCurrentCreditStatement()">فتح كشف الحساب</button><button class="btn" onclick="closeCreditModal()">إغلاق</button></div></div></div>
 <div class="modal" id="receiptViewModal"><div class="modalBox"><div class="modalHead"><h2 id="receiptViewTitle">عرض السند</h2><button class="x" onclick="closeReceiptView()">×</button></div><div id="receiptViewBody"></div><div class="actions"><button class="btn primary" id="receiptViewPrintBtn">طباعة</button><button class="btn" onclick="closeReceiptView()">إغلاق</button></div></div></div>
-
-<div class="modal" id="actionsModal"><div class="modalBox"><div class="modalHead"><h2 id="actionsModalTitle">إجراءات السند</h2><button class="x" onclick="closeActionsModal()">×</button></div><div id="actionsModalBody"></div></div></div>
 <div class="modal" id="pinModal"><div class="modalBox"><div class="modalHead"><h2 id="pinModalTitle">صلاحية المدير</h2><button class="x" onclick="closePinModal(false)">×</button></div><div class="hint" id="pinModalHint">أدخل الرقم السري للمدير لتأكيد العملية.</div><br><div class="field"><label>الرقم السري</label><input id="pinInput" type="password" placeholder="••••"></div><div class="field"><label>سبب العملية / ملاحظة</label><input id="pinReason" placeholder="اختياري"></div><div class="actions"><button class="btn primary" onclick="confirmPinModal()">تأكيد</button><button class="btn" onclick="closePinModal(false)">إلغاء</button></div></div></div>
 
 <div class="modal" id="empEditModal"><div class="modalBox"><div class="modalHead"><h2>تعديل بيانات الموظف</h2><button class="x" onclick="closeEmployeeModal()">×</button></div>
@@ -146,10 +143,10 @@
   <div><label>اسم الموظف</label><input id="editEmpName" placeholder="اسم الموظف"></div>
   <div><label>البريد الإلكتروني</label><input id="editEmpEmail" placeholder="name@example.com"></div>
   <div><label>الدور</label><select id="editEmpRole"><option value="manager">مدير</option><option value="accountant">محاسب</option><option value="collector">تحصيل</option><option value="viewer">مشاهدة فقط</option><option value="owner">مالك</option></select></div>
-  <div><label>الحالة</label><select id="editEmpActive"><option value="true">نشط</option><option value="false">موقوف</option></select></div><div><label>تغيير كلمة المرور</label><input id="editEmpNewPass" type="password" placeholder="للمستخدم الحالي فقط أو استخدم زر كلمة المرور"></div>
+  <div><label>الحالة</label><select id="editEmpActive"><option value="true">نشط</option><option value="false">موقوف</option></select></div><div><label>تغيير الرقم السري</label><input id="editEmpNewPass" type="password" inputmode="numeric" maxlength="4" placeholder="4 أرقام"></div>
 </div>
-<div class="edit-note">تغيير البريد هنا يحدّث بيانات الموظف داخل النظام. أما كلمة المرور فتتم عبر زر إرسال رابط إعادة تعيين كلمة المرور إلى بريد الموظف.</div>
-<div class="actions"><button class="btn primary" onclick="saveEmployeeEdit()">حفظ التعديل</button><button class="btn blue" onclick="sendEmployeePasswordReset()">إرسال رابط تغيير كلمة المرور</button><button class="btn" onclick="closeEmployeeModal()">إغلاق</button></div>
+<div class="edit-note">تغيير الرقم السري هنا ينشئ دخولًا جديدًا آمنًا للموظف بالرقم الجديد. الموظف لا يحتاج بريدًا للدخول.</div>
+<div class="actions"><button class="btn primary" onclick="saveEmployeeEdit()">حفظ التعديل</button><button class="btn" onclick="closeEmployeeModal()">إغلاق</button></div>
 </div></div>
 
 <div class="toast" id="toast"></div>
@@ -174,13 +171,20 @@ function confirmPinModal(){if(!verifyPin(pinInput.value)){alert('الرقم ال
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
 function money(n){return (Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ريال'}
 function todayISO(){return new Date().toISOString().slice(0,10)}
-function norm(v){return String(v||'').trim()}function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+function norm(v){return String(v||'').trim()}
+function usernameKey(v){return String(v||'').trim().replace(/\s+/g,' ')}
+function simpleHash(str){str=String(str||'');let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
+function internalEmailFromUsername(v){const u=usernameKey(v);return u?'u'+simpleHash(u)+'@sanabel.local':''}
+function internalEmailWithSalt(v){return 'u'+simpleHash(usernameKey(v)+'-'+Date.now())+'@sanabel.local'}
+function authPasswordFromPin(pin){return 'Sanabel@'+String(pin||'').trim()+'#OS'}
+function displayLoginName(email){email=String(email||'');return email.endsWith('@sanabel.local')?'مستخدم داخلي':email}
+function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
 function badge(st){if(st==='approved')return '<span class="badge ok">معتمد</span>';if(st==='deleted')return '<span class="badge del">محذوف</span>';return '<span class="badge wait">بانتظار</span>'}
-function customerName(id,fallback='-'){return customers.find(c=>c.id===id)?.name||fallback||'-'}
-function paymentName(id,fallback='-'){return paymentMethods.find(p=>p.id===id)?.name||fallback||'-'}
+function customerName(id){return customers.find(c=>c.id===id)?.name||'-'}
+function paymentName(id){return paymentMethods.find(p=>p.id===id)?.name||'-'}
 function customerIdByName(name){return customers.find(c=>norm(c.name)===norm(name))?.id}
 function paymentIdByName(name){return paymentMethods.find(p=>norm(p.name)===norm(name))?.id}
-function receiptToRow(r){let cName=r.os_customers?.name||r.customer?.name||r.customer_name||r.client_name||'-';let pName=r.os_payment_methods?.name||r.payment_method?.name||r.payment_method_name||'-';return {id:r.id, receipt_no:r.receipt_no, date:r.receipt_date, client:customerName(r.customer_id,cName), client_id:r.customer_id, amount:Number(r.amount||0), pay:paymentName(r.payment_method_id,pName), payment_method_id:r.payment_method_id, remain:Number(r.remaining||0), ref:r.reference_no||'', collector:r.collector_name||'', note:r.notes||'', status:r.status||'pending'}}
+function receiptToRow(r){return {id:r.id, receipt_no:r.receipt_no, date:r.receipt_date, client:customerName(r.customer_id), client_id:r.customer_id, amount:Number(r.amount||0), pay:paymentName(r.payment_method_id), payment_method_id:r.payment_method_id, remain:Number(r.remaining||0), ref:r.reference_no||'', collector:r.collector_name||'', note:r.notes||'', status:r.status||'pending'}}
 
 function roleLabel(role){return {owner:'مالك',manager:'مدير',accountant:'محاسب',collector:'تحصيل',viewer:'مشاهدة فقط'}[role]||role||'موظف'}
 function roleClass(role){return 'role-pill role-'+(role||'viewer')}
@@ -191,7 +195,7 @@ function can(action){const role=(currentAppUser?.role||'owner').toLowerCase();co
   viewer:['reports','print']
 };let allowed=rules[role]||rules.viewer;return allowed.includes('all')||allowed.includes(action)}
 function requirePermission(action,msg){if(can(action))return true;alert(msg||'ليست لديك صلاحية تنفيذ هذه العملية.');return false}
-function currentUserName(){return currentAppUser?.full_name || session?.user?.user_metadata?.full_name || session?.user?.email || '-'}
+function currentUserName(){return currentAppUser?.full_name || session?.user?.user_metadata?.full_name || displayLoginName(session?.user?.email) || '-'}
 async function loadEmployees(){
   try{
     let {data,error}=await sb.from('app_users').select('*').order('created_at',{ascending:false});
@@ -208,7 +212,7 @@ async function loadEmployees(){
       await logout();
       return;
     }
-    userEmail.textContent=(currentAppUser.full_name||session.user.email)+' • '+roleLabel(currentAppUser.role);
+    userEmail.textContent=(currentAppUser.full_name||displayLoginName(session.user.email))+' • '+roleLabel(currentAppUser.role);
     renderEmployees();
   }catch(e){console.warn(e)}
 }
@@ -224,10 +228,29 @@ function renderEmployees(){
     const isOwner=String(u.role||'').toLowerCase()==='owner' || String(u.email||'').toLowerCase()===MAIN_OWNER_EMAIL;
     const self=String(u.email||'').toLowerCase()===String(session?.user?.email||'').toLowerCase();
     const active=u.is_active!==false;
-    return `<tr><td>${escapeHtml(u.full_name||'-')}</td><td>${escapeHtml(u.email||'-')}</td><td><span class="${roleClass(u.role)}">${roleLabel(u.role)}</span></td><td>${active?'<span class="badge ok">نشط</span>':'<span class="badge del">موقوف</span>'}</td><td><button class="btn blue" onclick="openEditEmployee('${u.id}')">تعديل</button> <button class="btn" onclick="openEditEmployee('${u.id}');setTimeout(sendEmployeePasswordReset,100)">كلمة المرور</button> ${isOwner?'<span class="mini">الرئيسي</span>':`<button class="btn ${active?'danger':'green'}" onclick="toggleEmployeeActive('${u.id}')">${active?'إيقاف':'تفعيل'}</button> <button class="btn danger" onclick="deleteEmployee('${u.id}')">حذف</button>`}</td></tr>`
+    return `<tr><td>${escapeHtml(u.full_name||'-')}</td><td><span class="username-chip">${escapeHtml(displayLoginName(u.email||'-'))}</span></td><td><span class="${roleClass(u.role)}">${roleLabel(u.role)}</span></td><td>${active?'<span class="badge ok">نشط</span>':'<span class="badge del">موقوف</span>'}</td><td><button class="btn blue" onclick="openEditEmployee('${u.id}')">تعديل</button> <button class="btn" onclick="openEditEmployee('${u.id}');setTimeout(sendEmployeePasswordReset,100)">كلمة المرور</button> ${isOwner?'<span class="mini">الرئيسي</span>':`<button class="btn ${active?'danger':'green'}" onclick="toggleEmployeeActive('${u.id}')">${active?'إيقاف':'تفعيل'}</button> <button class="btn danger" onclick="deleteEmployee('${u.id}')">حذف</button>`}</td></tr>`
   }).join('')||'<tr><td colspan="5">لا يوجد موظفون</td></tr>'
 }
 function employeeById(id){return (appUsers||[]).find(u=>String(u.id)===String(id))}
+async function addEmployee(){
+  if(!requirePermission('all','إضافة الموظفين متاحة للمدير فقط.'))return;
+  let full_name=empName.value.trim(), username=(document.getElementById('empUsername')?.value||'').trim(), rawEmail=empEmail.value.trim(), password=empPass.value, role=empRole.value;
+  if(!full_name||!username||!password)return alert('أدخل اسم الموظف واسم المستخدم والرقم السري');
+  if(!/^\d{4}$/.test(password))return alert('الرقم السري يجب أن يكون 4 أرقام');
+  const loginKey=usernameKey(username);
+  if(!loginKey)return alert('اكتب اسم مستخدم واضح مثل: مجيب أو أحمد');
+  const authEmail=rawEmail && rawEmail.includes('@') ? rawEmail : internalEmailFromUsername(loginKey);
+  let authPassword=authPasswordFromPin(password);
+  let signup=await sb.auth.signUp({email:authEmail,password:authPassword,options:{data:{full_name,login_name:loginKey,pin_login:true}}});
+  if(signup.error && !String(signup.error.message||'').toLowerCase().includes('already')){alert('تعذر إنشاء حساب الدخول: '+signup.error.message);return}
+  let orgId=null;
+  try{let org=await sb.from('organizations').select('id,name').ilike('name','%سنابل%').limit(1).maybeSingle();orgId=org.data?.id||null}catch(e){}
+  let payload={email:authEmail,full_name,role,is_active:true}; if(orgId) payload.organization_id=orgId;
+  let ins=await sb.from('app_users').insert(payload);
+  if(ins.error){ins=await sb.from('app_users').insert({email:authEmail,full_name,role,is_active:true});}
+  if(ins.error){alert('تم إنشاء حساب الدخول، لكن تعذر حفظ الموظف في app_users: '+ins.error.message);return}
+  empName.value=''; if(document.getElementById('empUsername'))empUsername.value=''; empEmail.value=''; empPass.value='';toast('تم إضافة الموظف. سيظهر اسمه في قائمة الدخول.');await loadEmployees();
+}
 function openEditEmployee(id){
   if(!requirePermission('all','تعديل الموظفين متاح للمدير فقط.'))return;
   const u=employeeById(id); if(!u)return alert('الموظف غير موجود');
@@ -248,16 +271,19 @@ async function saveEmployeeEdit(){
   if(error)return alert('تعذر حفظ التعديل: '+error.message);
   const newPass=(document.getElementById('editEmpNewPass')?.value||'').trim();
   if(newPass){
-    if(newPass.length<6)return alert('كلمة المرور يجب ألا تقل عن 6 أحرف');
+    if(!/^\d{4}$/.test(newPass))return alert('الرقم السري يجب أن يكون 4 أرقام');
     if(String(u.email||'').toLowerCase()===String(session?.user?.email||'').toLowerCase()){
-      const passRes=await sb.auth.updateUser({password:newPass});
-      if(passRes.error)return alert('تم حفظ بيانات الموظف، لكن تعذر تغيير كلمة المرور: '+passRes.error.message);
+      const passRes=await sb.auth.updateUser({password:authPasswordFromPin(newPass)});
+      if(passRes.error)return alert('تم حفظ بيانات الموظف، لكن تعذر تغيير الرقم السري: '+passRes.error.message);
     }else{
-      await sb.auth.resetPasswordForEmail(payload.email,{redirectTo:location.href});
-      alert('تم حفظ بيانات الموظف. ولتغيير كلمة المرور لموظف آخر تم إرسال رابط إعادة تعيين إلى بريده.');
+      const newInternalEmail=internalEmailWithSalt(payload.full_name||payload.email);
+      const signup=await sb.auth.signUp({email:newInternalEmail,password:authPasswordFromPin(newPass),options:{data:{full_name:payload.full_name,pin_login:true}}});
+      if(signup.error && !String(signup.error.message||'').toLowerCase().includes('already'))return alert('تم حفظ بيانات الموظف، لكن تعذر إنشاء الرقم السري الجديد: '+signup.error.message);
+      const upd=await sb.from('app_users').update({email:newInternalEmail}).eq('id',id);
+      if(upd.error)return alert('تم إنشاء دخول جديد، لكن تعذر ربطه بالموظف: '+upd.error.message);
     }
   }
-  closeEmployeeModal(); toast('تم تحديث بيانات الموظف'); await loadEmployees();
+  closeEmployeeModal(); toast('تم تحديث بيانات الموظف'); await loadEmployees(); await loadLoginEmployees();
 }
 async function sendEmployeePasswordReset(){
   if(!requirePermission('all','تغيير كلمة المرور متاح للمدير فقط.'))return;
@@ -310,11 +336,43 @@ async function cleanupEmployeesKeepOwner(){
 }
 
 
+async function loadLoginEmployees(){
+  const sel=document.getElementById('loginUserSelect'); if(!sel)return;
+  sel.innerHTML='<option value="">جاري تحميل الموظفين...</option>';
+  let rows=[];
+  try{
+    const {data,error}=await sb.from('app_users').select('id,full_name,email,role,is_active').order('full_name');
+    if(!error) rows=(data||[]).filter(u=>u.is_active!==false && (u.email||u.role==='owner'));
+  }catch(e){console.warn(e)}
+  if(!rows.length){
+    rows=[{full_name:'أبو قصي',email:MAIN_OWNER_EMAIL,role:'owner',is_active:true}];
+    loginMsg.textContent='لم أستطع تحميل قائمة الموظفين، يمكنك الدخول بحساب المدير الرئيسي.';
+  }else{
+    loginMsg.textContent='';
+  }
+  sel.innerHTML=rows.map(u=>`<option value="${escapeHtml(u.email||'')}">${escapeHtml(u.full_name||u.email||'-')} — ${roleLabel(u.role)}</option>`).join('');
+  const last=localStorage.getItem('sanabel_last_login_user'); if(last && [...sel.options].some(o=>o.value===last))sel.value=last;
+}
 async function init(){today.textContent=new Date().toLocaleDateString('ar-SA-u-nu-latn',{weekday:'long',year:'numeric',month:'long',day:'numeric'});rDate.value=todayISO();const {data}=await sb.auth.getSession();session=data.session;if(session) await enterApp();else showLogin();}
-function showLogin(){document.getElementById('login').classList.remove('hide');document.getElementById('app').classList.add('hide')}
-async function doLogin(){loginMsg.textContent='جاري تسجيل الدخول...';const {data,error}=await sb.auth.signInWithPassword({email:loginEmail.value.trim(),password:loginPass.value});if(error){loginMsg.textContent='خطأ: '+error.message;return}session=data.session;await enterApp()}
+function showLogin(){document.getElementById('login').classList.remove('hide');document.getElementById('app').classList.add('hide');loadLoginEmployees()}
+async function doLogin(){
+  loginMsg.textContent='جاري تسجيل الدخول...';
+  let loginEmailValue=loginUserSelect.value;
+  let pin=loginPass.value.trim();
+  if(!loginEmailValue){loginMsg.textContent='اختر اسم الموظف';return}
+  if(!/^\d{4}$/.test(pin)){loginMsg.textContent='الرقم السري يجب أن يكون 4 أرقام';return}
+  let first=await sb.auth.signInWithPassword({email:loginEmailValue,password:authPasswordFromPin(pin)});
+  let data=first.data, error=first.error;
+  // توافق مع حساب المدير القديم إذا كان يستخدم كلمة مرور Supabase الأصلية
+  if(error){
+    let second=await sb.auth.signInWithPassword({email:loginEmailValue,password:pin});
+    data=second.data; error=second.error;
+  }
+  if(error){loginMsg.textContent='الرقم السري غير صحيح أو الحساب غير مفعل';return}
+  localStorage.setItem('sanabel_last_login_user',loginEmailValue);session=data.session;await enterApp()
+}
 async function logout(){await sb.auth.signOut();session=null;showLogin()}
-async function enterApp(){document.getElementById('login').classList.add('hide');document.getElementById('app').classList.remove('hide');userEmail.textContent=session.user.email;await loadTenants();await loadEmployees();await loadAll()}
+async function enterApp(){document.getElementById('login').classList.add('hide');document.getElementById('app').classList.remove('hide');userEmail.textContent=displayLoginName(session.user.email);await loadTenants();await loadEmployees();await loadAll()}
 async function loadTenants(){const {data,error}=await sb.from('tenants').select('*').order('name');if(error){toast('تعذر تحميل المؤسسة: '+error.message);return}tenants=data||[];const sanabel=tenants.find(t=>String(t.code||'').toUpperCase()==='SANABEL'||String(t.name||'').includes('سنابل'));tenantId=sanabel?.id||tenants[0]?.id||null;tenantSelect.innerHTML=tenantId?`<option value="${tenantId}">${escapeHtml((sanabel||tenants[0]).name)}</option>`:'';if(tenantId)tenantSelect.value=tenantId;updateTenantLabel()}
 function updateTenantLabel(){const t=tenants.find(x=>x.id===tenantId);tenantName.textContent=t?.name||'لا توجد مؤسسة'}
 async function switchTenant(){updateTenantLabel();await loadAll()}
@@ -322,7 +380,7 @@ async function loadAll(){if(!tenantId)return;await loadPaymentMethods();await lo
 async function loadPaymentMethods(){const {data,error}=await sb.from('os_payment_methods').select('*').eq('tenant_id',tenantId).eq('is_active',true).order('name');if(error){toast('خطأ طرق الدفع: '+error.message);return}paymentMethods=data||[];if(!paymentMethods.length){toast('لا توجد طرق دفع لهذه المؤسسة')}renderPaymentOptions()}
 function renderPaymentOptions(){const opts=paymentMethods.map(p=>`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join('');rPay.innerHTML=opts;ePay.innerHTML=opts;fPay.innerHTML='<option value="">الكل</option>'+opts}
 async function loadCustomers(){const {data,error}=await sb.from('os_customers').select('*').eq('tenant_id',tenantId).eq('is_active',true).order('created_at',{ascending:false});if(error){toast('خطأ العملاء: '+error.message);return}customers=data||[]}
-async function loadReceipts(){let res=await sb.from('os_receipts').select('*, os_customers(name,phone), os_payment_methods(name,type)').eq('tenant_id',tenantId).order('created_at',{ascending:false});if(res.error){res=await sb.from('os_receipts').select('*').eq('tenant_id',tenantId).order('created_at',{ascending:false})}if(res.error){toast('خطأ السندات: '+res.error.message);return}receipts=(res.data||[]).map(receiptToRow)}
+async function loadReceipts(){const {data,error}=await sb.from('os_receipts').select('*').eq('tenant_id',tenantId).order('created_at',{ascending:false});if(error){toast('خطأ السندات: '+error.message);return}receipts=(data||[]).map(receiptToRow)}
 function show(id,btn){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active','printable'));document.getElementById(id).classList.add('active');if(['reports','statement','overdue'].includes(id))document.getElementById(id).classList.add('printable');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');renderAll()}
 
 function daysBetween(dateStr){if(!dateStr)return 0;const d=new Date(dateStr+'T00:00:00');const n=new Date();return Math.max(0,Math.floor((n-d)/(1000*60*60*24)))}
@@ -339,7 +397,8 @@ function viewReceipt(id){const r=receipts.find(x=>x.id===id);if(!r)return;receip
 function closeReceiptView(){receiptViewModal.classList.remove('active')}
 
 function renderAll(){renderDashboard();renderClients();renderOverdue();renderReports();renderStatement();renderApproval();renderTrash();renderEmployees();loadSecuritySettings()}
-function renderDashboard(){let active=receipts.filter(r=>r.status!=='deleted');let total=active.reduce((s,r)=>s+r.amount,0),remain=active.reduce((s,r)=>s+r.remain,0),today=todayISO();kTotal.textContent=money(total);kToday.textContent=active.filter(r=>r.date===today).length.toLocaleString('en-US');kPending.textContent=active.filter(r=>r.status==='pending').length.toLocaleString('en-US');kRemain.textContent=money(remain);kOverdue.textContent=overdueClients().length.toLocaleString('en-US');latestRows.innerHTML=active.slice(0,15).map(r=>`<tr><td>${r.receipt_no}</td><td>${r.date}</td><td>${clientLink(r.client_id,r.client)}</td><td>${money(r.amount)}</td><td>${paymentChip(r.pay)}</td><td>${money(r.remain)}</td><td>${escapeHtml(r.collector||session?.user?.email||'-')}</td><td>${badge(r.status)}</td><td>${actionButtons(r.id)}</td></tr>`).join('')||'<tr><td colspan="9">لا توجد سندات</td></tr>'}
+function renderManagerDashboard(){let active=receipts.filter(r=>r.status!=='deleted');let today=todayISO();let todayRows=active.filter(r=>r.date===today);let todayTotal=todayRows.reduce((s,r)=>s+r.amount,0);if(document.getElementById('mgrTodayTotal'))mgrTodayTotal.textContent=money(todayTotal);if(document.getElementById('mgrPendingCount'))mgrPendingCount.textContent=active.filter(r=>r.status==='pending').length.toLocaleString('en-US');if(document.getElementById('mgrTodayCount'))mgrTodayCount.textContent=todayRows.length.toLocaleString('en-US');if(document.getElementById('mgrDeletedCount'))mgrDeletedCount.textContent=receipts.filter(r=>r.status==='deleted').length.toLocaleString('en-US');let by={};todayRows.forEach(r=>{let k=r.collector||'غير محدد';by[k]=(by[k]||0)+r.amount});let collectors=Object.entries(by).sort((a,b)=>b[1]-a[1]).slice(0,5);if(document.getElementById('mgrCollectors'))mgrCollectors.innerHTML=collectors.map(([n,v])=>`<div class="mini-row"><b>${escapeHtml(n)}</b><span>${money(v)}</span></div>`).join('')||'<div class="mini-row"><b>لا توجد عمليات اليوم</b><span>0</span></div>';if(document.getElementById('mgrActivity'))mgrActivity.innerHTML=active.slice(0,5).map(r=>`<div class="mini-row"><b>${escapeHtml(r.client||'-')}</b><span>${escapeHtml(r.receipt_no)} • ${money(r.amount)}</span></div>`).join('')||'<div class="mini-row"><b>لا توجد عمليات</b><span>-</span></div>'}
+function renderDashboard(){let active=receipts.filter(r=>r.status!=='deleted');let total=active.reduce((s,r)=>s+r.amount,0),remain=active.reduce((s,r)=>s+r.remain,0),today=todayISO();kTotal.textContent=money(total);kToday.textContent=active.filter(r=>r.date===today).length.toLocaleString('en-US');kPending.textContent=active.filter(r=>r.status==='pending').length.toLocaleString('en-US');kRemain.textContent=money(remain);kOverdue.textContent=overdueClients().length.toLocaleString('en-US');renderManagerDashboard();latestRows.innerHTML=active.slice(0,15).map(r=>`<tr><td>${r.receipt_no}</td><td>${r.date}</td><td>${clientLink(r.client_id,r.client)}</td><td>${money(r.amount)}</td><td>${paymentChip(r.pay)}</td><td>${money(r.remain)}</td><td>${escapeHtml(r.collector||displayLoginName(session?.user?.email)||'-')}</td><td>${badge(r.status)}</td><td>${actionButtons(r.id)}</td></tr>`).join('')||'<tr><td colspan="9">لا توجد سندات</td></tr>'}
 function renderClients(){clientsList.innerHTML=customers.map(c=>`<option value="${escapeHtml(c.name)}"></option>`).join('');clientsRows.innerHTML=customers.map(c=>`<tr><td>${clientLink(c.id,c.name)}</td><td>${escapeHtml(c.phone||'-')}</td><td>${creditBadgeHTML(c.id)}</td><td>${escapeHtml(c.notes||'-')}</td><td><button class="btn primary" onclick="selectReceiptClient('${c.id}')">إصدار سند</button> <button class="btn blue" onclick="openCreditModal('${c.id}')">تحليل</button></td></tr>`).join('')||'<tr><td colspan="5">لا توجد بيانات</td></tr>'}
 function selectReceiptClient(id){rClient.value=customers.find(c=>c.id===id)?.name||'';show('receipt',document.querySelectorAll('.nav button')[1])}
 async function addClient(){if(!requirePermission('add_client','لا تملك صلاحية إضافة العملاء.'))return;let name=cName.value.trim();if(!name)return alert('اكتب اسم العميل');const {error}=await sb.from('os_customers').insert({tenant_id:tenantId,name,phone:cPhone.value.trim()||null,notes:cNote.value.trim()||null});if(error){alert('خطأ حفظ العميل: '+error.message);return}cName.value=cPhone.value=cNote.value='';toast('تم حفظ العميل في السحابة');await loadAll()}
@@ -517,19 +576,18 @@ async function importClientsExcel(event){
 async function saveReceipt(){if(!requirePermission('add_receipt','لا تملك صلاحية إصدار السندات.'))return;let client=rClient.value.trim(),amount=Number(rAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let cid=customerIdByName(client);if(!cid){if(confirm('العميل غير موجود. هل تريد إضافته تلقائيًا؟')){let {data,error}=await sb.from('os_customers').insert({tenant_id:tenantId,name:client,notes:'أضيف تلقائيًا من سند قبض'}).select().single();if(error)return alert('خطأ إضافة العميل: '+error.message);cid=data.id;await loadCustomers()}else return}let payId=paymentIdByName(rPay.value);let receipt_no='RC-'+Date.now().toString().slice(-8);const payload={tenant_id:tenantId,module_id:'receivables',customer_id:cid,receipt_no,receipt_date:rDate.value||todayISO(),amount,remaining:Number(rRemain.value)||0,payment_method_id:payId,reference_no:rRef.value.trim()||null,collector_name:rCollector.value.trim()||currentUserName(),notes:rNote.value.trim()||null,status:'pending'};const {error}=await sb.from('os_receipts').insert(payload);if(error){alert('خطأ حفظ السند: '+error.message);return}clearReceipt();toast('تم حفظ السند في السحابة');await loadAll()}
 function clearReceipt(){rClient.value='';rDate.value=todayISO();rAmount.value='';rRemain.value='';rRef.value='';rCollector.value='';rNote.value=''}
 function filterRows(prefix){let rows=receipts.slice();let from=document.getElementById(prefix+'From')?.value,to=document.getElementById(prefix+'To')?.value,client=document.getElementById(prefix+'Client')?.value?.trim(),pay=document.getElementById(prefix+'Pay')?.value,status=document.getElementById(prefix+'Status')?.value;if(status){rows=rows.filter(r=>r.status===status)}else{rows=rows.filter(r=>r.status!=='deleted')}if(from)rows=rows.filter(r=>r.date>=from);if(to)rows=rows.filter(r=>r.date<=to);if(client)rows=rows.filter(r=>String(r.client).includes(client));if(pay)rows=rows.filter(r=>r.pay===pay);return rows}
-function actionButtons(id){return `<button class="btn gear" title="إجراءات" onclick="showActionsMenu('${id}')">⚙️</button>`}
-function showActionsMenu(id){const r=receipts.find(x=>x.id===id);if(!r)return;actionsModalTitle.textContent='إجراءات السند '+(r.receipt_no||'');let approveBtn=r.status==='pending'?`<button class="btn green" onclick="closeActionsModal();approve('${id}')">✅ اعتماد</button>`:'';let restoreBtn=r.status==='deleted'?`<button class="btn green" onclick="closeActionsModal();restoreReceipt('${id}')">♻️ استعادة</button>`:'';let deleteBtn=r.status!=='deleted'?`<button class="btn danger" onclick="closeActionsModal();delReceipt('${id}')">🗑️ حذف</button>`:'';actionsModalBody.innerHTML=`<div class="action-menu-note"><b>العميل:</b> ${escapeHtml(r.client||'-')}<br><b>المبلغ:</b> ${money(r.amount)}<br><b>الحالة:</b> ${r.status==='approved'?'معتمد':r.status==='pending'?'بانتظار الاعتماد':r.status==='deleted'?'محذوف':escapeHtml(r.status||'-')}</div><div class="action-menu-grid"><button class="btn blue" onclick="closeActionsModal();viewReceipt('${id}')">👁️ عرض</button><button class="btn" onclick="closeActionsModal();printReceipt('${id}')">🖨️ طباعة</button><button class="btn gold" onclick="closeActionsModal();openEditReceipt('${id}')">✏️ تعديل</button>${approveBtn}${restoreBtn}${deleteBtn}</div>`;actionsModal.classList.add('active')}
-function closeActionsModal(){actionsModal.classList.remove('active')}
+function toggleGear(id,ev){if(ev)ev.stopPropagation();document.querySelectorAll('.gear-list').forEach(m=>{if(m.id!==id)m.classList.remove('open')});const el=document.getElementById(id);if(el)el.classList.toggle('open')}document.addEventListener('click',()=>document.querySelectorAll('.gear-list').forEach(m=>m.classList.remove('open')));
+function actionButtons(id){const mid='gear_'+String(id).replace(/[^a-zA-Z0-9_-]/g,'');return `<div class="gear-menu"><button class="gear-btn" onclick="toggleGear('${mid}',event)">⚙️</button><div class="gear-list" id="${mid}"><button onclick="viewReceipt('${id}')">👁️ عرض</button><button onclick="printReceipt('${id}')">🖨️ طباعة</button><button onclick="openEditReceipt('${id}')">✏️ تعديل</button><button class="danger-action" onclick="delReceipt('${id}')">🗑️ حذف</button></div></div>`}
 function summarizePayments(rows){let active=rows.filter(r=>r.status!=='deleted');let map={};paymentMethods.forEach(m=>map[m.name]={count:0,total:0});active.forEach(r=>{let key=r.pay||'غير محدد';if(!map[key])map[key]={count:0,total:0};map[key].count++;map[key].total+=Number(r.amount||0)});return {active,map,total:active.reduce((s,r)=>s+Number(r.amount||0),0),remain:active.reduce((s,r)=>s+Number(r.remain||0),0),clients:new Set(active.map(r=>r.client)).size}}
 function renderPaymentSummary(summary){let icons={'نقدي':'💵','شبكة':'💳','تحويل':'🏦','STC Pay':'📱','شيك':'🧾','خصم':'➖','غير محدد':'❔'};let entries=Object.entries(summary.map).filter(([k,v])=>v.count||['نقدي','شبكة','تحويل','STC Pay','شيك','خصم'].includes(k));paymentSummary.innerHTML=entries.map(([k,v])=>`<div class="payment-card"><div class="pay-title"><span>${icons[k]||'💰'} ${escapeHtml(k)}</span><span>${summary.total?((v.total/summary.total)*100).toFixed(1):'0.0'}%</span></div><div class="pay-amount">${money(v.total)}</div><div class="pay-count">عدد السندات: ${Number(v.count).toLocaleString('en-US')}</div></div>`).join('');let cash=summary.map['نقدي']?.total||0,bank=(summary.map['شبكة']?.total||0)+(summary.map['تحويل']?.total||0),stc=summary.map['STC Pay']?.total||0,cheque=summary.map['شيك']?.total||0;dailyMatchBox.innerHTML=`<h3>مطابقة التحصيل اليومية</h3><div class="daily-match-row"><span>💵 إجمالي النقد</span><b>${money(cash)}</b></div><div class="daily-match-row"><span>🏦 إجمالي الإيداعات البنكية (شبكة + تحويل)</span><b>${money(bank)}</b></div><div class="daily-match-row"><span>📱 إجمالي STC Pay</span><b>${money(stc)}</b></div><div class="daily-match-row"><span>🧾 إجمالي الشيكات</span><b>${money(cheque)}</b></div><div class="daily-match-row"><span>الإجمالي العام</span><b>${money(summary.total)}</b></div>`}
-function renderReports(){let rows=filterRows('f');let q=norm(document.getElementById('fSearch')?.value).toLowerCase();if(q)rows=rows.filter(r=>[r.receipt_no,r.client,r.ref,r.collector,r.note].some(v=>norm(v).toLowerCase().includes(q)));let summary=summarizePayments(rows);let count=summary.active.length;reportSummary.innerHTML=`عدد السندات: <b>${count.toLocaleString('en-US')}</b> | إجمالي المقبوضات: <b>${money(summary.total)}</b> | إجمالي المتبقي: <b>${money(summary.remain)}</b>`;reportKpis.innerHTML=`<div class="report-kpi"><span>💰 إجمالي المقبوضات</span><b>${money(summary.total)}</b></div><div class="report-kpi"><span>⏳ إجمالي المتبقي</span><b>${money(summary.remain)}</b></div><div class="report-kpi"><span>📄 عدد السندات</span><b>${count.toLocaleString('en-US')}</b></div><div class="report-kpi"><span>👥 عملاء تم التحصيل منهم</span><b>${summary.clients.toLocaleString('en-US')}</b></div>`;renderPaymentSummary(summary);reportsRows.innerHTML=rows.map(r=>`<tr><td>${r.receipt_no}</td><td>${r.date}</td><td>${clientLink(r.client_id,r.client)}</td><td>${money(r.amount)}</td><td>${paymentChip(r.pay)}</td><td>${money(r.remain)}</td><td>${escapeHtml(r.ref||'-')}</td><td>${escapeHtml(r.collector||'-')}</td><td>${badge(r.status)}</td><td class="no-print">${actionButtons(r.id)}</td></tr>`).join('')||'<tr><td colspan="10">لا توجد بيانات</td></tr>'}
-function renderStatement(){let rows=filterRows('s').filter(r=>r.status!=='deleted');let total=rows.reduce((sum,r)=>sum+Number(r.amount||0),0),remain=rows.reduce((sum,r)=>sum+Number(r.remain||0),0),last=rows.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];statementTitle.textContent='كشف حساب العميل: '+(sClient.value||'الكل');let scId=customerIdByName(sClient.value||'');let sc=scId?creditInfo(scId):null;statementTotals.innerHTML=`${sc?'<div class="statement-total"><span>التقييم الائتماني</span><b>'+sc.icon+' '+sc.label+' '+sc.score+'/100</b></div>':''}<div class="statement-total"><span>إجمالي المقبوضات</span><b>${money(total)}</b></div><div class="statement-total"><span>إجمالي المتبقي</span><b>${money(remain)}</b></div><div class="statement-total"><span>عدد السندات</span><b>${rows.length.toLocaleString('en-US')}</b></div><div class="statement-total"><span>آخر عملية</span><b>${last?last.date:'-'}</b></div>`;statementRows.innerHTML=rows.map(r=>`<tr><td>${r.date}</td><td>${r.receipt_no}</td><td>${clientLink(r.client_id,r.client)}</td><td>${money(r.amount)}</td><td>${paymentChip(r.pay)}</td><td>${money(r.remain)}</td><td>${escapeHtml(r.note||'-')}</td><td>${badge(r.status)}</td><td class="no-print">${actionButtons(r.id)}</td></tr>`).join('')||'<tr><td colspan="9">لا توجد بيانات</td></tr>'}
+function renderReports(){let rows=filterRows('f');let q=norm(document.getElementById('fSearch')?.value).toLowerCase();if(q)rows=rows.filter(r=>[r.receipt_no,r.client,r.ref,r.collector,r.note].some(v=>norm(v).toLowerCase().includes(q)));let summary=summarizePayments(rows);let count=summary.active.length;reportSummary.innerHTML=`عدد السندات: <b>${count.toLocaleString('en-US')}</b> | إجمالي المقبوضات: <b>${money(summary.total)}</b> | إجمالي المتبقي: <b>${money(summary.remain)}</b>`;reportKpis.innerHTML=`<div class="report-kpi"><span>💰 إجمالي المقبوضات</span><b>${money(summary.total)}</b></div><div class="report-kpi"><span>⏳ إجمالي المتبقي</span><b>${money(summary.remain)}</b></div><div class="report-kpi"><span>📄 عدد السندات</span><b>${count.toLocaleString('en-US')}</b></div><div class="report-kpi"><span>👥 عملاء تم التحصيل منهم</span><b>${summary.clients.toLocaleString('en-US')}</b></div>`;renderPaymentSummary(summary);reportsRows.innerHTML=rows.map(r=>`<tr><td>${r.receipt_no}</td><td>${r.date}</td><td>${escapeHtml(r.client)}</td><td>${money(r.amount)}</td><td>${paymentChip(r.pay)}</td><td>${money(r.remain)}</td><td>${escapeHtml(r.ref||'-')}</td><td>${escapeHtml(r.collector||'-')}</td><td>${badge(r.status)}</td><td class="no-print">${actionButtons(r.id)}</td></tr>`).join('')||'<tr><td colspan="10">لا توجد بيانات</td></tr>'}
+function renderStatement(){let rows=filterRows('s').filter(r=>r.status!=='deleted');let total=rows.reduce((sum,r)=>sum+Number(r.amount||0),0),remain=rows.reduce((sum,r)=>sum+Number(r.remain||0),0),last=rows.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];statementTitle.textContent='كشف حساب العميل: '+(sClient.value||'الكل');let scId=customerIdByName(sClient.value||'');let sc=scId?creditInfo(scId):null;statementTotals.innerHTML=`${sc?'<div class="statement-total"><span>التقييم الائتماني</span><b>'+sc.icon+' '+sc.label+' '+sc.score+'/100</b></div>':''}<div class="statement-total"><span>إجمالي المقبوضات</span><b>${money(total)}</b></div><div class="statement-total"><span>إجمالي المتبقي</span><b>${money(remain)}</b></div><div class="statement-total"><span>عدد السندات</span><b>${rows.length.toLocaleString('en-US')}</b></div><div class="statement-total"><span>آخر عملية</span><b>${last?last.date:'-'}</b></div>`;statementRows.innerHTML=rows.map(r=>`<tr><td>${r.date}</td><td>${r.receipt_no}</td><td>${money(r.amount)}</td><td>${escapeHtml(r.pay)}</td><td>${money(r.remain)}</td><td>${escapeHtml(r.note||'-')}</td><td>${badge(r.status)}</td><td class="no-print">${actionButtons(r.id)}</td></tr>`).join('')||'<tr><td colspan="8">لا توجد بيانات</td></tr>'}
 function hasActiveReceipt(clientId){return receipts.some(r=>r.status!=='deleted' && r.client_id===clientId)}function overdueClients(){return customers.filter(c=>!hasActiveReceipt(c.id))}
 function renderOverdue(){let q=norm(document.getElementById('overdueSearch')?.value).toLowerCase();let rows=overdueClients().filter(c=>!q || norm(c.name).toLowerCase().includes(q) || norm(c.phone).toLowerCase().includes(q));overdueSummary.innerHTML=`عدد العملاء المتأخرين: <b>${rows.length.toLocaleString('en-US')}</b> من أصل <b>${customers.length.toLocaleString('en-US')}</b> عميل`;overdueRows.innerHTML=rows.map((c,i)=>`<tr><td>${(i+1).toLocaleString('en-US')}</td><td>${escapeHtml(c.name)}</td><td>${escapeHtml(c.phone||'-')}</td><td>${escapeHtml(c.notes||'-')}</td><td><span class="badge del">متأخر</span></td><td><button class="btn primary" onclick="selectReceiptClient('${c.id}')">إصدار سند</button></td></tr>`).join('')||'<tr><td colspan="6">لا يوجد عملاء متأخرون</td></tr>'}
 async function approve(id){if(!requirePermission('all','اعتماد السندات متاح للمدير فقط.'))return;let {error}=await sb.from('os_receipts').update({status:'approved',updated_at:new Date().toISOString(),collector_name:(receipts.find(x=>x.id===id)?.collector||currentUserName())}).eq('id',id);if(error)return alert(error.message);toast('تم اعتماد السند');await loadAll()}
 async function delReceipt(id){if(!requirePermission('all','حذف السندات متاح للمدير فقط.'))return;let r=receipts.find(x=>x.id===id);if(!r)return;let sec=getSecuritySettings();let pinResult=null;if(sec.deleteReceipt!==false){pinResult=await requireManagerPin('حذف سند قبض','سيتم نقل السند إلى سلة المحذوفات ولن يظهر للموظفين. أدخل رقم المدير للتأكيد.');if(!pinResult)return}let note=(pinResult&&pinResult.reason)?(' | سبب الحذف: '+pinResult.reason):'';let {error}=await sb.from('os_receipts').update({status:'deleted',notes:(r.note||'')+note,updated_at:new Date().toISOString()}).eq('id',id);if(error)return alert(error.message);toast('تم حذف السند ونقله إلى سلة المحذوفات');await loadAll()}
-function renderApproval(){let rows=receipts.filter(r=>r.status==='pending');approvalRows.innerHTML=rows.map(r=>`<tr><td>${r.receipt_no}</td><td>${r.date}</td><td>${clientLink(r.client_id,r.client)}</td><td>${money(r.amount)}</td><td>${paymentChip(r.pay)}</td><td>${money(r.remain)}</td><td>${actionButtons(r.id)}</td></tr>`).join('')||'<tr><td colspan="7">لا توجد سندات بانتظار الاعتماد</td></tr>'}
-function renderTrash(){let el=document.getElementById('trashRows');if(!el)return;let rows=receipts.filter(r=>r.status==='deleted');el.innerHTML=rows.map(r=>`<tr><td>${r.receipt_no}</td><td>${r.date}</td><td>${clientLink(r.client_id,r.client)}</td><td>${money(r.amount)}</td><td>${paymentChip(r.pay)}</td><td>${money(r.remain)}</td><td>${escapeHtml(r.collector||'-')}</td><td>${actionButtons(r.id)}</td></tr>`).join('')||'<tr><td colspan="8">لا توجد سندات محذوفة</td></tr>'}
+function renderApproval(){let rows=receipts.filter(r=>r.status==='pending');approvalRows.innerHTML=rows.map(r=>`<tr><td>${r.receipt_no}</td><td>${r.date}</td><td>${escapeHtml(r.client)}</td><td>${money(r.amount)}</td><td>${escapeHtml(r.pay)}</td><td>${money(r.remain)}</td><td><button class="btn green" onclick="approve('${r.id}')">اعتماد</button> ${actionButtons(r.id)}</td></tr>`).join('')||'<tr><td colspan="7">لا توجد سندات بانتظار الاعتماد</td></tr>'}
+function renderTrash(){let el=document.getElementById('trashRows');if(!el)return;let rows=receipts.filter(r=>r.status==='deleted');el.innerHTML=rows.map(r=>`<tr><td>${r.receipt_no}</td><td>${r.date}</td><td>${escapeHtml(r.client)}</td><td>${money(r.amount)}</td><td>${escapeHtml(r.pay)}</td><td>${money(r.remain)}</td><td>${escapeHtml(r.collector||'-')}</td><td><button class="btn green" onclick="restoreReceipt('${r.id}')">استعادة</button> <button class="btn" onclick="viewReceipt('${r.id}')">عرض</button></td></tr>`).join('')||'<tr><td colspan="8">لا توجد سندات محذوفة</td></tr>'}
 async function restoreReceipt(id){let r=receipts.find(x=>x.id===id);if(!r)return;let sec=getSecuritySettings();let pinResult=null;if(sec.restoreReceipt!==false){pinResult=await requireManagerPin('استعادة سند محذوف','أدخل رقم المدير لاستعادة السند من سلة المحذوفات.');if(!pinResult)return}let {error}=await sb.from('os_receipts').update({status:'pending',updated_at:new Date().toISOString()}).eq('id',id);if(error)return alert(error.message);toast('تمت استعادة السند وأصبح بانتظار الاعتماد');await loadAll()}
 async function openEditReceipt(id){if(!requirePermission('edit_receipt','لا تملك صلاحية تعديل السندات.'))return;let r=receipts.find(x=>x.id===id);if(!r)return;let sec=getSecuritySettings();if(r.status==='approved'&&sec.editApproved){let ok=await requireManagerPin('تعديل سند معتمد','هذا السند معتمد. أدخل رقم المدير للسماح بالتعديل.');if(!ok)return}eId.value=r.id;eClient.value=r.client;eDate.value=r.date;eAmount.value=r.amount;ePay.value=r.pay;eRemain.value=r.remain||0;eRef.value=r.ref||'';eCollector.value=r.collector||'';eStatus.value=r.status||'pending';eNote.value=r.note||'';editModal.classList.add('active')}
 function closeEditModal(){editModal.classList.remove('active')}
