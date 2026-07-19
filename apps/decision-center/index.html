@@ -440,7 +440,7 @@ body{
   <div class="login-box">
     <div class="brand" style="padding:0 0 22px">
       <div class="brand-logo">ق</div>
-      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V20 سحابي</small></div>
+      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V21 سحابي</small></div>
     </div>
     <div class="field">
       <label>اختر الموظف</label>
@@ -4261,60 +4261,42 @@ async function populatePinUsers(){
   const select=$('pinLoginUser');
   const status=$('pinLoginStatus');
   if(!select)return;
-
   select.innerHTML='<option value="">جارٍ تحميل الموظفين...</option>';
   select.disabled=true;
-  status.textContent='جارٍ الاتصال بقاعدة البيانات...';
+  status.textContent='جارٍ الاتصال بالسحابة...';
   setCloudStatus('تحميل الموظفين','orange');
 
   try{
-    // هذه الدالة متاحة للزائر، لذلك لا تحتاج جلسة قبل عرض الأسماء.
-    const usersRaw=await directJson(
-      SUPABASE_URL+'/rest/v1/rpc/dc_pin_list_users',
-      {
-        method:'POST',
-        headers:{
-          'apikey':SUPABASE_PUBLISHABLE_KEY,
-          'Authorization':'Bearer '+SUPABASE_PUBLISHABLE_KEY,
-          'Content-Type':'application/json'
-        },
-        body:JSON.stringify({p_workspace_id:DC_WORKSPACE})
-      },
-      15000
-    );
+    // القراءة من دليل آمن مباشر؛ لا تحتاج إنشاء جلسة أو بريد إلكتروني.
+    const url=SUPABASE_URL+'/rest/v1/dc_pin_login_directory?select=id,display_name,role,permissions,is_active&workspace_id=eq.'+encodeURIComponent(DC_WORKSPACE)+'&is_active=eq.true&order=display_name.asc';
+    const usersRaw=await directJson(url,{
+      method:'GET',
+      headers:{
+        'apikey':SUPABASE_PUBLISHABLE_KEY,
+        'Authorization':'Bearer '+SUPABASE_PUBLISHABLE_KEY,
+        'Accept':'application/json'
+      }
+    },15000);
 
     const users=(Array.isArray(usersRaw)?usersRaw:[]).map(u=>normalizeUserPermissions({
-      id:u.id,
-      name:u.display_name,
-      role:u.role,
-      enabled:u.is_active!==false,
-      pin:'',
-      permissions:u.permissions||{}
+      id:u.id,name:u.display_name,role:u.role,enabled:u.is_active!==false,pin:'',permissions:u.permissions||{}
     }));
-
     state.users=users;
     const active=users.filter(u=>u.enabled!==false);
+    if(!active.length)throw new Error('قاعدة البيانات متصلة، لكن لا يوجد موظف فعال في decision-center');
 
-    if(!active.length){
-      select.innerHTML='<option value="">لا يوجد مستخدمون فعالون</option>';
-      status.textContent='لم يتم العثور على مستخدمين فعالين في قاعدة البيانات.';
-      setCloudStatus('لا يوجد مستخدمون','orange');
-      return;
-    }
-
-    select.innerHTML=active.map(u=>
+    select.innerHTML='<option value="">اختر الموظف</option>'+active.map(u=>
       `<option value="${u.id}" style="color:#111;background:#fff">${escapeHtml(u.name)} — ${roleLabel(u.role)}</option>`
     ).join('');
-
     const last=localStorage.getItem('dc_last_pin_user');
-    select.value=(last&&active.some(u=>u.id===last))?last:active[0].id;
+    select.value=(last&&active.some(u=>u.id===last))?last:'';
     select.disabled=false;
     status.textContent='اختر اسمك ثم أدخل الرقم السري.';
     setCloudStatus('جاهز للدخول','green');
   }catch(error){
     console.error('Load users error:',error);
     select.innerHTML='<option value="">تعذر تحميل الموظفين</option>';
-    status.textContent='تعذر تحميل الموظفين: '+(error?.message||'خطأ غير معروف');
+    status.innerHTML='تعذر تحميل الموظفين<br><small style="color:#b91c1c">'+escapeHtml(error?.message||'خطأ غير معروف')+'</small>';
     setCloudStatus('غير متصل','red');
   }
 }
