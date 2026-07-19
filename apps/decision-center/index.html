@@ -440,7 +440,7 @@ body{
   <div class="login-box">
     <div class="brand" style="padding:0 0 22px">
       <div class="brand-logo">ق</div>
-      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V18 سحابي</small></div>
+      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V18.1 سحابي</small></div>
     </div>
     <div class="field">
       <label>اختر الموظف</label>
@@ -1647,7 +1647,7 @@ function normalizeUserPermissions(user){
 state.users=state.users.map(normalizeUserPermissions);
 
 
-const SUPABASE_URL='https://rueapdmdkjytsxkfunpw.supabase.co';
+const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
 const DC_WORKSPACE='decision-center';
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
@@ -4400,6 +4400,11 @@ function openNewUserModal(){
   applyRoleDefaults();
   openModal('userModal');
 }
+function setPerm(id,value){
+  const el=$(id);
+  if(el)el.checked=!!value;
+}
+
 function editUser(id){
   if(!currentUser?.permissions?.users)return toast('ليس لديك صلاحية إدارة المستخدمين');
   const u=state.users.find(x=>x.id===id);
