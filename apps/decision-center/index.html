@@ -440,13 +440,13 @@ body{
   <div class="login-box">
     <div class="brand" style="padding:0 0 22px">
       <div class="brand-logo">ق</div>
-      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V18.1 سحابي</small></div>
+      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V18.2 سحابي</small></div>
     </div>
     <div class="field">
       <label>اختر الموظف</label>
       <select id="pinLoginUser" autocomplete="username"
               style="color:#fff;background:#07182a;border:1px solid #28517a">
-        <option value="manager-1">أبوقصي — مدير</option>
+        <option value="">جارٍ تحميل الموظفين...</option>
       </select>
     </div>
     <div class="field" style="margin-top:12px">
@@ -4248,10 +4248,16 @@ function togglePinVisibility(){
 }
 
 async function loginWithPin(){
-  const userId=$('pinLoginUser')?.value;
+  let userId=$('pinLoginUser')?.value;
   const pin=englishDigits(($('pinLoginCode')?.value||'').trim());
+
+  const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if(userId && !uuidPattern.test(userId)){
+    await populatePinUsers();
+    userId=$('pinLoginUser')?.value;
+  }
   const status=$('pinLoginStatus');
-  if(!userId)return toast('اختر الموظف');
+  if(!userId)return toast('تعذر تحميل الموظفين من السحابة، حدّث الصفحة ثم حاول مرة أخرى');
   if(!pin)return toast('أدخل الرقم السري');
 
   const btn=$('loginBtn');
