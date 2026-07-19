@@ -440,7 +440,7 @@ body{
   <div class="login-box">
     <div class="brand" style="padding:0 0 22px">
       <div class="brand-logo">ق</div>
-      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V24 سحابي</small></div>
+      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V25 سحابي</small></div>
     </div>
     <div class="field">
       <label>اختر الموظف</label>
@@ -4268,21 +4268,39 @@ async function populatePinUsers(){
   setCloudStatus('تحميل الموظفين','orange');
 
   try{
-    // جلب الموظفين من الدالة التي تم اختبارها بنجاح داخل Supabase.
-    const usersRaw=await directJson(
-      SUPABASE_URL+'/rest/v1/rpc/dc_pin_list_users',
-      {
-        method:'POST',
-        headers:{
-          'apikey':SUPABASE_PUBLISHABLE_KEY,
-          'Authorization':'Bearer '+SUPABASE_PUBLISHABLE_KEY,
-          'Content-Type':'application/json',
-          'Accept':'application/json'
+    // المسار الأساسي: View آمن ومباشر. لا يعتمد على البريد أو Anonymous Auth.
+    let usersRaw;
+    try{
+      usersRaw=await directJson(
+        SUPABASE_URL+'/rest/v1/dc_pin_login_directory?select=id,display_name,role,permissions,is_active&workspace_id=eq.'+
+        encodeURIComponent(DC_WORKSPACE)+'&is_active=eq.true&order=display_name.asc',
+        {
+          method:'GET',
+          headers:{
+            'apikey':SUPABASE_PUBLISHABLE_KEY,
+            'Authorization':'Bearer '+SUPABASE_PUBLISHABLE_KEY,
+            'Accept':'application/json'
+          }
         },
-        body:JSON.stringify({p_workspace_id:DC_WORKSPACE})
-      },
-      15000
-    );
+        15000
+      );
+    }catch(viewError){
+      console.warn('Directory view failed, trying RPC fallback:',viewError);
+      usersRaw=await directJson(
+        SUPABASE_URL+'/rest/v1/rpc/dc_pin_list_users',
+        {
+          method:'POST',
+          headers:{
+            'apikey':SUPABASE_PUBLISHABLE_KEY,
+            'Authorization':'Bearer '+SUPABASE_PUBLISHABLE_KEY,
+            'Content-Type':'application/json',
+            'Accept':'application/json'
+          },
+          body:JSON.stringify({p_workspace_id:DC_WORKSPACE})
+        },
+        15000
+      );
+    }
 
     const users=(Array.isArray(usersRaw)?usersRaw:[]).map(u=>normalizeUserPermissions({
       id:u.id,name:u.display_name,role:u.role,enabled:u.is_active!==false,pin:'',permissions:u.permissions||{}
@@ -4302,7 +4320,7 @@ async function populatePinUsers(){
   }catch(error){
     console.error('Load users error:',error);
     select.innerHTML='<option value="">تعذر تحميل الموظفين</option>';
-    status.innerHTML='تعذر تحميل الموظفين<br><small style="color:#b91c1c">'+escapeHtml(error?.message||'خطأ غير معروف')+'</small><br><button type="button" class="btn secondary" style="margin-top:10px" onclick="populatePinUsers()">إعادة المحاولة</button>';
+    status.innerHTML='تعذر تحميل الموظفين<br><small style="color:#b91c1c;display:block;margin-top:6px;word-break:break-word">'+escapeHtml(error?.message||'خطأ غير معروف')+'</small><br><button type="button" class="btn secondary" style="margin-top:10px" onclick="populatePinUsers()">إعادة المحاولة</button>';
     setCloudStatus('غير متصل','red');
   }
 }
