@@ -440,7 +440,7 @@ body{
   <div class="login-box">
     <div class="brand" style="padding:0 0 22px">
       <div class="brand-logo">ق</div>
-      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V19 سحابي</small></div>
+      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V20 سحابي</small></div>
     </div>
     <div class="field">
       <label>اختر الموظف</label>
@@ -4196,38 +4196,65 @@ function roleLabel(r){return ({manager:'مدير',accountant:'محاسب',collec
 function bootstrapAdmin(){openAdminPage('users')}
 
 
+
 function withTimeout(promise,ms,message){
-  return Promise.race([
-    promise,
-    new Promise((_,reject)=>setTimeout(()=>reject(new Error(message||'انتهت مهلة الاتصال')),ms))
-  ]);
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),ms);
+  return Promise.resolve(
+    typeof promise==='function' ? promise(controller.signal) : promise
+  ).finally(()=>clearTimeout(timer)).catch(error=>{
+    if(error?.name==='AbortError')throw new Error(message||'انتهت مهلة الاتصال');
+    throw error;
+  });
+}
+
+async function directJson(url,options={},timeout=12000){
+  return withTimeout(async signal=>{
+    const response=await fetch(url,{...options,signal,cache:'no-store'});
+    const raw=await response.text();
+    let body=null;
+    try{body=raw?JSON.parse(raw):null}catch(_){body=raw}
+    if(!response.ok){
+      const msg=body?.msg||body?.message||body?.error_description||body?.error||raw||('HTTP '+response.status);
+      throw new Error(msg);
+    }
+    return body;
+  },timeout,'تعذر الوصول إلى السحابة');
 }
 
 async function ensureAnonymousCloudSession(){
-  try{
-    const sessionResult=await withTimeout(
-      supabaseClient.auth.getSession(),
-      8000,
-      'تعذر قراءة جلسة السحابة'
-    );
-    const session=sessionResult?.data?.session;
-    if(session){
-      cloudUser=session.user;
-      return session;
-    }
-
-    const signInResult=await withTimeout(
-      supabaseClient.auth.signInAnonymously(),
-      12000,
-      'تعذر إنشاء جلسة سحابية'
-    );
-    if(signInResult.error)throw signInResult.error;
-    cloudUser=signInResult.data.user;
-    return signInResult.data.session;
-  }catch(error){
-    console.error('Anonymous session error:',error);
-    throw error;
+  const current=await supabaseClient.auth.getSession();
+  if(current?.data?.session?.access_token){
+    cloudUser=current.data.session.user;
+    return current.data.session;
   }
+
+  // إنشاء جلسة مجهولة مباشرة عبر Auth REST لتجنب تعليق مكتبة المتصفح.
+  const result=await directJson(
+    SUPABASE_URL+'/auth/v1/signup',
+    {
+      method:'POST',
+      headers:{
+        'apikey':SUPABASE_PUBLISHABLE_KEY,
+        'Authorization':'Bearer '+SUPABASE_PUBLISHABLE_KEY,
+        'Content-Type':'application/json'
+      },
+      body:'{}'
+    },
+    15000
+  );
+
+  if(!result?.access_token||!result?.refresh_token){
+    throw new Error('لم تُنشأ جلسة الدخول المجهولة');
+  }
+
+  const setResult=await supabaseClient.auth.setSession({
+    access_token:result.access_token,
+    refresh_token:result.refresh_token
+  });
+  if(setResult.error)throw setResult.error;
+  cloudUser=setResult.data.user;
+  return setResult.data.session;
 }
 
 async function populatePinUsers(){
@@ -4237,19 +4264,26 @@ async function populatePinUsers(){
 
   select.innerHTML='<option value="">جارٍ تحميل الموظفين...</option>';
   select.disabled=true;
-  if(status)status.textContent='جارٍ الاتصال بقاعدة البيانات...';
+  status.textContent='جارٍ الاتصال بقاعدة البيانات...';
   setCloudStatus('تحميل الموظفين','orange');
 
   try{
-    const rpcResult=await withTimeout(
-      supabaseClient.rpc('dc_pin_list_users',{p_workspace_id:DC_WORKSPACE}),
-      12000,
-      'انتهت مهلة تحميل الموظفين'
+    // هذه الدالة متاحة للزائر، لذلك لا تحتاج جلسة قبل عرض الأسماء.
+    const usersRaw=await directJson(
+      SUPABASE_URL+'/rest/v1/rpc/dc_pin_list_users',
+      {
+        method:'POST',
+        headers:{
+          'apikey':SUPABASE_PUBLISHABLE_KEY,
+          'Authorization':'Bearer '+SUPABASE_PUBLISHABLE_KEY,
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({p_workspace_id:DC_WORKSPACE})
+      },
+      15000
     );
-    const {data,error}=rpcResult;
-    if(error)throw error;
 
-    const users=(data||[]).map(u=>normalizeUserPermissions({
+    const users=(Array.isArray(usersRaw)?usersRaw:[]).map(u=>normalizeUserPermissions({
       id:u.id,
       name:u.display_name,
       role:u.role,
@@ -4263,9 +4297,8 @@ async function populatePinUsers(){
 
     if(!active.length){
       select.innerHTML='<option value="">لا يوجد مستخدمون فعالون</option>';
-      if(status)status.textContent='لم يتم العثور على مستخدمين فعالين في قاعدة البيانات.';
+      status.textContent='لم يتم العثور على مستخدمين فعالين في قاعدة البيانات.';
       setCloudStatus('لا يوجد مستخدمون','orange');
-      select.disabled=true;
       return;
     }
 
@@ -4274,18 +4307,14 @@ async function populatePinUsers(){
     ).join('');
 
     const last=localStorage.getItem('dc_last_pin_user');
-    if(last&&active.some(u=>u.id===last))select.value=last;
-    else select.value=active[0].id;
-
+    select.value=(last&&active.some(u=>u.id===last))?last:active[0].id;
     select.disabled=false;
-    if(status)status.textContent='اختر اسمك ثم أدخل الرقم السري.';
+    status.textContent='اختر اسمك ثم أدخل الرقم السري.';
     setCloudStatus('جاهز للدخول','green');
   }catch(error){
     console.error('Load users error:',error);
     select.innerHTML='<option value="">تعذر تحميل الموظفين</option>';
-    select.disabled=true;
-    const msg=error?.message||'خطأ غير معروف';
-    if(status)status.textContent='تعذر تحميل الموظفين: '+msg;
+    status.textContent='تعذر تحميل الموظفين: '+(error?.message||'خطأ غير معروف');
     setCloudStatus('غير متصل','red');
   }
 }
@@ -4319,13 +4348,24 @@ async function loginWithPin(){
   setCloudStatus('جارٍ تسجيل الدخول','orange');
 
   try{
-    await ensureAnonymousCloudSession();
-    const {data,error}=await supabaseClient.rpc('dc_pin_login',{
-      p_workspace_id:DC_WORKSPACE,
-      p_user_id:userId,
-      p_pin:pin
-    });
-    if(error)throw error;
+    const session=await ensureAnonymousCloudSession();
+    const data=await directJson(
+      SUPABASE_URL+'/rest/v1/rpc/dc_pin_login',
+      {
+        method:'POST',
+        headers:{
+          'apikey':SUPABASE_PUBLISHABLE_KEY,
+          'Authorization':'Bearer '+session.access_token,
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({
+          p_workspace_id:DC_WORKSPACE,
+          p_user_id:userId,
+          p_pin:pin
+        })
+      },
+      15000
+    );
     const result=Array.isArray(data)?data[0]:data;
     if(!result?.success)throw new Error(result?.message||'الرقم السري غير صحيح');
 
@@ -4396,22 +4436,7 @@ async function restorePinSession(){
 async function initLogin(){
   $('loginScreen').style.display='grid';
   setCloudStatus('جارٍ الاتصال','orange');
-
-  // تحميل الأسماء أولًا حتى لا تبقى القائمة معلقة.
   await populatePinUsers();
-
-  // محاولة استعادة الجلسة في الخلفية فقط.
-  try{
-    const restored=await withTimeout(
-      restorePinSession(),
-      10000,
-      'انتهت مهلة استعادة الجلسة'
-    );
-    if(restored)return;
-  }catch(error){
-    console.warn('Session restore skipped:',error);
-  }
-
   setTimeout(()=>$('pinLoginCode')?.focus(),100);
 }
 
