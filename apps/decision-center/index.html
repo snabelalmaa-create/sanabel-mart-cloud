@@ -440,7 +440,7 @@ body{
   <div class="login-box">
     <div class="brand" style="padding:0 0 22px">
       <div class="brand-logo">ق</div>
-      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V22 سحابي</small></div>
+      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V23 سحابي</small></div>
     </div>
     <div class="field">
       <label>اختر الموظف</label>
@@ -5011,7 +5011,6 @@ function resetAll(){
 }
 
 $('analyticsFrom').value=state.settings.startDate;$('analyticsTo').value=isoToday();$('customerImportDate').value=isoToday();$('salesDate').value=isoToday();$('payDate').value=isoToday();$('paymentsImportDate').value=isoToday();$('promiseDate').value=isoToday();$('statementFrom').value=state.settings.startDate;$('statementTo').value=isoToday();applyRoleDefaults();
-ensureDefaultPinUsers();
 localStorage.setItem(key,JSON.stringify(state));
 document.addEventListener('input',e=>{
   const el=e.target;
