@@ -440,41 +440,28 @@ body{
   <div class="login-box">
     <div class="brand" style="padding:0 0 22px">
       <div class="brand-logo">ق</div>
-      <div><h1>مركز القرارات</h1><small>تسجيل الدخول إلى المستشار المالي</small></div>
+      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري</small></div>
     </div>
     <div class="field">
-      <label>البريد الإلكتروني</label>
-      <input id="cloudLoginEmail" type="email" autocomplete="username" value="snabel.almaa@hotmail.com" placeholder="name@example.com">
+      <label>اختر الموظف</label>
+      <select id="pinLoginUser" autocomplete="username"></select>
     </div>
     <div class="field" style="margin-top:12px">
-      <label>كلمة المرور</label>
-      <input id="cloudLoginPassword" type="password" autocomplete="current-password" placeholder="••••••••">
-    </div>
-    <div id="cloudLoginStatus" class="note" style="margin-top:10px">تسجيل دخول سحابي إلى مساحة مركز القرارات.</div>
-    <button class="btn" id="loginBtn" style="width:100%;margin-top:16px" onclick="login()">دخول</button>
-
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap">
-      <button type="button" onclick="forgotPassword()" style="border:0;background:transparent;color:var(--gold);cursor:pointer;font-weight:800;padding:4px 0">
-        نسيت كلمة المرور؟
-      </button>
-      <button type="button" onclick="togglePasswordVisibility()" id="togglePasswordBtn" style="border:0;background:transparent;color:var(--muted);cursor:pointer;padding:4px 0">
-        👁️ إظهار كلمة المرور
-      </button>
-    </div>
-
-    <div id="recoveryBox" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
-      <div class="field">
-        <label>كلمة المرور الجديدة</label>
-        <input id="newCloudPassword" type="password" autocomplete="new-password" placeholder="8 أحرف على الأقل">
+      <label>الرقم السري</label>
+      <div style="position:relative">
+        <input id="pinLoginCode" type="password" inputmode="numeric" autocomplete="current-password"
+               maxlength="12" placeholder="••••" style="padding-left:48px">
+        <button type="button" id="togglePinBtn" onclick="togglePinVisibility()"
+                style="position:absolute;left:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;cursor:pointer;font-size:20px">👁️</button>
       </div>
-      <div class="field" style="margin-top:12px">
-        <label>تأكيد كلمة المرور الجديدة</label>
-        <input id="confirmCloudPassword" type="password" autocomplete="new-password" placeholder="أعد كتابة كلمة المرور">
-      </div>
-      <button class="btn" id="saveNewPasswordBtn" style="width:100%;margin-top:14px" onclick="saveNewPassword()">حفظ كلمة المرور الجديدة</button>
     </div>
-
-    <p class="note" style="margin-top:14px">يتم تحديد الشاشات والإجراءات حسب صلاحيات المستخدم.</p>
+    <div id="pinLoginStatus" class="note" style="margin-top:10px">اختر اسمك ثم أدخل الرقم السري.</div>
+    <button class="btn" id="loginBtn" style="width:100%;margin-top:16px" onclick="loginWithPin()">دخول</button>
+    <div style="margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)">
+      <div style="font-weight:800">الدخول الأول للمدير</div>
+      <div class="note" style="margin-top:4px">المستخدم: أبوقصي — الرقم السري الافتراضي: <b style="color:var(--gold)">1234</b></div>
+      <div class="note">يمكن تغييره بعد الدخول من المستخدمون والصلاحيات.</div>
+    </div>
   </div>
 </div>
 <div id="cloudSyncBadge" class="badge orange" style="position:fixed;left:18px;bottom:18px;z-index:1500">السحابة: جاري الاتصال</div>
@@ -1814,7 +1801,7 @@ function startRealtime(){
 }
 
 const $=id=>document.getElementById(id);
-function save(){localStorage.setItem(key,JSON.stringify(state));renderAll();scheduleCloudSync()}
+function save(){localStorage.setItem(key,JSON.stringify(state));renderAll();populatePinUsers();scheduleCloudSync()}
 function englishDigits(value){
   return String(value??'')
     .replace(/[٠-٩]/g,d=>'0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)])
@@ -4203,127 +4190,82 @@ function savePayment(){
 }
 
 function roleLabel(r){return ({manager:'مدير',accountant:'محاسب',collector:'محصل',viewer:'مشاهد'})[r]||r}
-function bootstrapAdmin(){toast('إدارة المستخدمين تتم الآن من Supabase')}
-async function initLogin(){
-  setCloudStatus('فحص الجلسة');
-  const {data:{session},error}=await supabaseClient.auth.getSession();
-  if(error||!session){
-    $('loginScreen').style.display='grid';setCloudStatus('بانتظار الدخول','orange');return;
-  }
-  try{
-    cloudUser=session.user;
-    const {profile,member}=await fetchCloudContext(cloudUser);
-    cloudMember=member;applyCloudUser(cloudUser,profile,member);
-    $('loginScreen').style.display='none';afterLogin();await loadCloudState();startRealtime();
-  }catch(error){
-    await supabaseClient.auth.signOut();$('loginScreen').style.display='grid';
-    setCloudStatus('غير مصرح','red');toast(error.message);
-  }
+function bootstrapAdmin(){openAdminPage('users')}
+
+function populatePinUsers(){
+  const select=$('pinLoginUser');
+  if(!select)return;
+  const active=(state.users||[]).filter(u=>u.enabled!==false);
+  select.innerHTML=active.length
+    ? active.map(u=>`<option value="${u.id}">${escapeHtml(u.name)} — ${roleLabel(u.role)}</option>`).join('')
+    : '<option value="">لا يوجد مستخدمون فعالون</option>';
+  const last=localStorage.getItem('dc_last_pin_user');
+  if(last&&active.some(u=>u.id===last))select.value=last;
 }
 
-function togglePasswordVisibility(){
-  const input=$('cloudLoginPassword');
-  const btn=$('togglePasswordBtn');
+function togglePinVisibility(){
+  const input=$('pinLoginCode'),btn=$('togglePinBtn');
   if(!input||!btn)return;
   const show=input.type==='password';
   input.type=show?'text':'password';
-  btn.textContent=show?'🙈 إخفاء كلمة المرور':'👁️ إظهار كلمة المرور';
+  btn.textContent=show?'🙈':'👁️';
 }
 
-async function forgotPassword(){
-  const email=$('cloudLoginEmail').value.trim();
-  if(!email)return toast('اكتب البريد الإلكتروني أولًا');
-  const status=$('cloudLoginStatus');
-  status.textContent='جارٍ إرسال رابط إعادة التعيين...';
+function loginWithPin(){
+  const userId=$('pinLoginUser')?.value;
+  const pin=englishDigits(($('pinLoginCode')?.value||'').trim());
+  const status=$('pinLoginStatus');
+  if(!userId)return toast('اختر الموظف');
+  if(!pin)return toast('أدخل الرقم السري');
+  const user=(state.users||[]).find(u=>u.id===userId&&u.enabled!==false);
+  if(!user)return toast('المستخدم غير موجود أو غير فعال');
+  if(String(user.pin||'')!==String(pin)){
+    if(status)status.textContent='الرقم السري غير صحيح.';
+    $('pinLoginCode').value='';
+    $('pinLoginCode').focus();
+    return toast('الرقم السري غير صحيح');
+  }
+  currentUser=normalizeUserPermissions(user);
+  localStorage.setItem('dc_last_pin_user',user.id);
+  localStorage.setItem('dc_pin_session',JSON.stringify({userId:user.id,at:Date.now()}));
+  $('loginScreen').style.display='none';
+  $('pinLoginCode').value='';
+  setCloudStatus('وضع محلي','orange');
+  afterLogin();
+}
+
+async function initLogin(){
+  populatePinUsers();
+  setCloudStatus('وضع محلي','orange');
   try{
-    const redirectTo='https://snabelalmaa-create.github.io/sanabel-mart-cloud/apps/decision-center/index.html';
-    const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo});
-    if(error)throw error;
-    status.textContent='تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك.';
-    toast('تم إرسال الرابط. افتح بريدك واضغط رابط إعادة التعيين');
-  }catch(error){
-    console.error(error);
-    status.textContent='تعذر إرسال رابط إعادة التعيين';
-    toast(error.message||'تعذر إرسال الرابط');
-  }
+    const saved=JSON.parse(localStorage.getItem('dc_pin_session')||'null');
+    const user=saved&&(state.users||[]).find(u=>u.id===saved.userId&&u.enabled!==false);
+    if(user){
+      currentUser=normalizeUserPermissions(user);
+      $('loginScreen').style.display='none';
+      afterLogin();
+      return;
+    }
+  }catch(_){}
+  $('loginScreen').style.display='grid';
+  setTimeout(()=>$('pinLoginCode')?.focus(),100);
 }
 
-function showPasswordRecovery(){
-  const box=$('recoveryBox');
-  if(box){
-    box.style.display='block';
-    $('cloudLoginStatus').textContent='اكتب كلمة المرور الجديدة ثم اضغط حفظ.';
-    $('cloudLoginPassword').closest('.field').style.display='none';
-    $('loginBtn').style.display='none';
-    $('togglePasswordBtn').style.display='none';
-  }
-}
-
-async function saveNewPassword(){
-  const password=$('newCloudPassword').value;
-  const confirmPassword=$('confirmCloudPassword').value;
-  if(password.length<8)return toast('كلمة المرور يجب أن تكون 8 أحرف على الأقل');
-  if(password!==confirmPassword)return toast('كلمتا المرور غير متطابقتين');
-  const btn=$('saveNewPasswordBtn');
-  btn.disabled=true;
-  $('cloudLoginStatus').textContent='جارٍ حفظ كلمة المرور الجديدة...';
-  try{
-    const {error}=await supabaseClient.auth.updateUser({password});
-    if(error)throw error;
-    $('cloudLoginStatus').textContent='تم تغيير كلمة المرور بنجاح. يمكنك الدخول الآن.';
-    toast('تم تغيير كلمة المرور بنجاح');
-    $('recoveryBox').style.display='none';
-    $('cloudLoginPassword').closest('.field').style.display='grid';
-    $('loginBtn').style.display='block';
-    $('togglePasswordBtn').style.display='inline-block';
-    $('cloudLoginPassword').value='';
-    $('newCloudPassword').value='';
-    $('confirmCloudPassword').value='';
-    await supabaseClient.auth.signOut();
-  }catch(error){
-    console.error(error);
-    $('cloudLoginStatus').textContent='تعذر حفظ كلمة المرور الجديدة';
-    toast(error.message||'تعذر تغيير كلمة المرور');
-  }finally{
-    btn.disabled=false;
-  }
-}
-
-supabaseClient.auth.onAuthStateChange((event)=>{
-  if(event==='PASSWORD_RECOVERY'){
-    $('loginScreen').style.display='grid';
-    showPasswordRecovery();
-  }
-});
-
-async function login(){
-  const email=$('cloudLoginEmail').value.trim(),password=$('cloudLoginPassword').value;
-  if(!email||!password)return toast('أدخل البريد وكلمة المرور');
-  $('loginBtn').disabled=true;$('cloudLoginStatus').textContent='جارٍ تسجيل الدخول...';
-  try{
-    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
-    if(error)throw error;
-    cloudUser=data.user;
-    const {profile,member}=await fetchCloudContext(cloudUser);
-    cloudMember=member;applyCloudUser(cloudUser,profile,member);
-    $('loginScreen').style.display='none';$('cloudLoginPassword').value='';
-    afterLogin();await loadCloudState();startRealtime();
-  }catch(error){
-    $('cloudLoginStatus').textContent='تعذر تسجيل الدخول';
-    toast(error.message==='Invalid login credentials'?'البريد أو كلمة المرور غير صحيحة':error.message);
-  }finally{$('loginBtn').disabled=false}
-}
 function afterLogin(){
   $('currentUserName').textContent=currentUser.name;
   $('currentUserRole').textContent=roleLabel(currentUser.role);
   if($('headerUserName'))$('headerUserName').textContent=currentUser.name;
   renderAll();
 }
+
 async function logout(){
-  if(realtimeChannel)await supabaseClient.removeChannel(realtimeChannel);
-  await supabaseClient.auth.signOut();
   currentUser=null;cloudUser=null;cloudMember=null;cloudReady=false;
-  $('loginScreen').style.display='grid';setCloudStatus('تم تسجيل الخروج','orange');
+  localStorage.removeItem('dc_pin_session');
+  populatePinUsers();
+  $('loginScreen').style.display='grid';
+  $('pinLoginCode').value='';
+  $('pinLoginStatus').textContent='اختر اسمك ثم أدخل الرقم السري.';
+  setCloudStatus('وضع محلي','orange');
 }
 
 function openAdminPage(pageId){
@@ -4788,6 +4730,11 @@ document.addEventListener('input',e=>{
 });
 convertNodeDigits(document.body);
 updateLiveClock();
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&$('loginScreen')?.style.display!=='none'&&document.activeElement?.id==='pinLoginCode'){
+    e.preventDefault();loginWithPin();
+  }
+});
 initLogin();
 </script>
 </body>
