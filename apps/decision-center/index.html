@@ -440,13 +440,13 @@ body{
   <div class="login-box">
     <div class="brand" style="padding:0 0 22px">
       <div class="brand-logo">ق</div>
-      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V25 سحابي</small></div>
+      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V26 سحابي</small></div>
     </div>
     <div class="field">
       <label>اختر الموظف</label>
       <select id="pinLoginUser" autocomplete="username"
               style="color:#fff;background:#07182a;border:1px solid #28517a">
-        <option value="">جارٍ تحميل الموظفين...</option>
+        <option value="ec409292-3841-4043-9418-bb8f0dc44925">أبوقصي — مدير</option>
       </select>
     </div>
     <div class="field" style="margin-top:12px">
@@ -4319,9 +4319,18 @@ async function populatePinUsers(){
     setCloudStatus('جاهز للدخول','green');
   }catch(error){
     console.error('Load users error:',error);
-    select.innerHTML='<option value="">تعذر تحميل الموظفين</option>';
-    status.innerHTML='تعذر تحميل الموظفين<br><small style="color:#b91c1c;display:block;margin-top:6px;word-break:break-word">'+escapeHtml(error?.message||'خطأ غير معروف')+'</small><br><button type="button" class="btn secondary" style="margin-top:10px" onclick="populatePinUsers()">إعادة المحاولة</button>';
-    setCloudStatus('غير متصل','red');
+    select.innerHTML='<option value="ec409292-3841-4043-9418-bb8f0dc44925">أبوقصي — مدير</option>';
+    select.value='ec409292-3841-4043-9418-bb8f0dc44925';
+    select.disabled=false;
+    state.users=[normalizeUserPermissions({
+      id:'ec409292-3841-4043-9418-bb8f0dc44925',
+      name:'أبوقصي',
+      role:'manager',
+      enabled:true,
+      permissions:{reset:true,users:true,settings:true,approve:true,financePrint:true,statements:true,reportsExport:true}
+    })];
+    status.innerHTML='يمكنك الدخول الآن. تعذر فقط تحديث بقية الموظفين تلقائيًا.<br><small style="color:#b91c1c;display:block;margin-top:6px;word-break:break-word">'+escapeHtml(error?.message||'خطأ غير معروف')+'</small>';
+    setCloudStatus('الدخول متاح','orange');
   }
 }
 
@@ -4372,12 +4381,12 @@ async function loginWithPin(){
       15000
     );
     const result=Array.isArray(data)?data[0]:data;
-    if(!result?.success)throw new Error(result?.message||'الرقم السري غير صحيح');
+    if(!(result?.ok===true || result?.success===true))throw new Error(result?.message||'الرقم السري غير صحيح');
 
     const user=(state.users||[]).find(u=>u.id===userId);
     currentUser=normalizeUserPermissions({
       ...(user||{}),
-      id:result.app_user_id||userId,
+      id:result.user_id||result.app_user_id||userId,
       name:result.display_name||user?.name||'مستخدم',
       role:result.role||user?.role||'viewer',
       enabled:true,
@@ -4438,8 +4447,27 @@ async function restorePinSession(){
   }
 }
 
+function ensureFirstCloudUserVisible(){
+  const select=$('pinLoginUser');
+  if(select && !select.value){
+    select.innerHTML='<option value="ec409292-3841-4043-9418-bb8f0dc44925">أبوقصي — مدير</option>';
+    select.value='ec409292-3841-4043-9418-bb8f0dc44925';
+    select.disabled=false;
+  }
+  if(!(state.users||[]).some(u=>u.id==='ec409292-3841-4043-9418-bb8f0dc44925')){
+    state.users=[normalizeUserPermissions({
+      id:'ec409292-3841-4043-9418-bb8f0dc44925',
+      name:'أبوقصي',
+      role:'manager',
+      enabled:true,
+      permissions:{reset:true,users:true,settings:true,approve:true,financePrint:true,statements:true,reportsExport:true}
+    }),...(state.users||[]).filter(u=>u.id!=='ec409292-3841-4043-9418-bb8f0dc44925')];
+  }
+}
+
 async function initLogin(){
   $('loginScreen').style.display='grid';
+  ensureFirstCloudUserVisible();
 
   // Supabase لا يعمل بصورة مستقرة عند تشغيل الملف مباشرة من القرص بصيغة file://.
   // يجب فتح النسخة المنشورة عبر HTTPS حتى يكون للصفحة أصل آمن وثابت.
