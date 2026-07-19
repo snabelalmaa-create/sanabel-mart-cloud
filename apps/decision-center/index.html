@@ -440,7 +440,7 @@ body{
   <div class="login-box">
     <div class="brand" style="padding:0 0 22px">
       <div class="brand-logo">ق</div>
-      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V18.2 سحابي</small></div>
+      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V19 سحابي</small></div>
     </div>
     <div class="field">
       <label>اختر الموظف</label>
@@ -4196,45 +4196,96 @@ function roleLabel(r){return ({manager:'مدير',accountant:'محاسب',collec
 function bootstrapAdmin(){openAdminPage('users')}
 
 
+function withTimeout(promise,ms,message){
+  return Promise.race([
+    promise,
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error(message||'انتهت مهلة الاتصال')),ms))
+  ]);
+}
+
 async function ensureAnonymousCloudSession(){
-  const {data:{session}}=await supabaseClient.auth.getSession();
-  if(session){
-    cloudUser=session.user;
-    return session;
+  try{
+    const sessionResult=await withTimeout(
+      supabaseClient.auth.getSession(),
+      8000,
+      'تعذر قراءة جلسة السحابة'
+    );
+    const session=sessionResult?.data?.session;
+    if(session){
+      cloudUser=session.user;
+      return session;
+    }
+
+    const signInResult=await withTimeout(
+      supabaseClient.auth.signInAnonymously(),
+      12000,
+      'تعذر إنشاء جلسة سحابية'
+    );
+    if(signInResult.error)throw signInResult.error;
+    cloudUser=signInResult.data.user;
+    return signInResult.data.session;
+  }catch(error){
+    console.error('Anonymous session error:',error);
+    throw error;
   }
-  const {data,error}=await supabaseClient.auth.signInAnonymously();
-  if(error)throw error;
-  cloudUser=data.user;
-  return data.session;
 }
 
 async function populatePinUsers(){
   const select=$('pinLoginUser');
+  const status=$('pinLoginStatus');
   if(!select)return;
+
   select.innerHTML='<option value="">جارٍ تحميل الموظفين...</option>';
   select.disabled=true;
+  if(status)status.textContent='جارٍ الاتصال بقاعدة البيانات...';
+  setCloudStatus('تحميل الموظفين','orange');
+
   try{
-    await ensureAnonymousCloudSession();
-    const {data,error}=await supabaseClient.rpc('dc_pin_list_users',{p_workspace_id:DC_WORKSPACE});
+    const rpcResult=await withTimeout(
+      supabaseClient.rpc('dc_pin_list_users',{p_workspace_id:DC_WORKSPACE}),
+      12000,
+      'انتهت مهلة تحميل الموظفين'
+    );
+    const {data,error}=rpcResult;
     if(error)throw error;
+
     const users=(data||[]).map(u=>normalizeUserPermissions({
-      id:u.id,name:u.display_name,role:u.role,enabled:u.is_active!==false,
-      pin:'',permissions:u.permissions||{}
+      id:u.id,
+      name:u.display_name,
+      role:u.role,
+      enabled:u.is_active!==false,
+      pin:'',
+      permissions:u.permissions||{}
     }));
+
     state.users=users;
     const active=users.filter(u=>u.enabled!==false);
-    select.innerHTML=active.length
-      ? active.map(u=>`<option value="${u.id}" style="color:#111;background:#fff">${escapeHtml(u.name)} — ${roleLabel(u.role)}</option>`).join('')
-      : '<option value="">لا يوجد مستخدمون فعالون</option>';
+
+    if(!active.length){
+      select.innerHTML='<option value="">لا يوجد مستخدمون فعالون</option>';
+      if(status)status.textContent='لم يتم العثور على مستخدمين فعالين في قاعدة البيانات.';
+      setCloudStatus('لا يوجد مستخدمون','orange');
+      select.disabled=true;
+      return;
+    }
+
+    select.innerHTML=active.map(u=>
+      `<option value="${u.id}" style="color:#111;background:#fff">${escapeHtml(u.name)} — ${roleLabel(u.role)}</option>`
+    ).join('');
+
     const last=localStorage.getItem('dc_last_pin_user');
     if(last&&active.some(u=>u.id===last))select.value=last;
-    else if(active.length)select.value=active[0].id;
+    else select.value=active[0].id;
+
     select.disabled=false;
+    if(status)status.textContent='اختر اسمك ثم أدخل الرقم السري.';
     setCloudStatus('جاهز للدخول','green');
   }catch(error){
-    console.error(error);
+    console.error('Load users error:',error);
     select.innerHTML='<option value="">تعذر تحميل الموظفين</option>';
-    $('pinLoginStatus').textContent='تعذر الاتصال بالسحابة: '+(error.message||'خطأ غير معروف');
+    select.disabled=true;
+    const msg=error?.message||'خطأ غير معروف';
+    if(status)status.textContent='تعذر تحميل الموظفين: '+msg;
     setCloudStatus('غير متصل','red');
   }
 }
@@ -4256,8 +4307,10 @@ async function loginWithPin(){
     await populatePinUsers();
     userId=$('pinLoginUser')?.value;
   }
+  if(!userId || !uuidPattern.test(userId)){
+    return toast('لم يتم تحميل المستخدم السحابي بشكل صحيح');
+  }
   const status=$('pinLoginStatus');
-  if(!userId)return toast('تعذر تحميل الموظفين من السحابة، حدّث الصفحة ثم حاول مرة أخرى');
   if(!pin)return toast('أدخل الرقم السري');
 
   const btn=$('loginBtn');
@@ -4341,11 +4394,24 @@ async function restorePinSession(){
 }
 
 async function initLogin(){
-  setCloudStatus('جارٍ الاتصال','orange');
-  const restored=await restorePinSession();
-  if(restored)return;
   $('loginScreen').style.display='grid';
+  setCloudStatus('جارٍ الاتصال','orange');
+
+  // تحميل الأسماء أولًا حتى لا تبقى القائمة معلقة.
   await populatePinUsers();
+
+  // محاولة استعادة الجلسة في الخلفية فقط.
+  try{
+    const restored=await withTimeout(
+      restorePinSession(),
+      10000,
+      'انتهت مهلة استعادة الجلسة'
+    );
+    if(restored)return;
+  }catch(error){
+    console.warn('Session restore skipped:',error);
+  }
+
   setTimeout(()=>$('pinLoginCode')?.focus(),100);
 }
 
