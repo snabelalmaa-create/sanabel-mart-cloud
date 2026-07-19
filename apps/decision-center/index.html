@@ -440,7 +440,7 @@ body{
   <div class="login-box">
     <div class="brand" style="padding:0 0 22px">
       <div class="brand-logo">ق</div>
-      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V17.3</small></div>
+      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V18 سحابي</small></div>
     </div>
     <div class="field">
       <label>اختر الموظف</label>
@@ -461,9 +461,9 @@ body{
     <div id="pinLoginStatus" class="note" style="margin-top:10px">اختر اسمك ثم أدخل الرقم السري.</div>
     <button class="btn" id="loginBtn" style="width:100%;margin-top:16px" onclick="loginWithPin()">دخول</button>
     <div style="margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)">
-      <div style="font-weight:800">الدخول الأول للمدير</div>
-      <div class="note" style="margin-top:4px">المستخدم: أبوقصي — الرقم السري الافتراضي: <b style="color:var(--gold)">1234</b></div>
-      <div class="note">يمكن تغييره بعد الدخول من المستخدمون والصلاحيات.</div>
+      <div style="font-weight:800">الدخول السحابي</div>
+      <div class="note" style="margin-top:4px">تظهر جميع أسماء الموظفين الفعالين من قاعدة البيانات.</div>
+      <div class="note">المستخدم الأول: أبوقصي — الرقم السري الافتراضي: <b style="color:var(--gold)">1234</b></div>
     </div>
   </div>
 </div>
@@ -1677,7 +1677,7 @@ function applyCloudUser(user,profile,member){
     id:user.id,name:profile?.display_name||user.email||'مستخدم',email:user.email||'',
     role,enabled:true,permissions:role==='manager'?fullManagerPermissions():(member.permissions||{})
   });
-  state.users=[currentUser];
+  // قائمة المستخدمين تُحمّل من جدول مستخدمي PIN السحابي.
 }
 async function loadCloudState(){
   if(!cloudUser||cloudLoading)return;
@@ -4195,69 +4195,47 @@ function savePayment(){
 function roleLabel(r){return ({manager:'مدير',accountant:'محاسب',collector:'محصل',viewer:'مشاهد'})[r]||r}
 function bootstrapAdmin(){openAdminPage('users')}
 
-function ensureDefaultPinUsers(){
-  state.users=Array.isArray(state.users)?state.users:[];
-  let changed=false;
 
-  // إصلاح أي مستخدم قديم ناقص البيانات.
-  state.users=state.users.filter(Boolean).map((u,index)=>{
-    const fixed={
-      ...u,
-      id:u.id||('user-'+(index+1)),
-      name:(u.name||'').trim(),
-      pin:String(u.pin||''),
-      role:u.role||'viewer',
-      enabled:u.enabled!==false
-    };
-    if(!fixed.name)fixed.name='مستخدم '+(index+1);
-    if(!fixed.pin)fixed.pin='1234';
-    return normalizeUserPermissions(fixed);
-  });
-
-  // إذا لم يوجد أي مستخدم فعال، أنشئ المدير الافتراضي.
-  if(!state.users.some(u=>u.enabled!==false)){
-    state.users.push(normalizeUserPermissions({
-      id:'manager-1',
-      name:'أبوقصي',
-      pin:'1234',
-      role:'manager',
-      enabled:true,
-      permissions:fullManagerPermissions()
-    }));
-    changed=true;
+async function ensureAnonymousCloudSession(){
+  const {data:{session}}=await supabaseClient.auth.getSession();
+  if(session){
+    cloudUser=session.user;
+    return session;
   }
-
-  // ضمان وجود أبوقصي كمدير عند أول تشغيل فقط.
-  if(!state.users.some(u=>u.name==='أبوقصي')){
-    state.users.unshift(normalizeUserPermissions({
-      id:'manager-1',
-      name:'أبوقصي',
-      pin:'1234',
-      role:'manager',
-      enabled:true,
-      permissions:fullManagerPermissions()
-    }));
-    changed=true;
-  }
-
-  if(changed){
-    localStorage.setItem(key,JSON.stringify(state));
-  }
+  const {data,error}=await supabaseClient.auth.signInAnonymously();
+  if(error)throw error;
+  cloudUser=data.user;
+  return data.session;
 }
 
-function populatePinUsers(){
-  ensureDefaultPinUsers();
+async function populatePinUsers(){
   const select=$('pinLoginUser');
   if(!select)return;
-  const active=(state.users||[]).filter(u=>u.enabled!==false);
-  select.innerHTML=active.length
-    ? active.map(u=>`<option value="${u.id}" style="color:#111;background:#fff">${escapeHtml(u.name)} — ${roleLabel(u.role)}</option>`).join('')
-    : '<option value="">لا يوجد مستخدمون فعالون</option>';
-  const last=localStorage.getItem('dc_last_pin_user');
-  if(last&&active.some(u=>u.id===last)){
-    select.value=last;
-  }else if(active.length){
-    select.value=active[0].id;
+  select.innerHTML='<option value="">جارٍ تحميل الموظفين...</option>';
+  select.disabled=true;
+  try{
+    await ensureAnonymousCloudSession();
+    const {data,error}=await supabaseClient.rpc('dc_pin_list_users',{p_workspace_id:DC_WORKSPACE});
+    if(error)throw error;
+    const users=(data||[]).map(u=>normalizeUserPermissions({
+      id:u.id,name:u.display_name,role:u.role,enabled:u.is_active!==false,
+      pin:'',permissions:u.permissions||{}
+    }));
+    state.users=users;
+    const active=users.filter(u=>u.enabled!==false);
+    select.innerHTML=active.length
+      ? active.map(u=>`<option value="${u.id}" style="color:#111;background:#fff">${escapeHtml(u.name)} — ${roleLabel(u.role)}</option>`).join('')
+      : '<option value="">لا يوجد مستخدمون فعالون</option>';
+    const last=localStorage.getItem('dc_last_pin_user');
+    if(last&&active.some(u=>u.id===last))select.value=last;
+    else if(active.length)select.value=active[0].id;
+    select.disabled=false;
+    setCloudStatus('جاهز للدخول','green');
+  }catch(error){
+    console.error(error);
+    select.innerHTML='<option value="">تعذر تحميل الموظفين</option>';
+    $('pinLoginStatus').textContent='تعذر الاتصال بالسحابة: '+(error.message||'خطأ غير معروف');
+    setCloudStatus('غير متصل','red');
   }
 }
 
@@ -4269,43 +4247,99 @@ function togglePinVisibility(){
   btn.textContent=show?'🙈':'👁️';
 }
 
-function loginWithPin(){
+async function loginWithPin(){
   const userId=$('pinLoginUser')?.value;
   const pin=englishDigits(($('pinLoginCode')?.value||'').trim());
   const status=$('pinLoginStatus');
   if(!userId)return toast('اختر الموظف');
   if(!pin)return toast('أدخل الرقم السري');
-  const user=(state.users||[]).find(u=>u.id===userId&&u.enabled!==false);
-  if(!user)return toast('المستخدم غير موجود أو غير فعال');
-  if(String(user.pin||'')!==String(pin)){
-    if(status)status.textContent='الرقم السري غير صحيح.';
+
+  const btn=$('loginBtn');
+  btn.disabled=true;
+  status.textContent='جارٍ التحقق من الرقم السري...';
+  setCloudStatus('جارٍ تسجيل الدخول','orange');
+
+  try{
+    await ensureAnonymousCloudSession();
+    const {data,error}=await supabaseClient.rpc('dc_pin_login',{
+      p_workspace_id:DC_WORKSPACE,
+      p_user_id:userId,
+      p_pin:pin
+    });
+    if(error)throw error;
+    const result=Array.isArray(data)?data[0]:data;
+    if(!result?.success)throw new Error(result?.message||'الرقم السري غير صحيح');
+
+    const user=(state.users||[]).find(u=>u.id===userId);
+    currentUser=normalizeUserPermissions({
+      ...(user||{}),
+      id:result.app_user_id||userId,
+      name:result.display_name||user?.name||'مستخدم',
+      role:result.role||user?.role||'viewer',
+      enabled:true,
+      permissions:result.permissions||user?.permissions||{}
+    });
+
+    cloudMember={
+      role:currentUser.role==='manager'?'manager':currentUser.role,
+      permissions:currentUser.permissions,
+      is_active:true
+    };
+    cloudReady=true;
+    localStorage.setItem('dc_last_pin_user',userId);
+    localStorage.setItem('dc_pin_session',JSON.stringify({userId,at:Date.now()}));
+    $('loginScreen').style.display='none';
+    $('pinLoginCode').value='';
+    afterLogin();
+    await loadCloudState();
+    startRealtime();
+    setCloudStatus('متصل ومتزامن','green');
+  }catch(error){
+    console.error(error);
+    status.textContent=error.message||'تعذر تسجيل الدخول';
     $('pinLoginCode').value='';
     $('pinLoginCode').focus();
-    return toast('الرقم السري غير صحيح');
+    setCloudStatus('فشل الدخول','red');
+    toast(error.message||'تعذر تسجيل الدخول');
+  }finally{
+    btn.disabled=false;
   }
-  currentUser=normalizeUserPermissions(user);
-  localStorage.setItem('dc_last_pin_user',user.id);
-  localStorage.setItem('dc_pin_session',JSON.stringify({userId:user.id,at:Date.now()}));
-  $('loginScreen').style.display='none';
-  $('pinLoginCode').value='';
-  setCloudStatus('وضع محلي','orange');
-  afterLogin();
+}
+
+async function restorePinSession(){
+  try{
+    await ensureAnonymousCloudSession();
+    const {data,error}=await supabaseClient.rpc('dc_pin_current_session',{p_workspace_id:DC_WORKSPACE});
+    if(error)throw error;
+    const result=Array.isArray(data)?data[0]:data;
+    if(!result?.app_user_id)return false;
+
+    currentUser=normalizeUserPermissions({
+      id:result.app_user_id,
+      name:result.display_name,
+      role:result.role,
+      enabled:true,
+      permissions:result.permissions||{}
+    });
+    cloudReady=true;
+    $('loginScreen').style.display='none';
+    afterLogin();
+    await loadCloudState();
+    startRealtime();
+    setCloudStatus('متصل ومتزامن','green');
+    return true;
+  }catch(error){
+    console.warn('No cloud PIN session',error);
+    return false;
+  }
 }
 
 async function initLogin(){
-  populatePinUsers();
-  setCloudStatus('وضع محلي','orange');
-  try{
-    const saved=JSON.parse(localStorage.getItem('dc_pin_session')||'null');
-    const user=saved&&(state.users||[]).find(u=>u.id===saved.userId&&u.enabled!==false);
-    if(user){
-      currentUser=normalizeUserPermissions(user);
-      $('loginScreen').style.display='none';
-      afterLogin();
-      return;
-    }
-  }catch(_){}
+  setCloudStatus('جارٍ الاتصال','orange');
+  const restored=await restorePinSession();
+  if(restored)return;
   $('loginScreen').style.display='grid';
+  await populatePinUsers();
   setTimeout(()=>$('pinLoginCode')?.focus(),100);
 }
 
@@ -4317,13 +4351,16 @@ function afterLogin(){
 }
 
 async function logout(){
-  currentUser=null;cloudUser=null;cloudMember=null;cloudReady=false;
+  try{
+    await supabaseClient.rpc('dc_pin_logout',{p_workspace_id:DC_WORKSPACE});
+  }catch(error){console.warn(error)}
+  currentUser=null;cloudMember=null;cloudReady=false;
   localStorage.removeItem('dc_pin_session');
-  populatePinUsers();
   $('loginScreen').style.display='grid';
   $('pinLoginCode').value='';
   $('pinLoginStatus').textContent='اختر اسمك ثم أدخل الرقم السري.';
-  setCloudStatus('وضع محلي','orange');
+  setCloudStatus('جاهز للدخول','orange');
+  await populatePinUsers();
 }
 
 function openAdminPage(pageId){
@@ -4534,6 +4571,118 @@ function saveInlineUser(){
   renderUsers();
   initLogin();
   toggleInlineUserForm(false);
+}
+
+
+async function cloudSavePinUser(payload){
+  const {data,error}=await supabaseClient.rpc('dc_pin_save_user',{
+    p_workspace_id:DC_WORKSPACE,
+    p_user_id:payload.id||null,
+    p_display_name:payload.name,
+    p_pin:payload.pin||null,
+    p_role:payload.role,
+    p_permissions:payload.permissions||{},
+    p_is_active:payload.enabled!==false
+  });
+  if(error)throw error;
+  return data;
+}
+
+async function saveInlineUser(){
+  if(!currentUser?.permissions?.users)return toast('ليس لديك صلاحية إدارة المستخدمين');
+  const name=$('inlineUserName').value.trim();
+  const pin=englishDigits($('inlineUserPin').value.trim());
+  const role=$('inlineUserRole').value;
+  const editId=$('inlineEditingUserId').value||null;
+  if(!name)return toast('أدخل اسم المستخدم');
+  if(!editId&&!pin)return toast('أدخل الرقم السري');
+  if(pin&&pin.length<4)return toast('الرقم السري يجب أن يكون 4 أرقام على الأقل');
+
+  const permissions={};
+  Object.entries(inlinePermissionMap()).forEach(([id,key])=>permissions[key]=!!$(id)?.checked);
+  if(role==='manager'){
+    permissions.approve=true;
+    permissions.users=true;
+    permissions.settings=true;
+  }
+
+  try{
+    setCloudStatus('حفظ المستخدم','orange');
+    await cloudSavePinUser({id:editId,name,pin,role,permissions,enabled:true});
+    await populatePinUsers();
+    renderUsers();
+    toggleInlineUserForm(false);
+    setCloudStatus('متصل ومتزامن','green');
+    toast(editId?'تم تحديث المستخدم سحابيًا':'تم إنشاء المستخدم وظهر في جميع الأجهزة');
+  }catch(error){
+    console.error(error);
+    setCloudStatus('فشل حفظ المستخدم','red');
+    toast(error.message||'تعذر حفظ المستخدم');
+  }
+}
+
+async function saveUser(){
+  if(!currentUser?.permissions?.users)return toast('ليس لديك صلاحية إدارة المستخدمين');
+  const name=$('userName').value.trim();
+  const pin=englishDigits($('userPin').value.trim());
+  const editId=$('editingUserId').value||null;
+  const role=$('userRole').value;
+  if(!name)return toast('أدخل الاسم');
+  if(!editId&&!pin)return toast('أدخل الرقم السري');
+  if(pin&&pin.length<4)return toast('الرقم السري يجب أن يكون 4 أرقام على الأقل');
+
+  const permissions={
+    dashboard:$('permDashboard').checked,customersScreen:$('permCustomersScreen').checked,
+    feedCenter:$('permFeedCenter').checked,finance:$('permFinance').checked,
+    messages:$('permMessages').checked,analytics:$('permAnalytics').checked,
+    executive:$('permExecutive').checked,users:$('permUsers').checked,
+    customerImport:$('permCustomerImport').checked,customerEdit:$('permCustomerEdit').checked,
+    customerDelete:$('permCustomerDelete').checked,salesImport:$('permSalesImport').checked,
+    payments:$('permPayments').checked,financeSearch:$('permFinanceSearch').checked,
+    financeEdit:$('permFinanceEdit').checked,financeDelete:$('permFinanceDelete').checked,
+    financePrint:$('permFinancePrint').checked,approve:$('permApprove').checked,
+    statements:$('permStatements').checked,whatsapp:$('permWhatsApp').checked,
+    promises:$('permPromises').checked,reportsExport:$('permReportsExport').checked,
+    settings:$('permSettings').checked,reset:$('permReset').checked
+  };
+  if(role==='manager'){permissions.users=true;permissions.settings=true;permissions.approve=true}
+
+  try{
+    await cloudSavePinUser({id:editId,name,pin,role,permissions,enabled:true});
+    closeModal('userModal');
+    await populatePinUsers();
+    renderUsers();
+    toast(editId?'تم تحديث المستخدم سحابيًا':'تم إنشاء المستخدم وظهر في القائمة');
+  }catch(error){
+    console.error(error);toast(error.message||'تعذر حفظ المستخدم');
+  }
+}
+
+async function deleteUser(id){
+  if(!currentUser?.permissions?.users)return toast('ليس لديك صلاحية إدارة المستخدمين');
+  if(id===currentUser.id)return toast('لا يمكن حذف المستخدم الذي تعمل به الآن');
+  const u=state.users.find(x=>x.id===id);
+  if(!u)return;
+  if(!confirm(`سيتم حذف المستخدم "${u.name}" نهائيًا. هل أنت متأكد؟`))return;
+  try{
+    const {error}=await supabaseClient.rpc('dc_pin_delete_user',{
+      p_workspace_id:DC_WORKSPACE,p_user_id:id
+    });
+    if(error)throw error;
+    await populatePinUsers();renderUsers();toast('تم حذف المستخدم من جميع الأجهزة');
+  }catch(error){console.error(error);toast(error.message||'تعذر حذف المستخدم')}
+}
+
+async function toggleUser(id){
+  if(!currentUser?.permissions?.users)return toast('ليس لديك صلاحية إدارة المستخدمين');
+  const u=state.users.find(x=>x.id===id);
+  if(!u)return;
+  if(id===currentUser.id)return toast('لا يمكن إيقاف المستخدم الذي تعمل به الآن');
+  try{
+    await cloudSavePinUser({id,name:u.name,pin:null,role:u.role,permissions:u.permissions,enabled:!u.enabled});
+    await populatePinUsers();renderUsers();
+    toast(!u.enabled?'تم تفعيل المستخدم':'تم إيقاف المستخدم');
+  }catch(error){console.error(error);toast(error.message||'تعذر تعديل حالة المستخدم')}
 }
 
 function applyAccess(){
