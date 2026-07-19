@@ -440,11 +440,14 @@ body{
   <div class="login-box">
     <div class="brand" style="padding:0 0 22px">
       <div class="brand-logo">ق</div>
-      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري</small></div>
+      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V17.3</small></div>
     </div>
     <div class="field">
       <label>اختر الموظف</label>
-      <select id="pinLoginUser" autocomplete="username"></select>
+      <select id="pinLoginUser" autocomplete="username"
+              style="color:#fff;background:#07182a;border:1px solid #28517a">
+        <option value="manager-1">أبوقصي — مدير</option>
+      </select>
     </div>
     <div class="field" style="margin-top:12px">
       <label>الرقم السري</label>
@@ -4192,15 +4195,70 @@ function savePayment(){
 function roleLabel(r){return ({manager:'مدير',accountant:'محاسب',collector:'محصل',viewer:'مشاهد'})[r]||r}
 function bootstrapAdmin(){openAdminPage('users')}
 
+function ensureDefaultPinUsers(){
+  state.users=Array.isArray(state.users)?state.users:[];
+  let changed=false;
+
+  // إصلاح أي مستخدم قديم ناقص البيانات.
+  state.users=state.users.filter(Boolean).map((u,index)=>{
+    const fixed={
+      ...u,
+      id:u.id||('user-'+(index+1)),
+      name:(u.name||'').trim(),
+      pin:String(u.pin||''),
+      role:u.role||'viewer',
+      enabled:u.enabled!==false
+    };
+    if(!fixed.name)fixed.name='مستخدم '+(index+1);
+    if(!fixed.pin)fixed.pin='1234';
+    return normalizeUserPermissions(fixed);
+  });
+
+  // إذا لم يوجد أي مستخدم فعال، أنشئ المدير الافتراضي.
+  if(!state.users.some(u=>u.enabled!==false)){
+    state.users.push(normalizeUserPermissions({
+      id:'manager-1',
+      name:'أبوقصي',
+      pin:'1234',
+      role:'manager',
+      enabled:true,
+      permissions:fullManagerPermissions()
+    }));
+    changed=true;
+  }
+
+  // ضمان وجود أبوقصي كمدير عند أول تشغيل فقط.
+  if(!state.users.some(u=>u.name==='أبوقصي')){
+    state.users.unshift(normalizeUserPermissions({
+      id:'manager-1',
+      name:'أبوقصي',
+      pin:'1234',
+      role:'manager',
+      enabled:true,
+      permissions:fullManagerPermissions()
+    }));
+    changed=true;
+  }
+
+  if(changed){
+    localStorage.setItem(key,JSON.stringify(state));
+  }
+}
+
 function populatePinUsers(){
+  ensureDefaultPinUsers();
   const select=$('pinLoginUser');
   if(!select)return;
   const active=(state.users||[]).filter(u=>u.enabled!==false);
   select.innerHTML=active.length
-    ? active.map(u=>`<option value="${u.id}">${escapeHtml(u.name)} — ${roleLabel(u.role)}</option>`).join('')
+    ? active.map(u=>`<option value="${u.id}" style="color:#111;background:#fff">${escapeHtml(u.name)} — ${roleLabel(u.role)}</option>`).join('')
     : '<option value="">لا يوجد مستخدمون فعالون</option>';
   const last=localStorage.getItem('dc_last_pin_user');
-  if(last&&active.some(u=>u.id===last))select.value=last;
+  if(last&&active.some(u=>u.id===last)){
+    select.value=last;
+  }else if(active.length){
+    select.value=active[0].id;
+  }
 }
 
 function togglePinVisibility(){
@@ -4716,6 +4774,7 @@ function resetAll(){
 }
 
 $('analyticsFrom').value=state.settings.startDate;$('analyticsTo').value=isoToday();$('customerImportDate').value=isoToday();$('salesDate').value=isoToday();$('payDate').value=isoToday();$('paymentsImportDate').value=isoToday();$('promiseDate').value=isoToday();$('statementFrom').value=state.settings.startDate;$('statementTo').value=isoToday();applyRoleDefaults();
+ensureDefaultPinUsers();
 localStorage.setItem(key,JSON.stringify(state));
 document.addEventListener('input',e=>{
   const el=e.target;
