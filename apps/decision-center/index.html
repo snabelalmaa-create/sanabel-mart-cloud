@@ -440,7 +440,7 @@ body{
   <div class="login-box">
     <div class="brand" style="padding:0 0 22px">
       <div class="brand-logo">ق</div>
-      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V26 سحابي</small></div>
+      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V28 سحابي</small></div>
     </div>
     <div class="field">
       <label>اختر الموظف</label>
@@ -4198,6 +4198,16 @@ function bootstrapAdmin(){openAdminPage('users')}
 
 
 
+
+function escapeHtml(value){
+  return String(value ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
 function withTimeout(promise,ms,message){
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),ms);
@@ -4398,21 +4408,34 @@ async function loginWithPin(){
       permissions:currentUser.permissions,
       is_active:true
     };
-    cloudReady=true;
+
     localStorage.setItem('dc_last_pin_user',userId);
     localStorage.setItem('dc_pin_session',JSON.stringify({userId,at:Date.now()}));
     $('loginScreen').style.display='none';
     $('pinLoginCode').value='';
     afterLogin();
-    await loadCloudState();
-    startRealtime();
-    setCloudStatus('متصل ومتزامن','green');
+
+    // الدخول بالـ PIN نجح. المزامنة خطوة مستقلة حتى لا يظهر للمستخدم "فشل الدخول"
+    // بسبب مشكلة لاحقة في جلسة Supabase أو سياسات الجداول.
+    try{
+      const session=await ensureAnonymousCloudSession();
+      cloudUser=session?.user||cloudUser;
+      cloudReady=true;
+      await loadCloudState();
+      startRealtime();
+      setCloudStatus('متصل ومتزامن','green');
+    }catch(syncError){
+      console.error('Cloud sync after PIN login failed:',syncError);
+      cloudReady=false;
+      setCloudStatus('الدخول ناجح — المزامنة متوقفة','orange');
+      toast('تم الدخول بنجاح، لكن تعذرت المزامنة السحابية: '+(syncError?.message||'خطأ غير معروف'));
+    }
   }catch(error){
-    console.error(error);
+    console.error('PIN login failed:',error);
     status.textContent=error.message||'تعذر تسجيل الدخول';
     $('pinLoginCode').value='';
     $('pinLoginCode').focus();
-    setCloudStatus('فشل الدخول','red');
+    setCloudStatus('فشل التحقق من الرقم السري','red');
     toast(error.message||'تعذر تسجيل الدخول');
   }finally{
     btn.disabled=false;
