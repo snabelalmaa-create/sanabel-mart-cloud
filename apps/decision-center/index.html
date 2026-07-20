@@ -440,7 +440,7 @@ body{
   <div class="login-box">
     <div class="brand" style="padding:0 0 22px">
       <div class="brand-logo">ق</div>
-      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V28 سحابي</small></div>
+      <div><h1>مركز القرارات</h1><small>دخول الموظفين بالرقم السري — V29 سحابي</small></div>
     </div>
     <div class="field">
       <label>اختر الموظف</label>
@@ -4757,6 +4757,7 @@ function saveInlineUser(){
 
 
 async function cloudSavePinUser(payload){
+  await ensureAnonymousCloudSession();
   const {data,error}=await supabaseClient.rpc('dc_pin_save_user',{
     p_workspace_id:DC_WORKSPACE,
     p_user_id:payload.id||null,
@@ -4767,7 +4768,9 @@ async function cloudSavePinUser(payload){
     p_is_active:payload.enabled!==false
   });
   if(error)throw error;
-  return data;
+  const result=Array.isArray(data)?data[0]:data;
+  if(result?.ok===false)throw new Error(result?.message||'تعذر حفظ المستخدم');
+  return result||data;
 }
 
 async function saveInlineUser(){
@@ -4847,6 +4850,7 @@ async function deleteUser(id){
   if(!u)return;
   if(!confirm(`سيتم حذف المستخدم "${u.name}" نهائيًا. هل أنت متأكد؟`))return;
   try{
+    await ensureAnonymousCloudSession();
     const {error}=await supabaseClient.rpc('dc_pin_delete_user',{
       p_workspace_id:DC_WORKSPACE,p_user_id:id
     });
@@ -4939,7 +4943,7 @@ function applyRoleDefaults(){
   };
   Object.entries(map).forEach(([id,key])=>setPerm(id,defaults[key]));
 }
-function saveUser(){
+function legacySaveUserLocal(){
   if(!currentUser?.permissions?.users)return toast('ليس لديك صلاحية إدارة المستخدمين');
   const name=$('userName').value.trim(),pin=englishDigits($('userPin').value.trim());
   if(!name||!pin)return toast('أدخل الاسم والرقم السري');
@@ -5005,7 +5009,7 @@ function saveUser(){
   $('editingUserId').value='';
   $('userName').value='';$('userPin').value='';
 }
-function toggleUser(id){
+function legacyToggleUserLocal(id){
   if(!currentUser?.permissions?.users)return toast('ليس لديك صلاحية إدارة المستخدمين');
   const u=state.users.find(x=>x.id===id);
   if(!u)return;
