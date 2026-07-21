@@ -4523,7 +4523,7 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
   let crSyncBusy=false;
   function crJson(key,fallback=[]){try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback))}catch(e){return fallback}}
   function crSaveJson(key,val){localStorage.setItem(key,JSON.stringify(val))}
-  function crConfig(){return crJson(CR_CONFIG_KEY,{url:'',anonKey:'',tenantId:'',workspaceKey:''})}
+  const CR_DEFAULT_CONFIG={url:'https://rueapdmdkjytsxkfumpw.supabase.co',anonKey:'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9',tenantId:'8b9ab303-9874-4ae7-8ffe-b4f83f7b5cd6',workspaceKey:'55f12e62b20939d2559e79f747d097d413f1cb69991180bc'};function crConfig(){const saved=crJson(CR_CONFIG_KEY,{});return {...CR_DEFAULT_CONFIG,...saved,url:saved.url||CR_DEFAULT_CONFIG.url,anonKey:saved.anonKey||CR_DEFAULT_CONFIG.anonKey,tenantId:saved.tenantId||CR_DEFAULT_CONFIG.tenantId,workspaceKey:saved.workspaceKey||CR_DEFAULT_CONFIG.workspaceKey}}
   function crCloudReady(){const c=crConfig();return !!(c.url&&c.anonKey&&c.tenantId&&c.workspaceKey)}
   function crHeaders(extra={}){const c=crConfig();return {'apikey':c.anonKey,'Authorization':'Bearer '+c.anonKey,'Content-Type':'application/json','x-workspace-key':c.workspaceKey,...extra}}
   async function crRequest(path,opts={}){const c=crConfig();if(!crCloudReady())throw new Error('الربط السحابي غير مكتمل');const url=c.url.replace(/\/$/,'')+path;const res=await fetch(url,{...opts,headers:crHeaders(opts.headers||{})});if(!res.ok){const t=await res.text();throw new Error(t||('HTTP '+res.status))}const txt=await res.text();return txt?JSON.parse(txt):null}
