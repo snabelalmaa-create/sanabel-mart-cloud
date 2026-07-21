@@ -4610,5 +4610,73 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
 })();
 </script>
 
+
+<style id="shuraimi-auth-style-v1027">
+#shLogoutBtn{position:fixed;left:18px;top:88px;z-index:9998;border:0;border-radius:14px;padding:11px 16px;background:#b91c1c;color:#fff;font-family:Tajawal,Arial,sans-serif;font-weight:900;font-size:15px;box-shadow:0 10px 24px rgba(185,28,28,.25);cursor:pointer}
+#shLogoutBtn:hover{background:#991b1b}#shLogoutBtn span{margin-left:6px}
+#shAuthOverlay{position:fixed;inset:0;z-index:100000;background:linear-gradient(135deg,#071a34,#0e426b);display:none;align-items:center;justify-content:center;padding:20px;font-family:Tajawal,Arial,sans-serif}
+#shAuthOverlay.show{display:flex}.sh-auth-card{width:min(460px,100%);background:#fff;border-radius:28px;padding:25px;box-shadow:0 30px 90px rgba(0,0,0,.35);direction:rtl}.sh-auth-logo{width:82px;height:82px;margin:auto;border-radius:24px;background:linear-gradient(135deg,#f2c76a,#d88921);display:grid;place-items:center;font-size:40px}.sh-auth-card h2{text-align:center;margin:14px 0 4px;color:#0b1736}.sh-auth-card p{text-align:center;color:#718096;font-weight:800;margin:0 0 16px}.sh-auth-field{margin-top:12px}.sh-auth-field label{display:block;font-weight:900;margin-bottom:6px;color:#0b1736}.sh-auth-field select,.sh-auth-field input{width:100%;border:1px solid #cdd8e7;border-radius:14px;padding:13px;background:#fff;font-family:inherit;font-size:17px;outline:none}.sh-auth-field input{letter-spacing:4px;text-align:center;font-weight:900}.sh-auth-login{width:100%;margin-top:16px;border:0;border-radius:16px;padding:14px;background:linear-gradient(135deg,#0b284a,#0f5a78);color:#fff;font-family:inherit;font-weight:900;font-size:17px;cursor:pointer}.sh-auth-msg{min-height:24px;text-align:center;margin-top:10px;color:#b91c1c;font-weight:900}.sh-current-user{position:fixed;left:18px;top:145px;z-index:9997;background:#fff;border:1px solid #dbe4f0;border-radius:13px;padding:8px 12px;color:#334155;font:800 13px Tajawal,Arial,sans-serif;box-shadow:0 8px 20px rgba(15,23,42,.08)}
+@media(max-width:700px){#shLogoutBtn{left:10px;top:auto;bottom:78px;padding:10px 13px}.sh-current-user{display:none}}
+@media print{#shLogoutBtn,.sh-current-user,#shAuthOverlay{display:none!important}}
+</style>
+<div id="shAuthOverlay" aria-modal="true" role="dialog">
+  <div class="sh-auth-card">
+    <div class="sh-auth-logo">🏢</div>
+    <h2>نظام مؤسسة الشريمي</h2>
+    <p>اختر المستخدم وأدخل الرقم السري</p>
+    <div class="sh-auth-field"><label>المستخدم</label><select id="shAuthUser"></select></div>
+    <div class="sh-auth-field"><label>الرقم السري PIN</label><input id="shAuthPin" type="password" inputmode="numeric" maxlength="8" autocomplete="off"></div>
+    <button class="sh-auth-login" id="shAuthLoginBtn">دخول</button>
+    <div class="sh-auth-msg" id="shAuthMsg"></div>
+  </div>
+</div>
+<button id="shLogoutBtn" type="button" title="تسجيل الخروج وتبديل المستخدم"><span>🚪</span> تسجيل الخروج</button>
+<div id="shCurrentUserBadge" class="sh-current-user"></div>
+<script id="shuraimi-auth-script-v1027">
+(function(){
+ const LS='hasan_erp_v2_';
+ const USERS_KEY=LS+'permission_users_v2';
+ const PROFILE_KEY=LS+'current_user_profile';
+ const SESSION_KEY=LS+'signed_session_v1027';
+ const overlay=document.getElementById('shAuthOverlay'),sel=document.getElementById('shAuthUser'),pin=document.getElementById('shAuthPin'),msg=document.getElementById('shAuthMsg'),badge=document.getElementById('shCurrentUserBadge');
+ function readUsers(){
+   let rows=[];try{rows=JSON.parse(localStorage.getItem(USERS_KEY)||'[]')}catch(e){}
+   if(!Array.isArray(rows)||!rows.length){rows=[{id:1,name:'أبو قصي',role:'مالك النظام',pin:'1234',status:'نشط'}];localStorage.setItem(USERS_KEY,JSON.stringify(rows));}
+   return rows.filter(u=>(u.status||u['الحالة']||'نشط')==='نشط');
+ }
+ function profile(){try{return JSON.parse(localStorage.getItem(PROFILE_KEY)||'null')}catch(e){return null}}
+ function renderBadge(){const p=profile()||{name:'أبو قصي',role:'مالك النظام'};badge.textContent='👤 '+(p.name||'مستخدم')+' — '+(p.role||'');}
+ function fill(){const rows=readUsers();sel.innerHTML=rows.map(u=>'<option value="'+String(u.id)+'">'+String(u.name||u['اسم المستخدم']||'مستخدم')+' — '+String(u.role||u['الدور']||'')+'</option>').join('');}
+ function showLogin(){fill();pin.value='';msg.textContent='';overlay.classList.add('show');setTimeout(()=>pin.focus(),80)}
+ function hideLogin(){overlay.classList.remove('show')}
+ function login(){
+   const rows=readUsers(),u=rows.find(x=>String(x.id)===String(sel.value));
+   if(!u){msg.textContent='لم يتم العثور على المستخدم';return}
+   const expected=String(u.pin||u['الرقم السري']||'');
+   if(String(pin.value)!==expected){msg.textContent='الرقم السري غير صحيح';pin.select();return}
+   const p={id:u.id,name:u.name||u['اسم المستخدم']||'مستخدم',role:u.role||u['الدور']||'مشاهد فقط',loginAt:new Date().toISOString()};
+   localStorage.setItem(PROFILE_KEY,JSON.stringify(p));
+   sessionStorage.setItem(SESSION_KEY,JSON.stringify(p));
+   hideLogin();renderBadge();location.reload();
+ }
+ function logout(){
+   if(!confirm('هل تريد تسجيل الخروج وتبديل المستخدم؟'))return;
+   sessionStorage.removeItem(SESSION_KEY);
+   localStorage.removeItem(PROFILE_KEY);
+   showLogin();
+ }
+ document.getElementById('shLogoutBtn').addEventListener('click',logout);
+ document.getElementById('shAuthLoginBtn').addEventListener('click',login);
+ pin.addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+ // نحافظ على استمرار المستخدم الحالي لأول تشغيل، وبعد الضغط على الخروج يصبح الدخول إلزامياً.
+ if(!sessionStorage.getItem(SESSION_KEY)){
+   const p=profile();
+   if(p)sessionStorage.setItem(SESSION_KEY,JSON.stringify(p));
+ }
+ renderBadge();
+ window.shuraimiLogout=logout;
+ window.shuraimiSwitchUser=logout;
+})();
+</script>
 </body>
 </html>
