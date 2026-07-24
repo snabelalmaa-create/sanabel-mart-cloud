@@ -1,0 +1,10 @@
+{
+  "name": "أملاك علي يحيى الشريمي وأولاده",
+  "short_name": "أملاك علي",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f3f7fb",
+  "theme_color": "#102a43",
+  "lang": "ar",
+  "dir": "rtl"
+}
