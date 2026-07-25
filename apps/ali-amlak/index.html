@@ -189,7 +189,7 @@
 <script>
 const AR_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const DEFAULT_DATA={
-  settings:{businessName:'أملاك علي يحيى الشريمي وأولاده',ownerName:'علي يحيى الشريمي وأولاده',commercialNo:'',taxNo:'',address:'رجال ألمع',cloudUrl:'https://rueapdmdkjytsxkfumpw.supabase.co',cloudAnonKey:'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9',cloudEnabled:false,lastCloudSync:''},
+  settings:{businessName:'أملاك علي يحيى الشريمي وأولاده',ownerName:'علي يحيى الشريمي وأولاده',commercialNo:'',taxNo:'',address:'رجال ألمع',cloudUrl:'https://rueapdmdkjytsxkfumpw.supabase.co',cloudAnonKey:'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9',cloudEnabled:true,lastCloudSync:''},
   users:[
     {id:'u1',name:'أبوقصي',pin:'1234',role:'admin',active:true,permissions:['all']},
     {id:'u2',name:'موظف التحصيل',pin:'2222',role:'collector',active:true,permissions:['view','add','print','finance']}
@@ -199,8 +199,8 @@ const DEFAULT_DATA={
 };
 let db=loadDB(), currentUser=null, currentPage='dashboard';
 function loadDB(){try{const x=JSON.parse(localStorage.getItem('aliAmlakDB'));return x?migrate(x):structuredClone(DEFAULT_DATA)}catch{return structuredClone(DEFAULT_DATA)}}
-function migrate(x){for(const k of Object.keys(DEFAULT_DATA)) if(x[k]===undefined)x[k]=structuredClone(DEFAULT_DATA[k]);x.settings=x.settings||structuredClone(DEFAULT_DATA.settings);if(!x.settings.businessName||x.settings.businessName==='علي أملاك')x.settings.businessName='أملاك علي يحيى الشريمي وأولاده';if(!x.settings.ownerName)x.settings.ownerName='علي يحيى الشريمي وأولاده';for(const [k,v] of Object.entries(DEFAULT_DATA.settings))if(x.settings[k]===undefined)x.settings[k]=v;if(!x.settings.cloudUrl)x.settings.cloudUrl=DEFAULT_DATA.settings.cloudUrl;if(!x.settings.cloudAnonKey)x.settings.cloudAnonKey=DEFAULT_DATA.settings.cloudAnonKey;return x}
-function saveDB(){localStorage.setItem('aliAmlakDB',JSON.stringify(db));renderAll()}
+function migrate(x){for(const k of Object.keys(DEFAULT_DATA)) if(x[k]===undefined)x[k]=structuredClone(DEFAULT_DATA[k]);x.settings=x.settings||structuredClone(DEFAULT_DATA.settings);if(!x.settings.businessName||x.settings.businessName==='علي أملاك')x.settings.businessName='أملاك علي يحيى الشريمي وأولاده';if(!x.settings.ownerName)x.settings.ownerName='علي يحيى الشريمي وأولاده';for(const [k,v] of Object.entries(DEFAULT_DATA.settings))if(x.settings[k]===undefined)x.settings[k]=v;if(!x.settings.cloudUrl)x.settings.cloudUrl=DEFAULT_DATA.settings.cloudUrl;if(!x.settings.cloudAnonKey)x.settings.cloudAnonKey=DEFAULT_DATA.settings.cloudAnonKey;if(x.settings.cloudUrl&&x.settings.cloudAnonKey)x.settings.cloudEnabled=true;return x}
+function saveDB(){localStorage.setItem('aliAmlakDB',JSON.stringify(db));renderAll();scheduleCloudPush()}
 function id(prefix){return prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6)}
 function today(){return new Date().toISOString().slice(0,10)}
 function monthStart(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'}
@@ -224,7 +224,7 @@ function toast(msg,type='success'){const e=document.createElement('div');e.class
 
 function seedDemoContract(){if(db.contracts.length)return;const start=new Date();start.setMonth(start.getMonth()-3);start.setDate(1);const c={id:'c1',shopId:'s1',tenant:'مؤسسة الندى التجارية',phone:'0500000000',tenantId:'7000000000',start:start.toISOString().slice(0,10),months:12,rent:2500,opening:1500,deposit:0,dueDay:1,notes:'',status:'active',createdAt:new Date().toISOString()};db.contracts.push(c);generateDues(c);const c2={id:'c2',shopId:'s3',tenant:'مؤسسة الروابي',phone:'0511111111',tenantId:'7111111111',start:today().slice(0,8)+'01',months:12,rent:3000,opening:0,deposit:0,dueDay:1,notes:'',status:'active',createdAt:new Date().toISOString()};db.contracts.push(c2);generateDues(c2);db.shops.find(s=>s.id==='s1').status='rented';db.shops.find(s=>s.id==='s3').status='rented';saveDB()}
 
-function init(){document.getElementById('todayText').textContent=new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date());document.getElementById('receiptDate').value=today();document.getElementById('expenseDate').value=today();document.getElementById('contractStart').value=today();populateLogin();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+async function init(){document.getElementById('todayText').textContent=new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date());document.getElementById('receiptDate').value=today();document.getElementById('expenseDate').value=today();document.getElementById('contractStart').value=today();await autoCloudBootstrap();populateLogin();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=5.1').catch(()=>{});window.addEventListener('focus',()=>autoCloudPull(true));document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')autoCloudPull(true)});setInterval(()=>autoCloudPull(true),30000);}
 function populateLogin(){document.getElementById('loginUser').innerHTML=db.users.filter(u=>u.active).map(u=>`<option value="${u.id}">${u.name} — ${roleLabel(u.role)}</option>`).join('')}
 function login(){const u=db.users.find(x=>x.id===document.getElementById('loginUser').value);const pin=document.getElementById('loginPin').value;if(!u||u.pin!==pin)return toast('الرقم السري غير صحيح','error');currentUser=u;sessionStorage.setItem('aliAmlakUser',u.id);document.getElementById('loginScreen').classList.add('hidden');document.getElementById('app').classList.remove('hidden');document.getElementById('currentUserName').textContent=u.name;document.getElementById('currentUserRole').textContent=roleLabel(u.role);buildNav();showPage(u.role==='collector'?'collector':'dashboard');toast('مرحبًا '+u.name)}
 function logout(){currentUser=null;sessionStorage.removeItem('aliAmlakUser');document.getElementById('app').classList.add('hidden');document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('loginPin').value='';populateLogin()}
@@ -237,7 +237,7 @@ function showPage(p){currentPage=p;document.querySelectorAll('.page').forEach(e=
 function toggleSidebar(open){document.getElementById('sidebar').classList.toggle('open',open);document.getElementById('sidebarBackdrop').classList.toggle('show',open)}
 function pageHead(title,desc,actions=''){return `<div class="page-head"><div><h2>${title}</h2><p>${desc}</p></div><div class="page-actions">${actions}<button class="btn close-page" onclick="showPage('${currentUser?.role==='collector'?'collector':'dashboard'}')">✖ إغلاق</button></div></div>`}
 
-function renderAll(){if(!currentUser)return;renderDashboard();renderShops();renderContracts();renderReceipts();renderExpenses();renderArrears();renderStatements();renderReports();renderCollector();renderUsers();renderSettings();renderSystem();fillSelects();populateLogin()}
+function renderAll(){if(!currentUser)return;renderDashboard();renderShops();renderContracts();renderReceipts();renderExpenses();renderArrears();renderStatements();renderReports();renderCollector();renderUsers();renderSettings();renderSystem();refreshFormOptions();populateLogin()}
 function renderDashboard(){
   const active=db.contracts.filter(c=>c.status==='active').length,totalDue=db.dues.reduce((s,d)=>s+d.amount,0),outstanding=db.dues.reduce((s,d)=>s+(d.amount-d.paid),0),overdue=db.dues.filter(d=>d.amount>d.paid&&new Date(d.dueDate)<new Date(today())).reduce((s,d)=>s+(d.amount-d.paid),0);
   const recent=[...db.receipts].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,5);
@@ -312,7 +312,7 @@ function renderSettings(){const s=db.settings;document.getElementById('page-sett
 
 function renderSystem(){const s=db.settings, counts={shops:db.shops.length,contracts:db.contracts.length,receipts:db.receipts.length,expenses:db.expenses.length};document.getElementById('page-system').innerHTML=pageHead('إدارة النظام','النسخ الاحتياطي، تنظيف البيانات، والربط السحابي')+`<div class="kpi-grid"><div class="kpi"><span>المحلات</span><strong>${counts.shops}</strong></div><div class="kpi green"><span>العقود</span><strong>${counts.contracts}</strong></div><div class="kpi orange"><span>سندات القبض</span><strong>${counts.receipts}</strong></div><div class="kpi purple"><span>سندات الصرف</span><strong>${counts.expenses}</strong></div></div><div class="dashboard-grid"><div class="panel"><div class="panel-title"><div><h3>النسخ الاحتياطي والاستعادة</h3><small>احفظ نسخة قبل أي تنظيف أو نقل للجهاز الجديد</small></div></div><div class="big-action"><button class="btn btn-primary" onclick="exportBackup()">💾 تنزيل نسخة احتياطية</button><label class="btn btn-outline">📥 استعادة نسخة<input type="file" hidden accept="application/json" onchange="importBackup(event)"></label><button class="btn btn-outline" onclick="exportCSV()">📊 تصدير الحركات CSV</button></div><div class="alert green" style="margin-top:16px"><strong>المستخدمون والإعدادات محفوظون عند التنظيف</strong><small>زر بدء العمل من جديد يمسح المحلات والعقود والحركات فقط، ولا يحذف حساب المدير أو بيانات المؤسسة.</small></div></div><div class="panel"><div class="panel-title"><div><h3>بدء العمل من جديد</h3><small>عملية محمية على ثلاث مراحل</small></div></div><div class="alert red"><strong>تحذير مهم</strong><small>سيتم حذف المحلات والعقود والمستحقات وسندات القبض والصرف والتقارير نهائيًا من هذا الجهاز.</small></div><button class="btn btn-danger btn-lg" style="width:100%;margin-top:14px" onclick="startFreshReset()">🗑️ مسح بيانات العمل والبدء من جديد</button></div></div><div class="panel" style="margin-top:16px"><div class="panel-title"><div><h3>الربط السحابي Supabase</h3><small>تزامن نفس البيانات بين الكمبيوتر والجوال ونسخة المحصل</small></div><span class="badge ${s.cloudEnabled?'b-green':'b-gray'}">${s.cloudEnabled?'مفعّل':'غير مفعّل'}</span></div><div class="form-grid"><div class="field full"><label>رابط مشروع Supabase</label><input id="cloudUrl" placeholder="https://xxxx.supabase.co" value="${esc(s.cloudUrl||'')}"></div><div class="field full"><label>المفتاح العام Publishable / anon</label><input id="cloudKey" type="password" placeholder="sb_publishable_... أو eyJ..." value="${esc(s.cloudAnonKey||'')}"></div></div><div class="big-action"><button class="btn btn-primary" onclick="saveCloudSettings()">☁️ حفظ واختبار الاتصال</button><button class="btn btn-success" onclick="pushCloud()">⬆ رفع بيانات هذا الجهاز</button><button class="btn btn-outline" onclick="pullCloud()">⬇ تنزيل البيانات من السحابة</button></div><div class="demo-note">آخر مزامنة: ${s.lastCloudSync?new Date(s.lastCloudSync).toLocaleString('ar-SA'):'لم تتم المزامنة بعد'}. يلزم تنفيذ ملف <b>supabase_setup.sql</b> مرة واحدة داخل مشروع Supabase.</div></div>`}
 
-function fillSelects(){
+function refreshFormOptions(){
   const shopOpts='<option value="">اختر المحل</option>'+db.shops.map(s=>`<option value="${s.id}">${esc(s.no)} — ${esc(s.name)}</option>`).join('');
   ['contractShop','expenseShop'].forEach(selectId=>{
     const el=document.getElementById(selectId);
@@ -330,7 +330,7 @@ function fillSelects(){
     if([...el.options].some(o=>o.value===old))el.value=old;
   });
 }
-function openModal(id){fillSelects();document.getElementById(id).classList.add('open')}
+function openModal(id){refreshFormOptions();document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 function saveShop(){const no=v('shopNo'),name=v('shopName');if(!no||!name)return toast('أدخل رقم المحل واسم المحل','error');if(db.shops.some(s=>s.no===no))return toast('رقم المحل مستخدم مسبقًا','error');db.shops.push({id:id('s'),no,name,location:v('shopLocation'),rent:+v('shopRent')||0,status:v('shopStatus'),ref:v('shopRef'),notes:v('shopNotes')});log('إضافة محل',name);clearFields(['shopNo','shopName','shopLocation','shopRent','shopRef','shopNotes']);closeModal('shopModal');saveDB();toast('تم حفظ المحل بنجاح')}
 function startContract(sid){openModal('contractModal');document.getElementById('contractShop').value=sid;document.getElementById('contractRent').value=shopById(sid)?.rent||''}
@@ -360,6 +360,61 @@ function exportBackup(){const blob=new Blob([JSON.stringify(db,null,2)],{type:'a
 function importBackup(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{db=migrate(JSON.parse(rd.result));saveDB();toast('تمت استعادة النسخة الاحتياطية')}catch{toast('الملف غير صالح','error')}};rd.readAsText(f)}
 function exportCSV(){const rows=[['نوع','رقم','التاريخ','الطرف','المبلغ','الطريقة'],...db.receipts.map(r=>['قبض',r.no,r.date,contractById(r.contractId)?.tenant,r.amount,r.method]),...db.expenses.map(e=>['صرف',e.no,e.date,e.payee,e.amount,e.method])];const csv='\uFEFF'+rows.map(r=>r.map(x=>'"'+String(x??'').replaceAll('"','""')+'"').join(',')).join('\n');const b=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ali-amlak-report-'+today()+'.csv';a.click()}
 function startFreshReset(){if(currentUser?.role!=='admin')return toast('هذه العملية للمدير فقط','error');if(!confirm('تحذير: سيتم حذف جميع بيانات العمل نهائيًا. هل تريد المتابعة؟'))return;const pin=prompt('أدخل الرقم السري للمدير للتأكيد');if(pin!==currentUser.pin)return toast('الرقم السري غير صحيح','error');const word=prompt('اكتب كلمة حذف لإتمام العملية');if(word!=='حذف')return toast('لم يتم المسح لأن كلمة التأكيد غير صحيحة','error');const keepUsers=structuredClone(db.users),keepSettings=structuredClone(db.settings);db=structuredClone(DEFAULT_DATA);db.users=keepUsers;db.settings=keepSettings;db.shops=[];db.contracts=[];db.dues=[];db.receipts=[];db.expenses=[];db.logs=[];db.queue=[];localStorage.setItem('aliAmlakDB',JSON.stringify(db));logout();toast('تم مسح بيانات العمل. سجل الدخول وابدأ بإضافة المحلات')}
+
+let cloudPushTimer=null,cloudBusy=false,localDirty=false,lastCloudRemoteAt='';
+function cloudConfigured(){return !!(db?.settings?.cloudUrl&&db?.settings?.cloudAnonKey)}
+function persistLocalOnly(){localStorage.setItem('aliAmlakDB',JSON.stringify(db))}
+function scheduleCloudPush(){
+  if(!cloudConfigured()||!navigator.onLine)return;
+  localDirty=true;clearTimeout(cloudPushTimer);
+  cloudPushTimer=setTimeout(()=>autoCloudPush(true),450);
+}
+async function autoCloudPush(silent=false){
+  if(cloudBusy||!cloudConfigured()||!navigator.onLine)return false;
+  cloudBusy=true;
+  try{
+    const payload=structuredClone(db);payload.settings.cloudAnonKey='';payload.settings.cloudEnabled=true;
+    const now=new Date().toISOString();
+    const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_store',{method:'POST',headers:cloudHeaders(true),body:JSON.stringify({id:'main',payload,updated_at:now})});
+    if(!r.ok)throw new Error(await cloudError(r));
+    db.settings.cloudEnabled=true;db.settings.lastCloudSync=now;lastCloudRemoteAt=now;localDirty=false;persistLocalOnly();
+    if(!silent)toast('تمت المزامنة مع السحابة ✅');
+    return true;
+  }catch(e){console.error('autoCloudPush',e);if(!silent)toast('تعذر رفع البيانات للسحابة','error');return false}
+  finally{cloudBusy=false}
+}
+async function autoCloudPull(silent=false){
+  if(cloudBusy||localDirty||!cloudConfigured()||!navigator.onLine)return false;
+  cloudBusy=true;
+  try{
+    const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_store?id=eq.main&select=payload,updated_at',{headers:cloudHeaders(false),cache:'no-store'});
+    if(!r.ok)throw new Error(await cloudError(r));
+    const rows=await r.json();if(!rows.length||!rows[0].payload)return false;
+    const remoteAt=rows[0].updated_at||'';
+    if(remoteAt&&remoteAt===lastCloudRemoteAt)return true;
+    const cloudUrl=db.settings.cloudUrl,cloudKey=db.settings.cloudAnonKey;
+    db=migrate(rows[0].payload);db.settings.cloudUrl=cloudUrl;db.settings.cloudAnonKey=cloudKey;db.settings.cloudEnabled=true;db.settings.lastCloudSync=remoteAt||new Date().toISOString();lastCloudRemoteAt=remoteAt;persistLocalOnly();renderAll();populateLogin();
+    if(!silent)toast('تم تنزيل أحدث البيانات من السحابة ✅');
+    return true;
+  }catch(e){console.error('autoCloudPull',e);if(!silent)toast('تعذر تنزيل البيانات من السحابة','error');return false}
+  finally{cloudBusy=false}
+}
+async function autoCloudBootstrap(){
+  if(!cloudConfigured()||!navigator.onLine)return;
+  db.settings.cloudEnabled=true;persistLocalOnly();
+  try{
+    const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_store?id=eq.main&select=payload,updated_at',{headers:cloudHeaders(false),cache:'no-store'});
+    if(!r.ok)throw new Error(await cloudError(r));
+    const rows=await r.json();
+    if(rows.length&&rows[0].payload){
+      const cloudUrl=db.settings.cloudUrl,cloudKey=db.settings.cloudAnonKey;
+      db=migrate(rows[0].payload);db.settings.cloudUrl=cloudUrl;db.settings.cloudAnonKey=cloudKey;db.settings.cloudEnabled=true;db.settings.lastCloudSync=rows[0].updated_at||new Date().toISOString();lastCloudRemoteAt=rows[0].updated_at||'';persistLocalOnly();renderAll();
+    }else if(db.shops.length||db.contracts.length||db.receipts.length||db.expenses.length){
+      await autoCloudPush(true);
+    }
+  }catch(e){console.error('autoCloudBootstrap',e)}
+}
+
 function cleanCloudUrl(u){return String(u||'').trim().replace(/\/$/,'')}
 function buildCloudHeaders(key,withJson=false){
   const h={'apikey':key,'Accept':'application/json'};
@@ -382,27 +437,20 @@ async function saveCloudSettings(){
   }catch(e){console.error(e);toast('فشل الاتصال: '+String(e.message||e).slice(0,170),'error')}
 }
 async function pushCloud(){
-  if(!db.settings.cloudEnabled)return toast('احفظ إعدادات السحابة واختبر الاتصال أولًا','error');
-  if(!confirm('سيتم استبدال النسخة السحابية ببيانات هذا الجهاز. متابعة؟'))return;
-  try{
-    const payload=structuredClone(db);payload.settings.cloudAnonKey='';
-    const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_store',{method:'POST',headers:cloudHeaders(true),body:JSON.stringify({id:'main',payload,updated_at:new Date().toISOString()})});
-    if(!r.ok)throw new Error(await cloudError(r));
-    db.settings.lastCloudSync=new Date().toISOString();localStorage.setItem('aliAmlakDB',JSON.stringify(db));renderAll();toast('تم رفع البيانات إلى السحابة ✅');
-  }catch(e){console.error(e);toast('فشل الرفع: '+String(e.message||e).slice(0,170),'error')}
+  if(!cloudConfigured())return toast('احفظ إعدادات السحابة واختبر الاتصال أولًا','error');
+  await autoCloudPush(false);
 }
 async function pullCloud(){
-  if(!db.settings.cloudEnabled)return toast('احفظ إعدادات السحابة واختبر الاتصال أولًا','error');
-  if(!confirm('سيتم استبدال بيانات هذا الجهاز بالنسخة السحابية. متابعة؟'))return;
-  try{
-    const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_store?id=eq.main&select=payload,updated_at',{headers:cloudHeaders(false)});
-    if(!r.ok)throw new Error(await cloudError(r));
-    const rows=await r.json();if(!rows.length||!rows[0].payload)return toast('لا توجد نسخة بيانات في السحابة','error');
-    const cloud=rows[0].payload,cloudUrl=db.settings.cloudUrl,cloudKey=db.settings.cloudAnonKey;db=migrate(cloud);db.settings.cloudUrl=cloudUrl;db.settings.cloudAnonKey=cloudKey;db.settings.cloudEnabled=true;db.settings.lastCloudSync=new Date().toISOString();localStorage.setItem('aliAmlakDB',JSON.stringify(db));renderAll();toast('تم تنزيل البيانات من السحابة ✅');
-  }catch(e){console.error(e);toast('فشل التنزيل: '+String(e.message||e).slice(0,170),'error')}
+  if(!cloudConfigured())return toast('احفظ إعدادات السحابة واختبر الاتصال أولًا','error');
+  localDirty=false;await autoCloudPull(false);
 }
 function v(id){return document.getElementById(id)?.value?.trim?.()??document.getElementById(id)?.value??''}
 function clearFields(ids){ids.forEach(i=>{const e=document.getElementById(i);if(e)e.value=''})}
+
+
+// واجهة توافق احتياطية تمنع توقف النسخ القديمة المخزنة في المتصفح.
+window.refreshFormOptions = refreshFormOptions;
+window.fillSelects = refreshFormOptions;
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));if(e.key==='Enter'&&!document.getElementById('loginScreen').classList.contains('hidden'))login()});
 window.addEventListener('load',init);

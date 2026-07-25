@@ -1,4 +1,4 @@
--- نفّذ هذا الملف مرة واحدة من Supabase > SQL Editor
+-- أملاك علي يحيى الشريمي وأولاده - مخزن المزامنة السحابية V2
 create table if not exists public.ali_amlak_store (
   id text primary key,
   payload jsonb not null default '{}'::jsonb,
@@ -7,11 +7,11 @@ create table if not exists public.ali_amlak_store (
 
 alter table public.ali_amlak_store enable row level security;
 
-drop policy if exists "ali_amlak_read" on public.ali_amlak_store;
+drop policy if exists "ali_amlak_select" on public.ali_amlak_store;
 drop policy if exists "ali_amlak_insert" on public.ali_amlak_store;
 drop policy if exists "ali_amlak_update" on public.ali_amlak_store;
 
-create policy "ali_amlak_read"
+create policy "ali_amlak_select"
 on public.ali_amlak_store for select
 to anon
 using (id = 'main');
