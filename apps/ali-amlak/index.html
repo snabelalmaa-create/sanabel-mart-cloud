@@ -189,7 +189,7 @@
 <script>
 const AR_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const DEFAULT_DATA={
-  settings:{businessName:'أملاك علي يحيى الشريمي وأولاده',ownerName:'علي يحيى الشريمي وأولاده',commercialNo:'',taxNo:'',address:'رجال ألمع',cloudUrl:'https://rueapdmdkjytsxkfumpw.supabase.co',cloudAnonKey:'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9',cloudEnabled:true,lastCloudSync:''},
+  settings:{businessName:'أملاك علي يحيى الشريمي وأولاده',ownerName:'علي يحيى الشريمي وأولاده',commercialNo:'',taxNo:'',address:'رجال ألمع',cloudUrl:'https://rueapdmdkjytsxkfumpw.supabase.co',cloudAnonKey:'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9',cloudEnabled:true,lastCloudSync:'',lastCloudUpdatedAt:''},
   users:[
     {id:'u1',name:'أبوقصي',pin:'1234',role:'admin',active:true,permissions:['all']},
     {id:'u2',name:'موظف التحصيل',pin:'2222',role:'collector',active:true,permissions:['view','add','print','finance']}
@@ -200,7 +200,18 @@ const DEFAULT_DATA={
 let db=loadDB(), currentUser=null, currentPage='dashboard';
 function loadDB(){try{const x=JSON.parse(localStorage.getItem('aliAmlakDB'));return x?migrate(x):structuredClone(DEFAULT_DATA)}catch{return structuredClone(DEFAULT_DATA)}}
 function migrate(x){for(const k of Object.keys(DEFAULT_DATA)) if(x[k]===undefined)x[k]=structuredClone(DEFAULT_DATA[k]);x.settings=x.settings||structuredClone(DEFAULT_DATA.settings);if(!x.settings.businessName||x.settings.businessName==='علي أملاك')x.settings.businessName='أملاك علي يحيى الشريمي وأولاده';if(!x.settings.ownerName)x.settings.ownerName='علي يحيى الشريمي وأولاده';for(const [k,v] of Object.entries(DEFAULT_DATA.settings))if(x.settings[k]===undefined)x.settings[k]=v;if(!x.settings.cloudUrl)x.settings.cloudUrl=DEFAULT_DATA.settings.cloudUrl;if(!x.settings.cloudAnonKey)x.settings.cloudAnonKey=DEFAULT_DATA.settings.cloudAnonKey;if(x.settings.cloudUrl&&x.settings.cloudAnonKey)x.settings.cloudEnabled=true;return x}
-function saveDB(){localStorage.setItem('aliAmlakDB',JSON.stringify(db));renderAll();scheduleCloudPush()}
+let cloudPushTimer=null,cloudBusy=false,cloudPollTimer=null;
+function saveDB(){
+  localStorage.setItem('aliAmlakDB',JSON.stringify(db));
+  renderAll();
+  scheduleCloudPush();
+}
+function scheduleCloudPush(){
+  if(!db?.settings?.cloudEnabled||!db.settings.cloudUrl||!db.settings.cloudAnonKey)return;
+  clearTimeout(cloudPushTimer);
+  cloudPushTimer=setTimeout(()=>pushCloud(true),700);
+}
+
 function id(prefix){return prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6)}
 function today(){return new Date().toISOString().slice(0,10)}
 function monthStart(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01'}
@@ -224,7 +235,7 @@ function toast(msg,type='success'){const e=document.createElement('div');e.class
 
 function seedDemoContract(){if(db.contracts.length)return;const start=new Date();start.setMonth(start.getMonth()-3);start.setDate(1);const c={id:'c1',shopId:'s1',tenant:'مؤسسة الندى التجارية',phone:'0500000000',tenantId:'7000000000',start:start.toISOString().slice(0,10),months:12,rent:2500,opening:1500,deposit:0,dueDay:1,notes:'',status:'active',createdAt:new Date().toISOString()};db.contracts.push(c);generateDues(c);const c2={id:'c2',shopId:'s3',tenant:'مؤسسة الروابي',phone:'0511111111',tenantId:'7111111111',start:today().slice(0,8)+'01',months:12,rent:3000,opening:0,deposit:0,dueDay:1,notes:'',status:'active',createdAt:new Date().toISOString()};db.contracts.push(c2);generateDues(c2);db.shops.find(s=>s.id==='s1').status='rented';db.shops.find(s=>s.id==='s3').status='rented';saveDB()}
 
-async function init(){document.getElementById('todayText').textContent=new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date());document.getElementById('receiptDate').value=today();document.getElementById('expenseDate').value=today();document.getElementById('contractStart').value=today();await autoCloudBootstrap();populateLogin();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=5.1').catch(()=>{});window.addEventListener('focus',()=>autoCloudPull(true));document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')autoCloudPull(true)});setInterval(()=>autoCloudPull(true),30000);}
+function init(){document.getElementById('todayText').textContent=new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date());document.getElementById('receiptDate').value=today();document.getElementById('expenseDate').value=today();document.getElementById('contractStart').value=today();populateLogin();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=6').catch(()=>{});setTimeout(()=>pullCloud(true),900);cloudPollTimer=setInterval(()=>pullCloud(true),15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pullCloud(true)});}
 function populateLogin(){document.getElementById('loginUser').innerHTML=db.users.filter(u=>u.active).map(u=>`<option value="${u.id}">${u.name} — ${roleLabel(u.role)}</option>`).join('')}
 function login(){const u=db.users.find(x=>x.id===document.getElementById('loginUser').value);const pin=document.getElementById('loginPin').value;if(!u||u.pin!==pin)return toast('الرقم السري غير صحيح','error');currentUser=u;sessionStorage.setItem('aliAmlakUser',u.id);document.getElementById('loginScreen').classList.add('hidden');document.getElementById('app').classList.remove('hidden');document.getElementById('currentUserName').textContent=u.name;document.getElementById('currentUserRole').textContent=roleLabel(u.role);buildNav();showPage(u.role==='collector'?'collector':'dashboard');toast('مرحبًا '+u.name)}
 function logout(){currentUser=null;sessionStorage.removeItem('aliAmlakUser');document.getElementById('app').classList.add('hidden');document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('loginPin').value='';populateLogin()}
@@ -360,61 +371,6 @@ function exportBackup(){const blob=new Blob([JSON.stringify(db,null,2)],{type:'a
 function importBackup(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{db=migrate(JSON.parse(rd.result));saveDB();toast('تمت استعادة النسخة الاحتياطية')}catch{toast('الملف غير صالح','error')}};rd.readAsText(f)}
 function exportCSV(){const rows=[['نوع','رقم','التاريخ','الطرف','المبلغ','الطريقة'],...db.receipts.map(r=>['قبض',r.no,r.date,contractById(r.contractId)?.tenant,r.amount,r.method]),...db.expenses.map(e=>['صرف',e.no,e.date,e.payee,e.amount,e.method])];const csv='\uFEFF'+rows.map(r=>r.map(x=>'"'+String(x??'').replaceAll('"','""')+'"').join(',')).join('\n');const b=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ali-amlak-report-'+today()+'.csv';a.click()}
 function startFreshReset(){if(currentUser?.role!=='admin')return toast('هذه العملية للمدير فقط','error');if(!confirm('تحذير: سيتم حذف جميع بيانات العمل نهائيًا. هل تريد المتابعة؟'))return;const pin=prompt('أدخل الرقم السري للمدير للتأكيد');if(pin!==currentUser.pin)return toast('الرقم السري غير صحيح','error');const word=prompt('اكتب كلمة حذف لإتمام العملية');if(word!=='حذف')return toast('لم يتم المسح لأن كلمة التأكيد غير صحيحة','error');const keepUsers=structuredClone(db.users),keepSettings=structuredClone(db.settings);db=structuredClone(DEFAULT_DATA);db.users=keepUsers;db.settings=keepSettings;db.shops=[];db.contracts=[];db.dues=[];db.receipts=[];db.expenses=[];db.logs=[];db.queue=[];localStorage.setItem('aliAmlakDB',JSON.stringify(db));logout();toast('تم مسح بيانات العمل. سجل الدخول وابدأ بإضافة المحلات')}
-
-let cloudPushTimer=null,cloudBusy=false,localDirty=false,lastCloudRemoteAt='';
-function cloudConfigured(){return !!(db?.settings?.cloudUrl&&db?.settings?.cloudAnonKey)}
-function persistLocalOnly(){localStorage.setItem('aliAmlakDB',JSON.stringify(db))}
-function scheduleCloudPush(){
-  if(!cloudConfigured()||!navigator.onLine)return;
-  localDirty=true;clearTimeout(cloudPushTimer);
-  cloudPushTimer=setTimeout(()=>autoCloudPush(true),450);
-}
-async function autoCloudPush(silent=false){
-  if(cloudBusy||!cloudConfigured()||!navigator.onLine)return false;
-  cloudBusy=true;
-  try{
-    const payload=structuredClone(db);payload.settings.cloudAnonKey='';payload.settings.cloudEnabled=true;
-    const now=new Date().toISOString();
-    const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_store',{method:'POST',headers:cloudHeaders(true),body:JSON.stringify({id:'main',payload,updated_at:now})});
-    if(!r.ok)throw new Error(await cloudError(r));
-    db.settings.cloudEnabled=true;db.settings.lastCloudSync=now;lastCloudRemoteAt=now;localDirty=false;persistLocalOnly();
-    if(!silent)toast('تمت المزامنة مع السحابة ✅');
-    return true;
-  }catch(e){console.error('autoCloudPush',e);if(!silent)toast('تعذر رفع البيانات للسحابة','error');return false}
-  finally{cloudBusy=false}
-}
-async function autoCloudPull(silent=false){
-  if(cloudBusy||localDirty||!cloudConfigured()||!navigator.onLine)return false;
-  cloudBusy=true;
-  try{
-    const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_store?id=eq.main&select=payload,updated_at',{headers:cloudHeaders(false),cache:'no-store'});
-    if(!r.ok)throw new Error(await cloudError(r));
-    const rows=await r.json();if(!rows.length||!rows[0].payload)return false;
-    const remoteAt=rows[0].updated_at||'';
-    if(remoteAt&&remoteAt===lastCloudRemoteAt)return true;
-    const cloudUrl=db.settings.cloudUrl,cloudKey=db.settings.cloudAnonKey;
-    db=migrate(rows[0].payload);db.settings.cloudUrl=cloudUrl;db.settings.cloudAnonKey=cloudKey;db.settings.cloudEnabled=true;db.settings.lastCloudSync=remoteAt||new Date().toISOString();lastCloudRemoteAt=remoteAt;persistLocalOnly();renderAll();populateLogin();
-    if(!silent)toast('تم تنزيل أحدث البيانات من السحابة ✅');
-    return true;
-  }catch(e){console.error('autoCloudPull',e);if(!silent)toast('تعذر تنزيل البيانات من السحابة','error');return false}
-  finally{cloudBusy=false}
-}
-async function autoCloudBootstrap(){
-  if(!cloudConfigured()||!navigator.onLine)return;
-  db.settings.cloudEnabled=true;persistLocalOnly();
-  try{
-    const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_store?id=eq.main&select=payload,updated_at',{headers:cloudHeaders(false),cache:'no-store'});
-    if(!r.ok)throw new Error(await cloudError(r));
-    const rows=await r.json();
-    if(rows.length&&rows[0].payload){
-      const cloudUrl=db.settings.cloudUrl,cloudKey=db.settings.cloudAnonKey;
-      db=migrate(rows[0].payload);db.settings.cloudUrl=cloudUrl;db.settings.cloudAnonKey=cloudKey;db.settings.cloudEnabled=true;db.settings.lastCloudSync=rows[0].updated_at||new Date().toISOString();lastCloudRemoteAt=rows[0].updated_at||'';persistLocalOnly();renderAll();
-    }else if(db.shops.length||db.contracts.length||db.receipts.length||db.expenses.length){
-      await autoCloudPush(true);
-    }
-  }catch(e){console.error('autoCloudBootstrap',e)}
-}
-
 function cleanCloudUrl(u){return String(u||'').trim().replace(/\/$/,'')}
 function buildCloudHeaders(key,withJson=false){
   const h={'apikey':key,'Accept':'application/json'};
@@ -436,13 +392,29 @@ async function saveCloudSettings(){
     localStorage.setItem('aliAmlakDB',JSON.stringify(db));renderAll();toast('تم الاتصال بـ Supabase بنجاح ✅');
   }catch(e){console.error(e);toast('فشل الاتصال: '+String(e.message||e).slice(0,170),'error')}
 }
-async function pushCloud(){
-  if(!cloudConfigured())return toast('احفظ إعدادات السحابة واختبر الاتصال أولًا','error');
-  await autoCloudPush(false);
+async function pushCloud(silent=false){
+  if(!db.settings.cloudEnabled||cloudBusy)return silent?false:toast('احفظ إعدادات السحابة واختبر الاتصال أولًا','error');
+  if(!silent&&!confirm('سيتم استبدال النسخة السحابية ببيانات هذا الجهاز. متابعة؟'))return;
+  cloudBusy=true;
+  try{
+    const payload=structuredClone(db);payload.settings.cloudAnonKey='';
+    const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_store',{method:'POST',headers:cloudHeaders(true),body:JSON.stringify({id:'main',payload,updated_at:new Date().toISOString()})});
+    if(!r.ok)throw new Error(await cloudError(r));
+    db.settings.lastCloudSync=new Date().toISOString();db.settings.lastCloudUpdatedAt=db.settings.lastCloudSync;localStorage.setItem('aliAmlakDB',JSON.stringify(db));if(!silent){renderAll();toast('تم رفع البيانات إلى السحابة ✅')}return true;
+  }catch(e){console.error(e);if(!silent)toast('فشل الرفع: '+String(e.message||e).slice(0,170),'error');return false}finally{cloudBusy=false}
 }
-async function pullCloud(){
-  if(!cloudConfigured())return toast('احفظ إعدادات السحابة واختبر الاتصال أولًا','error');
-  localDirty=false;await autoCloudPull(false);
+async function pullCloud(silent=false){
+  if(!db.settings.cloudEnabled||cloudBusy)return silent?false:toast('احفظ إعدادات السحابة واختبر الاتصال أولًا','error');
+  if(!silent&&!confirm('سيتم استبدال بيانات هذا الجهاز بالنسخة السحابية. متابعة؟'))return;
+  cloudBusy=true;
+  try{
+    const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_store?id=eq.main&select=payload,updated_at',{headers:cloudHeaders(false)});
+    if(!r.ok)throw new Error(await cloudError(r));
+    const rows=await r.json();if(!rows.length||!rows[0].payload){if(!silent)toast('لا توجد نسخة بيانات في السحابة','error');return false}
+    const remoteUpdated=rows[0].updated_at||'';const localUpdated=db.settings.lastCloudUpdatedAt||'';
+    if(silent&&remoteUpdated&&localUpdated&&remoteUpdated<=localUpdated)return true;
+    const cloud=rows[0].payload,cloudUrl=db.settings.cloudUrl,cloudKey=db.settings.cloudAnonKey;db=migrate(cloud);db.settings.cloudUrl=cloudUrl;db.settings.cloudAnonKey=cloudKey;db.settings.cloudEnabled=true;db.settings.lastCloudSync=new Date().toISOString();db.settings.lastCloudUpdatedAt=remoteUpdated||db.settings.lastCloudSync;localStorage.setItem('aliAmlakDB',JSON.stringify(db));renderAll();if(!silent)toast('تم تنزيل البيانات من السحابة ✅');return true;
+  }catch(e){console.error(e);if(!silent)toast('فشل التنزيل: '+String(e.message||e).slice(0,170),'error');return false}finally{cloudBusy=false}
 }
 function v(id){return document.getElementById(id)?.value?.trim?.()??document.getElementById(id)?.value??''}
 function clearFields(ids){ids.forEach(i=>{const e=document.getElementById(i);if(e)e.value=''})}
