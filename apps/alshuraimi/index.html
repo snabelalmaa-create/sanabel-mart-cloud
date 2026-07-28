@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نظام مؤسسة حسن محمد الشريمي - V1.1 سحابي فعلي</title>
+<title>نظام مؤسسة حسن محمد الشريمي - V1.2 صلاحيات مراكز العقارات</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -164,6 +164,20 @@ body{background:#f6f9fd!important;color:var(--ink)!important;font-size:15px!impo
 @media(min-width:701px) and (max-width:1000px){.cards,.mini-cards,.modules,.prop-kpis{grid-template-columns:repeat(2,1fr)!important}}
 </style>
 <!-- SHURAIMI_CLOUD_V1027_END -->
+
+
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
 
 </head>
 <body>
@@ -343,13 +357,21 @@ function statusClass(s){return s==='مؤجر'?'rented':s==='صيانة'?'mainten
 function statusBadge(s){return s==='مؤجر'?'<span class="badge bad">مؤجر</span>':s==='صيانة'?'<span class="badge warn">صيانة</span>':'<span class="badge ok">متاح</span>'}
 function renderProperties(){
   seedProperties();
-  const centers=propLoad(PROP_CENTERS_KEY), units=propLoad(PROP_UNITS_KEY);
+  const allCenters=propLoad(PROP_CENTERS_KEY), allUnits=propLoad(PROP_UNITS_KEY);
+  const centers=(typeof allowedPropertyCenters==='function'?allowedPropertyCenters():allCenters);
+  const allowedIds=new Set(centers.map(c=>String(c.id)));
+  const units=allUnits.filter(u=>allowedIds.has(String(u.center_id)));
+  if(currentPropertyCenter&&!allowedIds.has(String(currentPropertyCenter)))currentPropertyCenter='';
   if(!currentPropertyCenter && centers.length) currentPropertyCenter=centers[0].id;
   const center=centers.find(c=>c.id===currentPropertyCenter)||centers[0];
   const cUnits=units.filter(u=>!center||u.center_id===center.id);
   const total=cUnits.length, rented=cUnits.filter(u=>u.status==='مؤجر').length, available=cUnits.filter(u=>u.status==='متاح').length, maintenance=cUnits.filter(u=>u.status==='صيانة').length;
   const revenue=cUnits.filter(u=>u.status==='مؤجر').reduce((a,u)=>a+Number(u.rent||0),0), due=cUnits.reduce((a,u)=>a+Number(u.due||0),0), occ=total?Math.round((rented/total)*100):0;
   const wrap=byId('properties');
+  if(!centers.length){
+    wrap.innerHTML='<div class="panel scope-hidden-message">🔒 لا توجد مراكز عقارية مسموحة لهذا المستخدم. راجع مدير النظام لإضافة الفندق أو الغربي أو أي مركز آخر.</div>';
+    return;
+  }
   wrap.innerHTML=`
     <div class="cost-center-card">
       <div class="panel-title"><div><h3>🏘 إدارة العقارات حسب مراكز التكلفة</h3><p style="margin:5px 0 0;color:var(--muted);font-weight:800">اختر مركز تكلفة، وستظهر الشقق أو المحلات التابعة له ككروت مستقلة.</p></div><div><button class="soft-btn" onclick="openCenterForm()">+ مركز تكلفة</button> <button class="soft-btn" onclick="openBulkUnitForm()">+ وحدات جماعية</button> <button class="primary" onclick="openUnitForm()">+ وحدة</button></div></div>
@@ -387,13 +409,14 @@ function unitCard(u){return `<div class="unit-card ${statusClass(u.status)}" dat
   <div class="unit-actions">${u.status==='مؤجر'?`<button class="primary-mini" onclick="unitAction('${u.id}','سداد')">سداد</button><button onclick="unitAction('${u.id}','تجديد')">تجديد</button><button onclick="unitAction('${u.id}','خروج')">خروج</button><button onclick="unitAction('${u.id}','تقرير')">تقرير</button><button onclick="openTenantMessage('${u.id}','عقد')">إرسال عقد</button><button onclick="openTenantMessage('${u.id}','سند')">إرسال سند</button>`:`<button class="primary-mini" onclick="unitAction('${u.id}','عقد')">عقد</button><button onclick="unitAction('${u.id}','مصروف')">مصروف</button><button onclick="unitAction('${u.id}','كهرباء')">كهرباء</button><button onclick="unitAction('${u.id}','تقرير')">تقرير</button>`}</div>
 </div>`}
 function filterUnits(){const q=(byId('propSearch')?.value||'').trim().toLowerCase(),t=byId('propTypeFilter')?.value||'all',s=byId('propStatusFilter')?.value||'all';document.querySelectorAll('#unitGrid .unit-card').forEach(card=>{const okQ=!q||card.dataset.search.includes(q),okT=t==='all'||card.dataset.type===t,okS=s==='all'||card.dataset.status===s;card.style.display=okQ&&okT&&okS?'block':'none'})}
-function openCenterForm(){byId('modalTitle').textContent='إضافة مركز تكلفة عقاري';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>اسم مركز التكلفة</label><input id="cc_name" placeholder="الفندق / الغربي / المحلات التجارية"></div><div class="field"><label>النوع</label><select id="cc_type"><option>شقق سكنية</option><option>محلات تجارية</option><option>مختلط</option><option>عام</option></select></div><div class="field"><label>الموقع</label><input id="cc_location" placeholder="المدينة / الحي"></div><div class="field"><label>ملاحظة</label><input id="cc_note"></div></div><div class="actions"><button class="success" onclick="saveCenter()">حفظ المركز</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
-function saveCenter(){const name=byId('cc_name').value.trim();if(!name)return alert('أدخل اسم مركز التكلفة');const rows=propLoad(PROP_CENTERS_KEY);const id='cc_'+Date.now();rows.push({id,name,type:byId('cc_type').value,location:byId('cc_location').value,note:byId('cc_note').value});propSave(PROP_CENTERS_KEY,rows);currentPropertyCenter=id;closeModal();renderProperties()}
-function openUnitForm(){seedProperties();const centers=propLoad(PROP_CENTERS_KEY);byId('modalTitle').textContent='إضافة وحدة عقارية';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>مركز التكلفة</label><select id="u_center">${centers.map(c=>`<option value="${c.id}" ${c.id===currentPropertyCenter?'selected':''}>${c.name}</option>`).join('')}</select></div><div class="field"><label>النوع</label><select id="u_type"><option>شقة</option><option>محل</option></select></div><div class="field"><label>رقم الوحدة</label><input id="u_no" placeholder="101 / محل 1"></div><div class="field"><label>الحالة</label><select id="u_status"><option>متاح</option><option>مؤجر</option><option>صيانة</option></select></div><div class="field"><label>المستأجر</label><input id="u_tenant"></div><div class="field"><label>الإيجار الشهري</label><input id="u_rent" type="number" step="0.01"></div><div class="field"><label>المستحق</label><input id="u_due" type="number" step="0.01" value="0"></div><div class="field"><label>حساب الكهرباء</label><input id="u_electric"></div><div class="field"><label>آخر سداد</label><input id="u_last" type="date"></div><div class="field"><label>ملاحظة</label><input id="u_note"></div></div><div class="actions"><button class="success" onclick="saveUnit()">حفظ الوحدة</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
+function openCenterForm(){if(!hasPermission('properties','add'))return denied('properties','add');byId('modalTitle').textContent='إضافة مركز تكلفة عقاري';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>اسم مركز التكلفة</label><input id="cc_name" placeholder="الفندق / الغربي / المحلات التجارية"></div><div class="field"><label>النوع</label><select id="cc_type"><option>شقق سكنية</option><option>محلات تجارية</option><option>مختلط</option><option>عام</option></select></div><div class="field"><label>الموقع</label><input id="cc_location" placeholder="المدينة / الحي"></div><div class="field"><label>ملاحظة</label><input id="cc_note"></div></div><div class="actions"><button class="success" onclick="saveCenter()">حفظ المركز</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
+function saveCenter(){if(!hasPermission('properties','add'))return denied('properties','add');const name=byId('cc_name').value.trim();if(!name)return alert('أدخل اسم مركز التكلفة');const rows=propLoad(PROP_CENTERS_KEY);const id='cc_'+Date.now();rows.push({id,name,type:byId('cc_type').value,location:byId('cc_location').value,note:byId('cc_note').value});propSave(PROP_CENTERS_KEY,rows);currentPropertyCenter=id;closeModal();renderProperties()}
+function openUnitForm(){seedProperties();const centers=(typeof allowedPropertyCenters==='function'?allowedPropertyCenters():propLoad(PROP_CENTERS_KEY));if(!centers.length)return alert('لا توجد مراكز عقارية مسموحة لك');byId('modalTitle').textContent='إضافة وحدة عقارية';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>مركز التكلفة</label><select id="u_center">${centers.map(c=>`<option value="${c.id}" ${c.id===currentPropertyCenter?'selected':''}>${c.name}</option>`).join('')}</select></div><div class="field"><label>النوع</label><select id="u_type"><option>شقة</option><option>محل</option></select></div><div class="field"><label>رقم الوحدة</label><input id="u_no" placeholder="101 / محل 1"></div><div class="field"><label>الحالة</label><select id="u_status"><option>متاح</option><option>مؤجر</option><option>صيانة</option></select></div><div class="field"><label>المستأجر</label><input id="u_tenant"></div><div class="field"><label>الإيجار الشهري</label><input id="u_rent" type="number" step="0.01"></div><div class="field"><label>المستحق</label><input id="u_due" type="number" step="0.01" value="0"></div><div class="field"><label>حساب الكهرباء</label><input id="u_electric"></div><div class="field"><label>آخر سداد</label><input id="u_last" type="date"></div><div class="field"><label>ملاحظة</label><input id="u_note"></div></div><div class="actions"><button class="success" onclick="saveUnit()">حفظ الوحدة</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
 
 function openBulkUnitForm(){
   seedProperties();
-  const centers=propLoad(PROP_CENTERS_KEY);
+  const centers=(typeof allowedPropertyCenters==='function'?allowedPropertyCenters():propLoad(PROP_CENTERS_KEY));
+  if(!centers.length)return alert('لا توجد مراكز عقارية مسموحة لك');
   const activeCenter=centers.find(c=>c.id===currentPropertyCenter)||centers[0]||{};
   const defaultType=(activeCenter.type||'').includes('محلات')?'محل':'شقة';
   byId('modalTitle').textContent='إضافة وحدات جماعية';
@@ -440,7 +463,7 @@ function previewBulkUnits(){
   if(byId('bulkPreview'))byId('bulkPreview').innerHTML=preview||'<div class="empty">أدخل نطاق أرقام صحيح. الحد الأعلى 300 وحدة في العملية الواحدة.</div>';
 }
 function saveBulkUnits(){
-  const center=byId('bu_center').value, type=byId('bu_type').value, status=byId('bu_status').value;
+  const center=byId('bu_center').value;if(typeof guardPropertyCenter==='function'&&!guardPropertyCenter(center))return; type=byId('bu_type').value, status=byId('bu_status').value;
   const nums=bulkUnitNumbers(); if(!nums.length)return alert('أدخل نطاق أرقام صحيح');
   const rows=propLoad(PROP_UNITS_KEY);
   const existSet=new Set(rows.filter(u=>u.center_id===center).map(u=>String(u.unit_no).trim()));
@@ -456,7 +479,7 @@ function saveBulkUnits(){
   alert(`تم إنشاء ${added} وحدة${skipped.length?`، وتم تخطي ${skipped.length} مكرر: ${skipped.join('، ')}`:''}`);
 }
 
-function saveUnit(){const no=byId('u_no').value.trim();if(!no)return alert('أدخل رقم الوحدة');const rows=propLoad(PROP_UNITS_KEY);rows.unshift({id:Date.now(),center_id:byId('u_center').value,type:byId('u_type').value,unit_no:no,status:byId('u_status').value,tenant:byId('u_tenant').value,rent:byId('u_rent').value,due:byId('u_due').value,last_payment:byId('u_last').value||'-',electric_account:byId('u_electric').value,note:byId('u_note').value});propSave(PROP_UNITS_KEY,rows);currentPropertyCenter=byId('u_center').value;closeModal();renderProperties();renderDashboard()}
+function saveUnit(){const selectedCenter=byId('u_center').value;if(typeof guardPropertyCenter==='function'&&!guardPropertyCenter(selectedCenter))return;const no=byId('u_no').value.trim();if(!no)return alert('أدخل رقم الوحدة');const rows=propLoad(PROP_UNITS_KEY);rows.unshift({id:Date.now(),center_id:selectedCenter,type:byId('u_type').value,unit_no:no,status:byId('u_status').value,tenant:byId('u_tenant').value,rent:byId('u_rent').value,due:byId('u_due').value,last_payment:byId('u_last').value||'-',electric_account:byId('u_electric').value,note:byId('u_note').value});propSave(PROP_UNITS_KEY,rows);currentPropertyCenter=selectedCenter;closeModal();renderProperties();renderDashboard()}
 
 function propertyCentersOptions(selected){
   return propLoad(PROP_CENTERS_KEY).map(c=>`<option value="${c.id}" ${String(c.id)===String(selected)?'selected':''}>${c.name}</option>`).join('');
@@ -653,11 +676,46 @@ function printContract(contractId){
  .signatures{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:42px}.sig{height:105px;border:1px dashed #b6c5d6;border-radius:18px;padding:12px;text-align:center;background:#fbfdff}.sig b{display:block;color:#0b2346;margin-bottom:42px}.sig span{border-top:1px solid #0f172a;display:block;padding-top:8px;color:#475569;font-weight:800}
  .footer{margin-top:18px;border-top:1px solid #dbe4ef;padding-top:8px;display:flex;justify-content:space-between;color:#64748b;font-size:11px;position:relative;z-index:1}.print-btn{position:fixed;top:14px;left:14px;background:#0b2346;color:white;border:0;border-radius:12px;padding:10px 16px;font-weight:900;cursor:pointer}.seal{position:absolute;left:24mm;bottom:32mm;width:95px;height:95px;border:3px solid rgba(180,123,37,.25);border-radius:50%;display:grid;place-items:center;color:rgba(180,123,37,.38);font-weight:900;transform:rotate(-12deg);font-size:14px;text-align:center}
  @media print{body{background:white}.doc{box-shadow:none;margin:0;width:auto;min-height:auto}.print-btn{display:none}.footer{position:fixed;bottom:8mm;left:16mm;right:16mm}}
- </style></head><body><button class="print-btn" onclick="print()">طباعة العقد</button><main class="doc"><div class="top-border"></div><div class="watermark">HASAN ERP</div><div class="header"><div class="logo">ح</div><div class="brand"><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><p>عقود وإدارة أملاك — Hasan ERP Powered by Sanabel OS</p><p class="sub">وثيقة عقد إيجار رسمية</p></div><div class="doc-meta"><div><span>رقم العقد</span><b>${contractNo}</b></div><div><span>تاريخ الطباعة</span><b>${today}</b></div><div><span>حالة العقد</span><b>${ct['الحالة']||'نشط'}</b></div></div></div><div class="title"><h2>عقد إيجار ${ct['نوع الوحدة']||''} ${ct['الوحدة']||''}</h2><span>مركز التكلفة: ${ct['مركز التكلفة']||'-'}</span></div>
+ </style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><button class="print-btn" onclick="print()">طباعة العقد</button><main class="doc"><div class="top-border"></div><div class="watermark">HASAN ERP</div><div class="header"><div class="logo">ح</div><div class="brand"><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><p>عقود وإدارة أملاك — Hasan ERP Powered by Sanabel OS</p><p class="sub">وثيقة عقد إيجار رسمية</p></div><div class="doc-meta"><div><span>رقم العقد</span><b>${contractNo}</b></div><div><span>تاريخ الطباعة</span><b>${today}</b></div><div><span>حالة العقد</span><b>${ct['الحالة']||'نشط'}</b></div></div></div><div class="title"><h2>عقد إيجار ${ct['نوع الوحدة']||''} ${ct['الوحدة']||''}</h2><span>مركز التكلفة: ${ct['مركز التكلفة']||'-'}</span></div>
  <div class="section-title">بيانات العقد</div><div class="meta-grid"><div class="info"><span class="lab">نوع العقد</span><span class="val">${ct['نوع العقد']||'-'}</span></div><div class="info"><span class="lab">الوحدة</span><span class="val">${ct['نوع الوحدة']||''} ${ct['الوحدة']||''}</span></div><div class="info"><span class="lab">تاريخ البداية</span><span class="val">${ct['تاريخ البداية']||'-'}</span></div><div class="info"><span class="lab">تاريخ النهاية</span><span class="val">${ct['تاريخ النهاية']||'-'}</span></div><div class="info gold"><span class="lab">الإيجار قبل الضريبة لكل دفعة</span><span class="val">${moneyProp(ct['الإيجار'])} ر.س</span></div><div class="info gold"><span class="lab">عدد الدفعات</span><span class="val">${ct['عدد الدفعات']||'-'}</span></div>${ct['نوع الوحدة']==='محل'?`<div class="info"><span class="lab">نوع الفاتورة</span><span class="val">${ct['نوع الفاتورة']||'غير ضريبي'}</span></div><div class="info"><span class="lab">الضريبة لكل دفعة</span><span class="val">${moneyProp(ct['الضريبة لكل دفعة'])} ر.س</span></div><div class="info gold"><span class="lab">الإجمالي بعد الضريبة</span><span class="val">${moneyProp(ct['الإجمالي لكل دفعة']||ct['الإيجار'])} ر.س</span></div>`:''}</div>
  <div class="section-title">أطراف العقد</div><div class="party"><div class="party-card"><h3>الطرف الأول: المؤجر</h3><div class="party-line"><span>الاسم</span><b>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</b></div><div class="party-line"><span>الصفة</span><b>مالك/مؤجر</b></div><div class="party-line"><span>النظام</span><b>Hasan ERP</b></div></div><div class="party-card"><h3>الطرف الثاني: المستأجر</h3><div class="party-line"><span>الاسم</span><b>${ct['المستأجر']||'-'}</b></div><div class="party-line"><span>الجوال</span><b>${ct['الجوال']||'-'}</b></div><div class="party-line"><span>${ct['نوع الوحدة']==='محل'?'السجل التجاري':'الهوية/السجل'}</span><b>${ct['رقم الهوية/السجل']||'-'}</b></div>${ct['نوع الوحدة']==='محل'?`<div class="party-line"><span>الرقم الضريبي</span><b>${ct['الرقم الضريبي']||'-'}</b></div><div class="party-line"><span>النشاط التجاري</span><b>${ct['النشاط التجاري']||'-'}</b></div><div class="party-line"><span>العنوان الوطني</span><b>${ct['العنوان الوطني']||'-'}</b></div><div class="party-line"><span>البريد الإلكتروني</span><b>${ct['البريد الإلكتروني']||'-'}</b></div>`:''}</div></div>
  <div class="section-title">بنود العقد</div><div class="terms"><ol><li>يلتزم المستأجر بسداد الدفعات في مواعيدها حسب جدول الدفعات الموضح في هذا العقد.</li><li>يلتزم المستأجر بالمحافظة على الوحدة وعدم استخدامها في غير الغرض المتفق عليه.</li><li>أي خدمات أو مصروفات أو فواتير كهرباء مرتبطة بالوحدة تُسجل على مركز التكلفة والوحدة في النظام.</li><li>لا يحق للمستأجر التنازل عن الوحدة أو تأجيرها للغير إلا بموافقة خطية من المؤجر.</li><li>تعد بيانات هذا العقد وجدول الدفعات جزءًا لا يتجزأ من العقد.</li></ol></div>
- <div class="section-title">جدول الدفعات</div><table><thead><tr><th>رقم الدفعة</th><th>تاريخ الاستحقاق</th><th>الفترة</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>${inst.map(r=>`<tr><td>${r['رقم الدفعة']}</td><td>${r['تاريخ الاستحقاق']||'-'}</td><td>${(r['الفترة من']||r['تاريخ الاستحقاق']||'-')+(r['الفترة إلى']&&r['الفترة إلى']!==r['الفترة من']?' إلى '+r['الفترة إلى']:'')}</td><td>${moneyProp(r['المبلغ'])} ر.س</td><td class="${r['الحالة']==='مدفوع'?'status-paid':'status-unpaid'}">${r['الحالة']}</td></tr>`).join('')||'<tr><td colspan="7">لا توجد دفعات</td></tr>'}</tbody></table><div class="summary"><div class="sum"><span>إجمالي الدفعات</span><b>${moneyProp(totalRent)} ر.س</b></div><div class="sum"><span>عدد الدفعات</span><b>${inst.length}</b></div><div class="sum"><span>المدفوع</span><b>${inst.filter(x=>x['الحالة']==='مدفوع').length}</b></div></div><div class="signatures"><div class="sig"><b>توقيع المؤجر</b><span>الاسم والتوقيع والختم</span></div><div class="sig"><b>توقيع المستأجر</b><span>الاسم والتوقيع</span></div></div><div class="seal">ختم المؤسسة</div><div class="footer"><span>تم إنشاء العقد آلياً من Hasan ERP</span><span>${contractNo}</span></div></main></body></html>`);
+ <div class="section-title">جدول الدفعات</div><table><thead><tr><th>رقم الدفعة</th><th>تاريخ الاستحقاق</th><th>الفترة</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>${inst.map(r=>`<tr><td>${r['رقم الدفعة']}</td><td>${r['تاريخ الاستحقاق']||'-'}</td><td>${(r['الفترة من']||r['تاريخ الاستحقاق']||'-')+(r['الفترة إلى']&&r['الفترة إلى']!==r['الفترة من']?' إلى '+r['الفترة إلى']:'')}</td><td>${moneyProp(r['المبلغ'])} ر.س</td><td class="${r['الحالة']==='مدفوع'?'status-paid':'status-unpaid'}">${r['الحالة']}</td></tr>`).join('')||'<tr><td colspan="7">لا توجد دفعات</td></tr>'}</tbody></table><div class="summary"><div class="sum"><span>إجمالي الدفعات</span><b>${moneyProp(totalRent)} ر.س</b></div><div class="sum"><span>عدد الدفعات</span><b>${inst.length}</b></div><div class="sum"><span>المدفوع</span><b>${inst.filter(x=>x['الحالة']==='مدفوع').length}</b></div></div><div class="signatures"><div class="sig"><b>توقيع المؤجر</b><span>الاسم والتوقيع والختم</span></div><div class="sig"><b>توقيع المستأجر</b><span>الاسم والتوقيع</span></div></div><div class="seal">ختم المؤسسة</div><div class="footer"><span>تم إنشاء العقد آلياً من Hasan ERP</span><span>${contractNo}</span></div></main>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`);
  w.document.close();
  setTimeout(()=>w.print(),300)
 }
@@ -841,7 +899,42 @@ function printMessageDocument(){
   const w=window.open('','_blank','width=900,height=1000');
   const rows = m.doc==='سند قبض PDF'?pays.slice(-6).map(r=>`<tr><td>${r['تاريخ السداد']||'-'}</td><td>${r['البيان']||'-'}</td><td>${(r['الفترة من']||'-')+' إلى '+(r['الفترة إلى']||'-')}</td><td>${moneyProp(r['المبلغ'])} ر.س</td></tr>`).join(''):
     linkedLoad('rent_installments').filter(r=>String(r.unit_id)===String(u.id)).map(r=>`<tr><td>${r['رقم الدفعة']||'-'}</td><td>${r['تاريخ الاستحقاق']||'-'}</td><td>${moneyProp(r['المبلغ'])} ر.س</td><td>${r['الحالة']||'-'}</td></tr>`).join('');
-  w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${m.doc}</title><style>body{font-family:Arial,Tahoma,sans-serif;background:#f4f7fb;margin:0;color:#111827}.doc{width:210mm;min-height:297mm;margin:auto;background:#fff;padding:18mm;box-shadow:0 15px 45px #0002}.head{display:flex;gap:18px;align-items:center;border-bottom:3px solid #0b2346;padding-bottom:14px}.logo{width:70px;height:70px;border-radius:20px;background:linear-gradient(135deg,#0b2346,#b47b25);color:white;display:grid;place-items:center;font-size:34px;font-weight:900}.brand h1{margin:0;font-size:24px}.brand p{margin:4px 0;color:#64748b}.title{text-align:center;margin:24px 0}.box{border:1px solid #dbe4ef;border-radius:14px;padding:12px;margin:8px 0;background:#fbfdff}table{width:100%;border-collapse:collapse;margin-top:15px}th,td{border:1px solid #cbd5e1;padding:10px;text-align:center}th{background:#0b2346;color:white}.sign{display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:60px}.sign div{border-top:1px solid #111;text-align:center;padding-top:8px}</style></head><body><button onclick="print()" style="position:fixed;top:15px;left:15px;padding:10px 18px">طباعة / PDF</button><main class="doc"><div class="head"><div class="logo">ح</div><div class="brand"><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><p>Hasan ERP — مستند رسمي</p></div></div><div class="title"><h2>${m.doc}</h2><b>${u.type||''} ${u.unit_no||''} — ${c?.name||''}</b></div><div class="box"><b>المستأجر:</b> ${u.tenant||'-'} &nbsp; <b>الجوال:</b> ${u.phone||'-'}</div><div class="box"><b>الرسالة:</b><br>${String(m.body).replace(/\n/g,'<br>')}</div><table><thead><tr>${m.doc==='سند قبض PDF'?'<th>التاريخ</th><th>البيان</th><th>الفترة</th><th>المبلغ</th>':'<th>رقم الدفعة</th><th>الاستحقاق</th><th>المبلغ</th><th>الحالة</th>'}</tr></thead><tbody>${rows||'<tr><td colspan="4">لا توجد بيانات</td></tr>'}</tbody></table><div class="sign"><div>توقيع المؤسسة</div><div>توقيع المستأجر</div></div></main></body></html>`);
+  w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${m.doc}</title><style>body{font-family:Arial,Tahoma,sans-serif;background:#f4f7fb;margin:0;color:#111827}.doc{width:210mm;min-height:297mm;margin:auto;background:#fff;padding:18mm;box-shadow:0 15px 45px #0002}.head{display:flex;gap:18px;align-items:center;border-bottom:3px solid #0b2346;padding-bottom:14px}.logo{width:70px;height:70px;border-radius:20px;background:linear-gradient(135deg,#0b2346,#b47b25);color:white;display:grid;place-items:center;font-size:34px;font-weight:900}.brand h1{margin:0;font-size:24px}.brand p{margin:4px 0;color:#64748b}.title{text-align:center;margin:24px 0}.box{border:1px solid #dbe4ef;border-radius:14px;padding:12px;margin:8px 0;background:#fbfdff}table{width:100%;border-collapse:collapse;margin-top:15px}th,td{border:1px solid #cbd5e1;padding:10px;text-align:center}th{background:#0b2346;color:white}.sign{display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:60px}.sign div{border-top:1px solid #111;text-align:center;padding-top:8px}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><button onclick="print()" style="position:fixed;top:15px;left:15px;padding:10px 18px">طباعة / PDF</button><main class="doc"><div class="head"><div class="logo">ح</div><div class="brand"><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><p>Hasan ERP — مستند رسمي</p></div></div><div class="title"><h2>${m.doc}</h2><b>${u.type||''} ${u.unit_no||''} — ${c?.name||''}</b></div><div class="box"><b>المستأجر:</b> ${u.tenant||'-'} &nbsp; <b>الجوال:</b> ${u.phone||'-'}</div><div class="box"><b>الرسالة:</b><br>${String(m.body).replace(/\n/g,'<br>')}</div><table><thead><tr>${m.doc==='سند قبض PDF'?'<th>التاريخ</th><th>البيان</th><th>الفترة</th><th>المبلغ</th>':'<th>رقم الدفعة</th><th>الاستحقاق</th><th>المبلغ</th><th>الحالة</th>'}</tr></thead><tbody>${rows||'<tr><td colspan="4">لا توجد بيانات</td></tr>'}</tbody></table><div class="sign"><div>توقيع المؤسسة</div><div>توقيع المستأجر</div></div></main>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`);
   w.document.close();saveMessageLog('تم تجهيز PDF');
 }
 function openTenantMessage(unitId,type='عقد'){
@@ -936,8 +1029,78 @@ function saveFinancePayment(){
   if(taxable==='ضريبي'&&tax>0){const tx=load('tax');tx.unshift({id:rec.id,'نوع الفاتورة':'مدخلات','الرقم':rec['رقم السند'],'المبلغ الخاضع':base,'الضريبة':tax,'الفترة':String(rec['التاريخ']).slice(0,7),'مركز التكلفة':center,'المورد':rec['المورد'],created:rec.created});save('tax',tx)}
   closeModal(); renderFinanceSection(); renderDashboard();
 }
-function printFinanceVoucher(id){const r=load('finance').find(x=>x.id===id);if(!r)return;const w=window.open('','_blank','width=900,height=1000');const isPay=r['نوع العملية']==='سند صرف';w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${r['رقم السند']}</title><style>body{font-family:Arial,Tahoma,sans-serif;background:#eef2f7;margin:0}.doc{width:210mm;min-height:297mm;background:white;margin:auto;padding:18mm;box-shadow:0 20px 60px #0002}.head{display:flex;align-items:center;gap:15px;border-bottom:3px solid #0b2346;padding-bottom:14px}.logo{width:70px;height:70px;border-radius:18px;background:linear-gradient(135deg,#0b2346,#b47b25);color:white;display:grid;place-items:center;font-size:34px;font-weight:bold}h1,h2{margin:0}.title{text-align:center;margin:25px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{border:1px solid #d7e0ee;border-radius:12px;padding:11px;background:#fbfdff}.amount{font-size:26px;font-weight:bold;color:${isPay?'#dc2626':'#16a34a'}}.sign{display:grid;grid-template-columns:1fr 1fr;gap:70px;margin-top:70px}.sign div{border-top:1px solid #111;text-align:center;padding-top:8px}button{position:fixed;top:12px;left:12px;padding:10px 18px}</style></head><body><button onclick="print()">طباعة / PDF</button><main class="doc"><div class="head"><div class="logo">ح</div><div><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><p>سند مالي رسمي — Hasan ERP</p></div></div><div class="title"><h2>${r['نوع العملية']}</h2><p>${r['رقم السند']||''}</p></div><div class="grid"><div class="box"><b>التاريخ:</b> ${r['التاريخ']||'-'}</div><div class="box"><b>مركز التكلفة:</b> ${r['مركز التكلفة']||'-'}</div><div class="box"><b>${isPay?'المستفيد':'المستلم منه'}:</b> ${isPay?(r['المستفيد']||r['المورد']||'-'):(r['المستلم منه']||'-')}</div><div class="box"><b>طريقة الدفع:</b> ${r['طريقة الدفع']||'-'} — ${r['الحساب']||'-'}</div><div class="box"><b>بند الصرف:</b> ${r['بند الصرف']||'-'}</div><div class="box"><b>الضريبة:</b> ${r['ضريبي']||'غير ضريبي'}</div></div><div class="box" style="margin-top:12px"><b>البيان:</b><br>${r['البيان']||'-'}</div>${isPay?`<div class="grid" style="margin-top:12px"><div class="box"><b>قبل الضريبة:</b> ${money(r['قبل الضريبة'])}</div><div class="box"><b>قيمة الضريبة:</b> ${money(r['الضريبة'])}</div></div>`:''}<div class="box" style="margin-top:18px;text-align:center"><div>الإجمالي</div><div class="amount">${money(r['المبلغ'])} ر.س</div></div><div class="sign"><div>توقيع المستلم</div><div>اعتماد الإدارة</div></div></main></body></html>`);w.document.close()}
-function printFinanceDailyReport(){const rows=load('finance').filter(r=>(r['التاريخ']||'').slice(0,10)===new Date().toISOString().slice(0,10));const w=window.open('','_blank','width=1000,height=800');w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><style>body{font-family:Arial;padding:25px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:center}th{background:#0b2346;color:white}</style></head><body><h2>تقرير الحركات المالية اليومية</h2><table><thead><tr><th>السند</th><th>النوع</th><th>المركز</th><th>البيان</th><th>المبلغ</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r['رقم السند']||'-'}</td><td>${r['نوع العملية']||'-'}</td><td>${r['مركز التكلفة']||'-'}</td><td>${r['البيان']||'-'}</td><td>${money(r['المبلغ'])}</td></tr>`).join('')}</tbody></table></body></html>`);w.document.close();setTimeout(()=>w.print(),250)}
+function printFinanceVoucher(id){const r=load('finance').find(x=>x.id===id);if(!r)return;const w=window.open('','_blank','width=900,height=1000');const isPay=r['نوع العملية']==='سند صرف';w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${r['رقم السند']}</title><style>body{font-family:Arial,Tahoma,sans-serif;background:#eef2f7;margin:0}.doc{width:210mm;min-height:297mm;background:white;margin:auto;padding:18mm;box-shadow:0 20px 60px #0002}.head{display:flex;align-items:center;gap:15px;border-bottom:3px solid #0b2346;padding-bottom:14px}.logo{width:70px;height:70px;border-radius:18px;background:linear-gradient(135deg,#0b2346,#b47b25);color:white;display:grid;place-items:center;font-size:34px;font-weight:bold}h1,h2{margin:0}.title{text-align:center;margin:25px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{border:1px solid #d7e0ee;border-radius:12px;padding:11px;background:#fbfdff}.amount{font-size:26px;font-weight:bold;color:${isPay?'#dc2626':'#16a34a'}}.sign{display:grid;grid-template-columns:1fr 1fr;gap:70px;margin-top:70px}.sign div{border-top:1px solid #111;text-align:center;padding-top:8px}button{position:fixed;top:12px;left:12px;padding:10px 18px}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><button onclick="print()">طباعة / PDF</button><main class="doc"><div class="head"><div class="logo">ح</div><div><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><p>سند مالي رسمي — Hasan ERP</p></div></div><div class="title"><h2>${r['نوع العملية']}</h2><p>${r['رقم السند']||''}</p></div><div class="grid"><div class="box"><b>التاريخ:</b> ${r['التاريخ']||'-'}</div><div class="box"><b>مركز التكلفة:</b> ${r['مركز التكلفة']||'-'}</div><div class="box"><b>${isPay?'المستفيد':'المستلم منه'}:</b> ${isPay?(r['المستفيد']||r['المورد']||'-'):(r['المستلم منه']||'-')}</div><div class="box"><b>طريقة الدفع:</b> ${r['طريقة الدفع']||'-'} — ${r['الحساب']||'-'}</div><div class="box"><b>بند الصرف:</b> ${r['بند الصرف']||'-'}</div><div class="box"><b>الضريبة:</b> ${r['ضريبي']||'غير ضريبي'}</div></div><div class="box" style="margin-top:12px"><b>البيان:</b><br>${r['البيان']||'-'}</div>${isPay?`<div class="grid" style="margin-top:12px"><div class="box"><b>قبل الضريبة:</b> ${money(r['قبل الضريبة'])}</div><div class="box"><b>قيمة الضريبة:</b> ${money(r['الضريبة'])}</div></div>`:''}<div class="box" style="margin-top:18px;text-align:center"><div>الإجمالي</div><div class="amount">${money(r['المبلغ'])} ر.س</div></div><div class="sign"><div>توقيع المستلم</div><div>اعتماد الإدارة</div></div></main>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`);w.document.close()}
+function printFinanceDailyReport(){const rows=load('finance').filter(r=>(r['التاريخ']||'').slice(0,10)===new Date().toISOString().slice(0,10));const w=window.open('','_blank','width=1000,height=800');w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><style>body{font-family:Arial;padding:25px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:center}th{background:#0b2346;color:white}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><h2>تقرير الحركات المالية اليومية</h2><table><thead><tr><th>السند</th><th>النوع</th><th>المركز</th><th>البيان</th><th>المبلغ</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r['رقم السند']||'-'}</td><td>${r['نوع العملية']||'-'}</td><td>${r['مركز التكلفة']||'-'}</td><td>${r['البيان']||'-'}</td><td>${money(r['المبلغ'])}</td></tr>`).join('')}</tbody></table>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`);w.document.close();setTimeout(()=>w.print(),250)}
 
 
 
@@ -1120,7 +1283,42 @@ function printFinalSettlement(unitId){
   const u=getUnit(unitId),ct=activeContractForUnit(unitId);if(!u||!ct)return;
   addContractTimeline(ct.id,'📑','تم تجهيز التسوية النهائية',byId('sett_note')?.value||'تسوية نهائية','النظام');
   const w=window.open('','_blank','width=900,height=900');
-  w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}td,th{border:1px solid #ccc;padding:10px}.sign{display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:80px}.sign div{border-top:1px solid #111;text-align:center;padding-top:10px}</style></head><body><h1>مخالصة وتسوية نهائية</h1><p><b>رقم العقد:</b> ${formalContractNo(ct)}</p><p><b>الوحدة:</b> ${u.type} ${u.unit_no}</p><p><b>المستأجر:</b> ${ct['المستأجر']||'-'}</p><table><tr><th>البند</th><th>المبلغ</th></tr><tr><td>صافي التسوية</td><td>${byId('sett_net')?.value||'-'} ر.س</td></tr><tr><td>البيان</td><td>${byId('sett_note')?.value||''}</td></tr></table><div class="sign"><div>توقيع المؤجر</div><div>توقيع المستأجر</div></div></body></html>`);w.document.close();setTimeout(()=>w.print(),250);
+  w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}td,th{border:1px solid #ccc;padding:10px}.sign{display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:80px}.sign div{border-top:1px solid #111;text-align:center;padding-top:10px}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><h1>مخالصة وتسوية نهائية</h1><p><b>رقم العقد:</b> ${formalContractNo(ct)}</p><p><b>الوحدة:</b> ${u.type} ${u.unit_no}</p><p><b>المستأجر:</b> ${ct['المستأجر']||'-'}</p><table><tr><th>البند</th><th>المبلغ</th></tr><tr><td>صافي التسوية</td><td>${byId('sett_net')?.value||'-'} ر.س</td></tr><tr><td>البيان</td><td>${byId('sett_note')?.value||''}</td></tr></table><div class="sign"><div>توقيع المؤجر</div><div>توقيع المستأجر</div></div>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`);w.document.close();setTimeout(()=>w.print(),250);
 }
 openUnitReport=function(u,c){
   if(typeof u==='string'||typeof u==='number')u=getUnit(u); if(!u)return alert('لم يتم العثور على الوحدة'); c=c||getCenter(u.center_id)||{};
@@ -1536,7 +1734,42 @@ const oldPrintFinanceVoucher = typeof printFinanceVoucher==='function' ? printFi
 function printFinanceVoucher(id){
   const {row:r}=findFinanceVoucher(id); if(!r) return alert('لم يتم العثور على السند');
   const w=window.open('','_blank','width=900,height=760');
-  w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${safeText(r['رقم السند']||'سند')}</title><style>body{font-family:Arial;padding:32px;color:#111} .head{border-bottom:3px solid #0b2346;padding-bottom:14px;margin-bottom:18px;display:flex;justify-content:space-between}.brand{font-size:24px;font-weight:bold}.box{border:1px solid #ddd;border-radius:12px;padding:14px;margin:10px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row{display:flex;justify-content:space-between;border-bottom:1px dashed #ddd;padding:7px}.status{padding:5px 10px;border-radius:20px;background:#eef} .sig{display:flex;justify-content:space-between;margin-top:60px}.sig div{width:40%;border-top:1px solid #333;text-align:center;padding-top:10px}</style></head><body><div class="head"><div><div class="brand">مؤسسة حسن محمد الشريمي</div><div>سند مالي رسمي</div></div><div><b>${safeText(r['نوع العملية']||'-')}</b><br>${statusBadgeVoucher(statusOfVoucher(r))}</div></div><div class="grid"><div class="box"><div class="row"><span>رقم السند</span><b>${safeText(r['رقم السند']||'-')}</b></div><div class="row"><span>التاريخ</span><b>${safeText(r['التاريخ']||'-')}</b></div><div class="row"><span>مركز التكلفة</span><b>${safeText(r['مركز التكلفة']||'-')}</b></div><div class="row"><span>طريقة الدفع</span><b>${safeText(r['طريقة الدفع']||'-')}</b></div></div><div class="box"><div class="row"><span>المستفيد/المستلم منه</span><b>${safeText(r['المستلم منه']||r['المستفيد']||r['المورد']||'-')}</b></div><div class="row"><span>المبلغ</span><b>${money(r['المبلغ'])} ر.س</b></div><div class="row"><span>الضريبة</span><b>${money(r['الضريبة'])} ر.س</b></div><div class="row"><span>المستخدم</span><b>${safeText(r['المستخدم']||r.user||'النظام')}</b></div></div></div><div class="box"><b>البيان:</b><p>${safeText(r['البيان']||'-')}</p></div><div class="sig"><div>المحاسب</div><div>المدير / الاعتماد</div></div><script>setTimeout(()=>window.print(),300)<\/script></body></html>`);
+  w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${safeText(r['رقم السند']||'سند')}</title><style>body{font-family:Arial;padding:32px;color:#111} .head{border-bottom:3px solid #0b2346;padding-bottom:14px;margin-bottom:18px;display:flex;justify-content:space-between}.brand{font-size:24px;font-weight:bold}.box{border:1px solid #ddd;border-radius:12px;padding:14px;margin:10px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row{display:flex;justify-content:space-between;border-bottom:1px dashed #ddd;padding:7px}.status{padding:5px 10px;border-radius:20px;background:#eef} .sig{display:flex;justify-content:space-between;margin-top:60px}.sig div{width:40%;border-top:1px solid #333;text-align:center;padding-top:10px}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><div class="head"><div><div class="brand">مؤسسة حسن محمد الشريمي</div><div>سند مالي رسمي</div></div><div><b>${safeText(r['نوع العملية']||'-')}</b><br>${statusBadgeVoucher(statusOfVoucher(r))}</div></div><div class="grid"><div class="box"><div class="row"><span>رقم السند</span><b>${safeText(r['رقم السند']||'-')}</b></div><div class="row"><span>التاريخ</span><b>${safeText(r['التاريخ']||'-')}</b></div><div class="row"><span>مركز التكلفة</span><b>${safeText(r['مركز التكلفة']||'-')}</b></div><div class="row"><span>طريقة الدفع</span><b>${safeText(r['طريقة الدفع']||'-')}</b></div></div><div class="box"><div class="row"><span>المستفيد/المستلم منه</span><b>${safeText(r['المستلم منه']||r['المستفيد']||r['المورد']||'-')}</b></div><div class="row"><span>المبلغ</span><b>${money(r['المبلغ'])} ر.س</b></div><div class="row"><span>الضريبة</span><b>${money(r['الضريبة'])} ر.س</b></div><div class="row"><span>المستخدم</span><b>${safeText(r['المستخدم']||r.user||'النظام')}</b></div></div></div><div class="box"><b>البيان:</b><p>${safeText(r['البيان']||'-')}</p></div><div class="sig"><div>المحاسب</div><div>المدير / الاعتماد</div></div><script>setTimeout(()=>window.print(),300)<\/script>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`);
   w.document.close();
   const {rows,idx}=findFinanceVoucher(id); if(idx>-1){addAuditToVoucher(rows[idx],'طباعة','تمت طباعة السند / PDF');save('finance',rows)}
 }
@@ -2212,7 +2445,42 @@ seedProperties();
   window.exportCostCenterFinancialReportExcel=function(){
     const rep=window.__lastCostCenterReport; if(!rep)return alert('اعرض التقرير أولاً');
     const rows=rep.summary.rows;
-    const html=`<html><head><meta charset="utf-8"></head><body><h2>تقرير مالي - ${esc(rep.centerName)}</h2><table border="1"><tr><th>الإيرادات</th><th>المصروفات</th><th>الصافي</th></tr><tr><td>${rep.summary.revenue}</td><td>${rep.summary.expense}</td><td>${rep.summary.net}</td></tr></table><br><table border="1"><tr><th>التاريخ</th><th>النوع</th><th>المرجع</th><th>الطرف</th><th>الفرع/الوحدة</th><th>طريقة الدفع</th><th>البيان</th><th>المبلغ</th></tr>${rows.map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.kind)}</td><td>${esc(r.ref)}</td><td>${esc(r.party)}</td><td>${esc(r.branch)}</td><td>${esc(r.method)}</td><td>${esc(r.statement)}</td><td>${r.amount}</td></tr>`).join('')}</table></body></html>`;
+    const html=`<html><head><meta charset="utf-8">
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><h2>تقرير مالي - ${esc(rep.centerName)}</h2><table border="1"><tr><th>الإيرادات</th><th>المصروفات</th><th>الصافي</th></tr><tr><td>${rep.summary.revenue}</td><td>${rep.summary.expense}</td><td>${rep.summary.net}</td></tr></table><br><table border="1"><tr><th>التاريخ</th><th>النوع</th><th>المرجع</th><th>الطرف</th><th>الفرع/الوحدة</th><th>طريقة الدفع</th><th>البيان</th><th>المبلغ</th></tr>${rows.map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.kind)}</td><td>${esc(r.ref)}</td><td>${esc(r.party)}</td><td>${esc(r.branch)}</td><td>${esc(r.method)}</td><td>${esc(r.statement)}</td><td>${r.amount}</td></tr>`).join('')}</table>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`;
     const blob=new Blob(['\ufeff',html],{type:'application/vnd.ms-excel;charset=utf-8;'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`تقرير_${rep.centerName}_${new Date().toISOString().slice(0,10)}.xls`;a.click();URL.revokeObjectURL(a.href);
   };
@@ -2220,7 +2488,42 @@ seedProperties();
     const rep=window.__lastCostCenterReport; if(!rep)return alert('اعرض التقرير أولاً');
     const body=byId('cc_report_result')?.innerHTML||'';
     const w=window.open('','_blank');
-    w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير ${esc(rep.centerName)}</title><style>body{font-family:Arial,Tahoma;padding:24px;color:#111}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ddd;padding:8px;text-align:right}.metric,.cards{display:block}.metric{border:1px solid #ddd;border-radius:10px;padding:10px;margin:8px 0}.micon,.hint{display:none}.green{color:#15803d}.red{color:#b91c1c}.badge{padding:3px 7px;border-radius:12px;background:#eee}</style></head><body><h2>تقرير مالي - ${esc(rep.centerName)}</h2><p>الفترة: ${esc(rep.filters.from||'-')} إلى ${esc(rep.filters.to||'-')} | الفرع: ${esc(rep.filters.branch||'الكل')}</p>${body}<script>setTimeout(()=>window.print(),300)<\/script></body></html>`);w.document.close();
+    w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير ${esc(rep.centerName)}</title><style>body{font-family:Arial,Tahoma;padding:24px;color:#111}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ddd;padding:8px;text-align:right}.metric,.cards{display:block}.metric{border:1px solid #ddd;border-radius:10px;padding:10px;margin:8px 0}.micon,.hint{display:none}.green{color:#15803d}.red{color:#b91c1c}.badge{padding:3px 7px;border-radius:12px;background:#eee}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><h2>تقرير مالي - ${esc(rep.centerName)}</h2><p>الفترة: ${esc(rep.filters.from||'-')} إلى ${esc(rep.filters.to||'-')} | الفرع: ${esc(rep.filters.branch||'الكل')}</p>${body}<script>setTimeout(()=>window.print(),300)<\/script>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`);w.document.close();
   };
   // Override cost center cards while preserving V53 style.
   window.renderCostCentersSection=function(){
@@ -2405,7 +2708,42 @@ seedProperties();
   };
   window.exportPurchasesExcel=function(){
     const rows=(load('purchases')||[]).filter(passesPurchaseFilters);
-    const html=`<html><head><meta charset="utf-8"></head><body><h2>تقرير المشتريات</h2><table border="1"><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>المورد</th><th>السجل</th><th>الضريبي</th><th>مركز التكلفة</th><th>الفرع</th><th>قبل الضريبة</th><th>الضريبة</th><th>الإجمالي</th><th>طريقة الدفع</th><th>السداد</th></tr>${rows.map(r=>`<tr><td>${safeEsc(r['رقم الفاتورة'])}</td><td>${safeEsc(r['تاريخ الفاتورة'])}</td><td>${safeEsc(r['المورد'])}</td><td>${safeEsc(r['رقم السجل التجاري'])}</td><td>${safeEsc(r['الرقم الضريبي'])}</td><td>${safeEsc(r['مركز التكلفة'])}</td><td>${safeEsc(r['الفرع / الوحدة'])}</td><td>${n(r['المبلغ قبل الضريبة'])}</td><td>${n(r['الضريبة'])}</td><td>${n(r['الإجمالي'])}</td><td>${safeEsc(r['طريقة الدفع'])}</td><td>${safeEsc(r['حالة السداد'])}</td></tr>`).join('')}</table></body></html>`;
+    const html=`<html><head><meta charset="utf-8">
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><h2>تقرير المشتريات</h2><table border="1"><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>المورد</th><th>السجل</th><th>الضريبي</th><th>مركز التكلفة</th><th>الفرع</th><th>قبل الضريبة</th><th>الضريبة</th><th>الإجمالي</th><th>طريقة الدفع</th><th>السداد</th></tr>${rows.map(r=>`<tr><td>${safeEsc(r['رقم الفاتورة'])}</td><td>${safeEsc(r['تاريخ الفاتورة'])}</td><td>${safeEsc(r['المورد'])}</td><td>${safeEsc(r['رقم السجل التجاري'])}</td><td>${safeEsc(r['الرقم الضريبي'])}</td><td>${safeEsc(r['مركز التكلفة'])}</td><td>${safeEsc(r['الفرع / الوحدة'])}</td><td>${n(r['المبلغ قبل الضريبة'])}</td><td>${n(r['الضريبة'])}</td><td>${n(r['الإجمالي'])}</td><td>${safeEsc(r['طريقة الدفع'])}</td><td>${safeEsc(r['حالة السداد'])}</td></tr>`).join('')}</table>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`;
     const blob=new Blob(['\ufeff',html],{type:'application/vnd.ms-excel;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='تقرير_المشتريات.xls'; a.click(); URL.revokeObjectURL(a.href);
   };
   const oldRenderModuleSectionV55=window.renderModuleSection;
@@ -2502,12 +2840,82 @@ seedProperties();
     const st=window.__supplierStatement; if(!st)return alert('افتح كشف المورد أولاً');
     const body=byId('modalBody').innerHTML;
     const w=window.open('','_blank');
-    w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>كشف حساب مورد</title><style>body{font-family:Arial,Tahoma;padding:24px;color:#111}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ddd;padding:8px;text-align:right}.actions,.micon,.hint{display:none}.metric{border:1px solid #ddd;padding:10px;border-radius:10px;margin:6px 0}.green{color:#15803d}.red{color:#b91c1c}.blue{color:#1d4ed8}</style></head><body><h2>كشف حساب مورد - ${esc2(st.name)}</h2>${body}</body></html>`);
+    w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>كشف حساب مورد</title><style>body{font-family:Arial,Tahoma;padding:24px;color:#111}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ddd;padding:8px;text-align:right}.actions,.micon,.hint{display:none}.metric{border:1px solid #ddd;padding:10px;border-radius:10px;margin:6px 0}.green{color:#15803d}.red{color:#b91c1c}.blue{color:#1d4ed8}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><h2>كشف حساب مورد - ${esc2(st.name)}</h2>${body}
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`);
     w.document.close(); setTimeout(()=>w.print(),300);
   };
   window.exportSupplierStatementExcel=function(){
     const st=window.__supplierStatement; if(!st)return alert('افتح كشف المورد أولاً');
-    const html=`<html><head><meta charset="utf-8"></head><body><h2>كشف حساب مورد - ${esc2(st.name)}</h2><table border="1"><tr><th>التاريخ</th><th>النوع</th><th>المرجع</th><th>البيان</th><th>فاتورة</th><th>سداد</th><th>الرصيد</th></tr>${st.rows.map(e=>`<tr><td>${esc2(e.date)}</td><td>${esc2(e.type)}</td><td>${esc2(e.ref)}</td><td>${esc2(e.note)}</td><td>${num2(e.debit)}</td><td>${num2(e.credit)}</td><td>${num2(e.balance)}</td></tr>`).join('')}</table></body></html>`;
+    const html=`<html><head><meta charset="utf-8">
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><h2>كشف حساب مورد - ${esc2(st.name)}</h2><table border="1"><tr><th>التاريخ</th><th>النوع</th><th>المرجع</th><th>البيان</th><th>فاتورة</th><th>سداد</th><th>الرصيد</th></tr>${st.rows.map(e=>`<tr><td>${esc2(e.date)}</td><td>${esc2(e.type)}</td><td>${esc2(e.ref)}</td><td>${esc2(e.note)}</td><td>${num2(e.debit)}</td><td>${num2(e.credit)}</td><td>${num2(e.balance)}</td></tr>`).join('')}</table>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`;
     const blob=new Blob(['\ufeff',html],{type:'application/vnd.ms-excel;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='كشف_حساب_'+st.name+'.xls'; a.click(); URL.revokeObjectURL(a.href);
   };
   const oldGenericActionButtonV56=window.genericActionButton || genericActionButton;
@@ -2634,7 +3042,42 @@ seedProperties();
     const f=findVoucher(kind,id); if(!f||!f.row)return alert('لم يتم العثور على السند');
     const u=typeof getUnit==='function'?getUnit(unitId):{}; const r=f.row;
     const w=window.open('','_blank');
-    w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>سند</title><style>body{font-family:Arial,Tahoma;padding:28px;color:#111}h2{text-align:center}table{width:100%;border-collapse:collapse;margin-top:18px}td,th{border:1px solid #ddd;padding:10px;text-align:right}.head{display:flex;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:12px}</style></head><body><div class="head"><b>مؤسسة حسن محمد الشريمي</b><b>${kind==='payment'?'سند قبض':'سند/حركة مالية'}</b></div><h2>${kind==='payment'?'سند قبض':'سند مالي'} - ${esc(u?.type||'')} ${esc(u?.unit_no||'')}</h2><table><tbody><tr><th>التاريخ</th><td>${esc(r['تاريخ السداد']||r['التاريخ']||String(r.created||'').slice(0,10)||'-')}</td></tr><tr><th>المبلغ</th><td>${fmt(r['المبلغ'])} ر.س</td></tr><tr><th>طريقة الدفع</th><td>${esc(r['طريقة الدفع']||'-')}</td></tr><tr><th>البيان</th><td>${esc(r['البيان']||'-')}</td></tr><tr><th>مركز التكلفة</th><td>${esc(r['مركز التكلفة']||unitCenterName(u)||'-')}</td></tr><tr><th>الوحدة</th><td>${esc(r['الوحدة']||u?.unit_no||'-')}</td></tr></tbody></table></body></html>`);
+    w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>سند</title><style>body{font-family:Arial,Tahoma;padding:28px;color:#111}h2{text-align:center}table{width:100%;border-collapse:collapse;margin-top:18px}td,th{border:1px solid #ddd;padding:10px;text-align:right}.head{display:flex;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:12px}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><div class="head"><b>مؤسسة حسن محمد الشريمي</b><b>${kind==='payment'?'سند قبض':'سند/حركة مالية'}</b></div><h2>${kind==='payment'?'سند قبض':'سند مالي'} - ${esc(u?.type||'')} ${esc(u?.unit_no||'')}</h2><table><tbody><tr><th>التاريخ</th><td>${esc(r['تاريخ السداد']||r['التاريخ']||String(r.created||'').slice(0,10)||'-')}</td></tr><tr><th>المبلغ</th><td>${fmt(r['المبلغ'])} ر.س</td></tr><tr><th>طريقة الدفع</th><td>${esc(r['طريقة الدفع']||'-')}</td></tr><tr><th>البيان</th><td>${esc(r['البيان']||'-')}</td></tr><tr><th>مركز التكلفة</th><td>${esc(r['مركز التكلفة']||unitCenterName(u)||'-')}</td></tr><tr><th>الوحدة</th><td>${esc(r['الوحدة']||u?.unit_no||'-')}</td></tr></tbody></table>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`);
     w.document.close(); setTimeout(()=>w.print(),300);
   };
   window.sendUnitVoucherWhatsApp=function(kind,id,unitId){
@@ -2917,7 +3360,42 @@ seedProperties();
     const user=(typeof getCurrentUser==='function'?getCurrentUser():{name:'النظام'}).name;
     const period=(f.from||f.to)?`${f.from||'البداية'} إلى ${f.to||'اليوم'}`:today;
     const w=window.open('','_blank','width=1200,height=850');
-    w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير الحركات المالية</title><style>body{font-family:Arial,Tahoma,sans-serif;margin:0;background:#eef3f8;color:#111}.doc{width:297mm;min-height:210mm;margin:auto;background:white;padding:14mm;box-sizing:border-box}.head{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #0b2346;padding-bottom:12px}.brand h1{margin:0;font-size:24px}.brand p{margin:5px 0;color:#64748b}.logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#0b2346,#c99735);color:white;display:grid;place-items:center;font-size:30px;font-weight:900}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}.kpi{border:1px solid #dbe4ef;border-radius:12px;padding:10px;background:#fbfdff}.kpi span{color:#64748b;font-weight:bold}.kpi b{display:block;font-size:20px;margin-top:5px}table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}th,td{border:1px solid #cbd5e1;padding:7px;text-align:center;vertical-align:top}th{background:#0b2346;color:white}.section-title{background:#f1f5f9;border:1px solid #dbe4ef;border-radius:10px;padding:8px;margin-top:14px;font-weight:bold}.sign{display:grid;grid-template-columns:1fr 1fr;gap:70px;margin-top:35px}.sign div{border-top:1px solid #111;text-align:center;padding-top:8px}.no-print{position:fixed;top:12px;left:12px;padding:10px 18px}@media print{.no-print{display:none}.doc{width:auto;min-height:auto;margin:0;padding:8mm}body{background:white}}</style></head><body><button class="no-print" onclick="print()">طباعة / PDF</button><main class="doc"><div class="head"><div class="brand"><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><p>تقرير الحركات المالية اليومية / التفصيلية</p><p>الفترة: ${h(period)} — أصدره: ${h(user)} — وقت الطباعة: ${new Date().toLocaleString('ar-SA')}</p></div><div class="logo">ح</div></div><div class="kpis"><div class="kpi"><span>إجمالي المقبوضات</span><b>${fmt(totalIn)} ر.س</b></div><div class="kpi"><span>إجمالي المصروفات</span><b>${fmt(totalOut)} ر.س</b></div><div class="kpi"><span>صافي الحركة</span><b>${fmt(totalIn-totalOut)} ر.س</b></div><div class="kpi"><span>عدد الحركات</span><b>${rows.length}</b></div></div><div class="section-title">ملخص حسب مركز التكلفة</div><table><thead><tr><th>مركز التكلفة</th><th>عدد الحركات</th><th>قبض</th><th>صرف</th><th>الصافي</th></tr></thead><tbody>${sumRows(byCenter)}</tbody></table><div class="section-title">ملخص حسب طريقة الدفع</div><table><thead><tr><th>طريقة الدفع</th><th>عدد الحركات</th><th>قبض</th><th>صرف</th><th>الصافي</th></tr></thead><tbody>${sumRows(byMethod)}</tbody></table><div class="section-title">تفاصيل الحركات</div><table><thead><tr><th>رقم السند</th><th>التاريخ</th><th>العملية</th><th>مركز التكلفة</th><th>الفرع</th><th>الوحدة/المشروع</th><th>الطرف</th><th>المرجع</th><th>البيان</th><th>طريقة الدفع</th><th>قبض</th><th>صرف</th><th>الحالة</th></tr></thead><tbody>${detail}</tbody></table><div class="sign"><div>توقيع المحاسب</div><div>اعتماد المدير</div></div></main></body></html>`);
+    w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير الحركات المالية</title><style>body{font-family:Arial,Tahoma,sans-serif;margin:0;background:#eef3f8;color:#111}.doc{width:297mm;min-height:210mm;margin:auto;background:white;padding:14mm;box-sizing:border-box}.head{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #0b2346;padding-bottom:12px}.brand h1{margin:0;font-size:24px}.brand p{margin:5px 0;color:#64748b}.logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#0b2346,#c99735);color:white;display:grid;place-items:center;font-size:30px;font-weight:900}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}.kpi{border:1px solid #dbe4ef;border-radius:12px;padding:10px;background:#fbfdff}.kpi span{color:#64748b;font-weight:bold}.kpi b{display:block;font-size:20px;margin-top:5px}table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}th,td{border:1px solid #cbd5e1;padding:7px;text-align:center;vertical-align:top}th{background:#0b2346;color:white}.section-title{background:#f1f5f9;border:1px solid #dbe4ef;border-radius:10px;padding:8px;margin-top:14px;font-weight:bold}.sign{display:grid;grid-template-columns:1fr 1fr;gap:70px;margin-top:35px}.sign div{border-top:1px solid #111;text-align:center;padding-top:8px}.no-print{position:fixed;top:12px;left:12px;padding:10px 18px}@media print{.no-print{display:none}.doc{width:auto;min-height:auto;margin:0;padding:8mm}body{background:white}}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><button class="no-print" onclick="print()">طباعة / PDF</button><main class="doc"><div class="head"><div class="brand"><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><p>تقرير الحركات المالية اليومية / التفصيلية</p><p>الفترة: ${h(period)} — أصدره: ${h(user)} — وقت الطباعة: ${new Date().toLocaleString('ar-SA')}</p></div><div class="logo">ح</div></div><div class="kpis"><div class="kpi"><span>إجمالي المقبوضات</span><b>${fmt(totalIn)} ر.س</b></div><div class="kpi"><span>إجمالي المصروفات</span><b>${fmt(totalOut)} ر.س</b></div><div class="kpi"><span>صافي الحركة</span><b>${fmt(totalIn-totalOut)} ر.س</b></div><div class="kpi"><span>عدد الحركات</span><b>${rows.length}</b></div></div><div class="section-title">ملخص حسب مركز التكلفة</div><table><thead><tr><th>مركز التكلفة</th><th>عدد الحركات</th><th>قبض</th><th>صرف</th><th>الصافي</th></tr></thead><tbody>${sumRows(byCenter)}</tbody></table><div class="section-title">ملخص حسب طريقة الدفع</div><table><thead><tr><th>طريقة الدفع</th><th>عدد الحركات</th><th>قبض</th><th>صرف</th><th>الصافي</th></tr></thead><tbody>${sumRows(byMethod)}</tbody></table><div class="section-title">تفاصيل الحركات</div><table><thead><tr><th>رقم السند</th><th>التاريخ</th><th>العملية</th><th>مركز التكلفة</th><th>الفرع</th><th>الوحدة/المشروع</th><th>الطرف</th><th>المرجع</th><th>البيان</th><th>طريقة الدفع</th><th>قبض</th><th>صرف</th><th>الحالة</th></tr></thead><tbody>${detail}</tbody></table><div class="sign"><div>توقيع المحاسب</div><div>اعتماد المدير</div></div></main>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`);
     w.document.close(); setTimeout(()=>w.print(),300);
   };
 })();
@@ -3064,11 +3542,81 @@ seedProperties();
     saveHR(PAY_KEY,pays); saveHR(ADJ_KEY,adjs); alert('تم اعتماد المسير وإنشاء سندات صرف لعدد '+count+' موظف'); closeModal(); renderHRSection(); renderDashboard(); if(typeof renderFinanceSection==='function')renderFinanceSection();
   };
   window.printHRPayroll=function(month=($('hr_month')?.value)||ym()){
-    const rows=activeEmployees().map(e=>({e,c:payrollCalc(e,month)})); const total=rows.reduce((s,x)=>s+x.c.net,0); const trs=rows.map(x=>`<tr><td>${esc(empName(x.e))}</td><td>${esc(x.e['المسمى الوظيفي']||'-')}</td><td>${esc(x.e['مركز التكلفة']||'-')}</td><td>${fmt(x.c.basic)}</td><td>${fmt(x.c.allowances)}</td><td>${fmt(x.c.bonuses)}</td><td>${fmt(x.c.advances)}</td><td>${fmt(x.c.loanDue)}</td><td>${fmt(x.c.deductions)}</td><td>${fmt(x.c.net)}</td></tr>`).join(''); const w=window.open('','_blank'); w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>مسير الرواتب</title><style>body{font-family:Arial;background:#eef3f8;margin:0}.doc{background:white;width:297mm;min-height:210mm;margin:auto;padding:14mm;box-sizing:border-box}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #cbd5e1;padding:7px;text-align:center}th{background:#0b2346;color:white}.head{display:flex;justify-content:space-between;border-bottom:3px solid #0b2346;margin-bottom:15px}.kpi{display:inline-block;border:1px solid #ddd;padding:10px;margin:5px;border-radius:8px}.sign{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:35px}.sign div{border-top:1px solid #111;text-align:center;padding-top:8px}@media print{button{display:none}.doc{width:auto;margin:0}}</style></head><body><button onclick="print()">طباعة / PDF</button><div class="doc"><div class="head"><div><h2>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h2><p>مسير رواتب شهر ${esc(monthLabel(month))}</p></div><h1>👥</h1></div><div class="kpi">عدد الموظفين: <b>${rows.length}</b></div><div class="kpi">صافي المسير: <b>${fmt(total)} ر.س</b></div><table><thead><tr><th>الموظف</th><th>المسمى</th><th>مركز التكلفة</th><th>الأساسي</th><th>البدلات</th><th>مكافآت</th><th>دفعات/سلف</th><th>أقساط سلف</th><th>خصومات</th><th>الصافي</th></tr></thead><tbody>${trs}</tbody></table><div class="sign"><div>توقيع المحاسب</div><div>اعتماد المدير</div></div></div></body></html>`); w.document.close(); setTimeout(()=>w.print(),300);
+    const rows=activeEmployees().map(e=>({e,c:payrollCalc(e,month)})); const total=rows.reduce((s,x)=>s+x.c.net,0); const trs=rows.map(x=>`<tr><td>${esc(empName(x.e))}</td><td>${esc(x.e['المسمى الوظيفي']||'-')}</td><td>${esc(x.e['مركز التكلفة']||'-')}</td><td>${fmt(x.c.basic)}</td><td>${fmt(x.c.allowances)}</td><td>${fmt(x.c.bonuses)}</td><td>${fmt(x.c.advances)}</td><td>${fmt(x.c.loanDue)}</td><td>${fmt(x.c.deductions)}</td><td>${fmt(x.c.net)}</td></tr>`).join(''); const w=window.open('','_blank'); w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>مسير الرواتب</title><style>body{font-family:Arial;background:#eef3f8;margin:0}.doc{background:white;width:297mm;min-height:210mm;margin:auto;padding:14mm;box-sizing:border-box}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #cbd5e1;padding:7px;text-align:center}th{background:#0b2346;color:white}.head{display:flex;justify-content:space-between;border-bottom:3px solid #0b2346;margin-bottom:15px}.kpi{display:inline-block;border:1px solid #ddd;padding:10px;margin:5px;border-radius:8px}.sign{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:35px}.sign div{border-top:1px solid #111;text-align:center;padding-top:8px}@media print{button{display:none}.doc{width:auto;margin:0}}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><button onclick="print()">طباعة / PDF</button><div class="doc"><div class="head"><div><h2>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h2><p>مسير رواتب شهر ${esc(monthLabel(month))}</p></div><h1>👥</h1></div><div class="kpi">عدد الموظفين: <b>${rows.length}</b></div><div class="kpi">صافي المسير: <b>${fmt(total)} ر.س</b></div><table><thead><tr><th>الموظف</th><th>المسمى</th><th>مركز التكلفة</th><th>الأساسي</th><th>البدلات</th><th>مكافآت</th><th>دفعات/سلف</th><th>أقساط سلف</th><th>خصومات</th><th>الصافي</th></tr></thead><tbody>${trs}</tbody></table><div class="sign"><div>توقيع المحاسب</div><div>اعتماد المدير</div></div></div>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`); w.document.close(); setTimeout(()=>w.print(),300);
   };
   window.exportHRPayrollCSV=function(){const month=($('hr_month')?.value)||ym(); const cols=['الموظف','المسمى','مركز التكلفة','الأساسي','البدلات','مكافآت','دفعات/سلف','قسط سلفة','خصومات','الصافي']; const lines=activeEmployees().map(e=>{const c=payrollCalc(e,month); return [empName(e),e['المسمى الوظيفي']||e['الوظيفة']||'',e['مركز التكلفة']||'',c.basic,c.allowances,c.bonuses,c.advances,c.loanDue,c.deductions,c.net].map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')}); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff'+cols.join(',')+'\n'+lines.join('\n')],{type:'text/csv'})); a.download='مسير_رواتب_'+month+'.csv'; a.click();};
   window.filterHRTable=function(){const q=($('hr_search')?.value||'').trim().toLowerCase(); document.querySelectorAll('#hr_emp_table tbody tr').forEach(tr=>tr.style.display=tr.innerText.toLowerCase().includes(q)?'':'none');};
-  window.printEmployeeStatement=function(empId){ const e=employeeById(empId); if(!e)return; let bal=0; const trs=movements(e,'').map(x=>{bal+=x.debit-x.credit;return `<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.note)}</td><td>${x.debit?fmt(x.debit):'-'}</td><td>${x.credit?fmt(x.credit):'-'}</td><td>${fmt(bal)}</td></tr>`}).join(''); const w=window.open('','_blank'); w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>كشف موظف</title><style>body{font-family:Arial}.doc{max-width:1000px;margin:auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:center}th{background:#0b2346;color:white}@media print{button{display:none}}</style></head><body><button onclick="print()">طباعة</button><div class="doc"><h2>كشف حساب الموظف: ${esc(empName(e))}</h2><p>مركز التكلفة: ${esc(e['مركز التكلفة']||'-')}</p><table><thead><tr><th>التاريخ</th><th>النوع</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>${trs}</tbody></table></div></body></html>`); w.document.close(); setTimeout(()=>w.print(),300);};
+  window.printEmployeeStatement=function(empId){ const e=employeeById(empId); if(!e)return; let bal=0; const trs=movements(e,'').map(x=>{bal+=x.debit-x.credit;return `<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.note)}</td><td>${x.debit?fmt(x.debit):'-'}</td><td>${x.credit?fmt(x.credit):'-'}</td><td>${fmt(bal)}</td></tr>`}).join(''); const w=window.open('','_blank'); w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>كشف موظف</title><style>body{font-family:Arial}.doc{max-width:1000px;margin:auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:center}th{background:#0b2346;color:white}@media print{button{display:none}}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><button onclick="print()">طباعة</button><div class="doc"><h2>كشف حساب الموظف: ${esc(empName(e))}</h2><p>مركز التكلفة: ${esc(e['مركز التكلفة']||'-')}</p><table><thead><tr><th>التاريخ</th><th>النوع</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>${trs}</tbody></table></div>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`); w.document.close(); setTimeout(()=>w.print(),300);};
   const oldRenderModuleSection=window.renderModuleSection;
   window.renderModuleSection=function(k){ if(k==='hr') return renderHRSection(); return oldRenderModuleSection(k); };
   const oldOpenAdd=window.openAdd;
@@ -3108,8 +3656,78 @@ seedProperties();
   window.renderSupplierProfileTab=function(tab,btn){if(btn){btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');} const s=suppliers().find(x=>String(x.id)===String(window.__activeSupplierId)); if(!s)return; const name=supplierName(s), invs=invoices(name), ps=pays(name); let html=''; if(tab==='overview'){html=`<div class="cards" style="grid-template-columns:repeat(4,1fr)"><div class="metric"><div><div class="label">عدد الفواتير</div><div class="value blue">${invs.length}</div></div><div class="micon">🧾</div></div><div class="metric"><div><div class="label">فواتير غير مسددة</div><div class="value red">${invs.filter(r=>(r['حالة السداد']||'')!=='مسدد').length}</div></div><div class="micon">⏰</div></div><div class="metric"><div><div class="label">آخر فاتورة</div><div class="value blue" style="font-size:20px">${E(lastDate(invs,'تاريخ الفاتورة'))}</div></div><div class="micon">📅</div></div><div class="metric"><div><div class="label">آخر سداد</div><div class="value green" style="font-size:20px">${E(lastDate(ps,'التاريخ'))}</div></div><div class="micon">💵</div></div></div>`;} if(tab==='invoices'){html=`<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الفاتورة</th><th>الإجمالي</th><th>السداد</th><th>المتبقي</th><th>إجراء</th></tr></thead><tbody>${invs.map(r=>`<tr><td>${E(r['تاريخ الفاتورة']||'-')}</td><td>${E(r['رقم الفاتورة']||'-')}</td><td>${F(invTotal(r))}</td><td>${E(r['حالة السداد']||'-')}</td><td>${F(typeof window.purchaseRemaining==='function'?window.purchaseRemaining(r):invTotal(r))}</td><td><button class="soft-btn" onclick="openSupplierPayment('${r.id}')">سداد</button></td></tr>`).join('')||'<tr><td colspan="6"><div class="empty">لا توجد فواتير</div></td></tr>'}</tbody></table></div>`;} if(tab==='payments'){html=`<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>المرجع</th><th>المبلغ</th><th>طريقة الدفع</th><th>البيان</th></tr></thead><tbody>${ps.map(p=>`<tr><td>${E(p['التاريخ']||'-')}</td><td>${E(p['رقم الفاتورة']||p.id)}</td><td>${F(p['المبلغ'])}</td><td>${E(p['طريقة الدفع']||'-')}</td><td>${E(p['البيان']||'-')}</td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">لا توجد سدادات</div></td></tr>'}</tbody></table></div>`;} if(tab==='info'){html=`<div class="grid row2"><div class="report-box"><span>السجل التجاري</span><b>${E(s['رقم السجل التجاري']||'-')}</b></div><div class="report-box"><span>الرقم الضريبي</span><b>${E(s['الرقم الضريبي']||'-')}</b></div><div class="report-box"><span>العنوان الوطني</span><b>${E(s['العنوان الوطني']||'-')}</b></div><div class="report-box"><span>المدينة</span><b>${E(s['المدينة']||'-')}</b></div><div class="report-box"><span>المسؤول</span><b>${E(s['اسم المسؤول']||'-')}</b></div><div class="report-box"><span>الجوال</span><b>${E(s['الجوال']||'-')}</b></div><div class="report-box"><span>البريد</span><b>${E(s['البريد الإلكتروني']||'-')}</b></div><div class="report-box"><span>IBAN</span><b>${E(s['IBAN']||s['الآيبان']||'-')}</b></div></div>`;} $('supplier_profile_tab').innerHTML=html;};
   window.openSupplierGeneralPayment=function(name){if(!name)return; const today=new Date().toISOString().slice(0,10); $('modalTitle').textContent='سداد عام للمورد - '+name; $('modalBody').innerHTML=`<div class="form row3"><div class="field"><label>المورد</label><input id="sgp_supplier" value="${E(name)}" readonly></div><div class="field"><label>التاريخ</label><input id="sgp_date" type="date" value="${today}"></div><div class="field"><label>المبلغ</label><input id="sgp_amount" type="number" step="0.01"></div><div class="field"><label>طريقة الدفع</label><select id="sgp_method"><option>نقدي</option><option>تحويل</option><option>شبكة</option><option>شيك</option></select></div><div class="field wide"><label>البيان</label><input id="sgp_note" value="سداد عام للمورد ${E(name)}"></div></div><div class="actions"><button class="success" onclick="saveSupplierGeneralPayment()">حفظ السداد</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`; $('modal').classList.add('show');};
   window.saveSupplierGeneralPayment=function(){const name=$('sgp_supplier').value, amount=N($('sgp_amount').value); if(amount<=0)return alert('أدخل مبلغ السداد'); const pay={id:Date.now(),created:new Date().toISOString(),'المورد':name,'رقم الفاتورة':'سداد عام','التاريخ':$('sgp_date').value,'المبلغ':amount,'طريقة الدفع':$('sgp_method').value,'البيان':$('sgp_note').value}; const rows=load(PAY_KEY)||[]; rows.unshift(pay); save(PAY_KEY,rows); const fin=load('finance')||[]; fin.unshift({id:pay.id,created:pay.created,'نوع العملية':'سند صرف','رقم السند':'PV-SUP-'+String(pay.id).slice(-6),'التاريخ':pay['التاريخ'],'المستفيد':name,'المورد':name,'بند الصرف':'سداد مورد','المبلغ':amount,'قبل الضريبة':amount,'الضريبة':0,'طريقة الدفع':pay['طريقة الدفع'],'الحساب':(typeof financeAccountByMethod==='function'?financeAccountByMethod(pay['طريقة الدفع']):pay['طريقة الدفع']),'البيان':pay['البيان'],'حالة الاعتماد':amount>=10000?'بانتظار اعتماد':'معتمد',supplier_payment_id:pay.id}); save('finance',fin); closeModal(); renderSuppliersSection(); if(typeof renderFinanceSection==='function')renderFinanceSection();};
-  window.exportSuppliersExcel=function(){const rows=suppliers().filter(supplierMatches); const html=`<html><head><meta charset="utf-8"></head><body><h2>تقرير الموردين</h2><table border="1"><tr><th>المورد</th><th>السجل</th><th>الضريبي</th><th>الجوال</th><th>المدينة</th><th>الرصيد</th><th>آخر فاتورة</th><th>آخر سداد</th><th>عدد الفواتير</th><th>الحالة</th></tr>${rows.map(s=>{const name=supplierName(s);return `<tr><td>${E(name)}</td><td>${E(s['رقم السجل التجاري'])}</td><td>${E(s['الرقم الضريبي'])}</td><td>${E(s['الجوال'])}</td><td>${E(s['المدينة'])}</td><td>${balance(name)}</td><td>${E(lastDate(invoices(name),'تاريخ الفاتورة'))}</td><td>${E(lastDate(pays(name),'التاريخ'))}</td><td>${invoices(name).length}</td><td>${E(s['الحالة']||'نشط')}</td></tr>`}).join('')}</table></body></html>`; const blob=new Blob(['\ufeff',html],{type:'application/vnd.ms-excel;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='تقرير_الموردين.xls'; a.click(); URL.revokeObjectURL(a.href);};
-  window.printSuppliersReport=function(){const body=byId('suppliers')?.innerHTML||''; const w=window.open('','_blank'); w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير الموردين</title><style>body{font-family:Arial,Tahoma;padding:20px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:7px}.actions,.gear-btn,.actions-menu,.soft-btn,.primary,.micon,.hint{display:none}.metric{border:1px solid #ddd;margin:6px;padding:8px;border-radius:8px}.cards{display:block}.green{color:#15803d}.red{color:#b91c1c}</style></head><body><h2>تقرير الموردين</h2>${body}<script>setTimeout(()=>print(),300)<\/script></body></html>`); w.document.close();};
+  window.exportSuppliersExcel=function(){const rows=suppliers().filter(supplierMatches); const html=`<html><head><meta charset="utf-8">
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><h2>تقرير الموردين</h2><table border="1"><tr><th>المورد</th><th>السجل</th><th>الضريبي</th><th>الجوال</th><th>المدينة</th><th>الرصيد</th><th>آخر فاتورة</th><th>آخر سداد</th><th>عدد الفواتير</th><th>الحالة</th></tr>${rows.map(s=>{const name=supplierName(s);return `<tr><td>${E(name)}</td><td>${E(s['رقم السجل التجاري'])}</td><td>${E(s['الرقم الضريبي'])}</td><td>${E(s['الجوال'])}</td><td>${E(s['المدينة'])}</td><td>${balance(name)}</td><td>${E(lastDate(invoices(name),'تاريخ الفاتورة'))}</td><td>${E(lastDate(pays(name),'التاريخ'))}</td><td>${invoices(name).length}</td><td>${E(s['الحالة']||'نشط')}</td></tr>`}).join('')}</table>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`; const blob=new Blob(['\ufeff',html],{type:'application/vnd.ms-excel;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='تقرير_الموردين.xls'; a.click(); URL.revokeObjectURL(a.href);};
+  window.printSuppliersReport=function(){const body=byId('suppliers')?.innerHTML||''; const w=window.open('','_blank'); w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير الموردين</title><style>body{font-family:Arial,Tahoma;padding:20px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:7px}.actions,.gear-btn,.actions-menu,.soft-btn,.primary,.micon,.hint{display:none}.metric{border:1px solid #ddd;margin:6px;padding:8px;border-radius:8px}.cards{display:block}.green{color:#15803d}.red{color:#b91c1c}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><h2>تقرير الموردين</h2>${body}<script>setTimeout(()=>print(),300)<\/script>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`); w.document.close();};
   const oldGeneric=window.genericActionButton;
   window.genericActionButton=function(k,id){if(k==='suppliers'){const menuId='sup_v57_'+id; return `<div class="action-cell"><button class="gear-btn" onclick="toggleActionMenu(event,'${menuId}')">⚙️</button><div class="actions-menu" id="${menuId}"><button onclick="openSupplierProfile('${id}');closeActionMenus()"><span>ملف المورد</span><b>👁️</b></button><button onclick="editRecord('suppliers',${id});closeActionMenus()"><span>تعديل</span><b>✏️</b></button><button onclick="{const s=(load('suppliers')||[]).find(x=>String(x.id)==='${id}'); if(s)openSupplierStatement(s['الاسم التجاري']||s['اسم المورد']); closeActionMenus();}"><span>كشف الحساب</span><b>📄</b></button><button onclick="{const s=(load('suppliers')||[]).find(x=>String(x.id)==='${id}'); if(s)openSupplierGeneralPayment(s['الاسم التجاري']||s['اسم المورد']); closeActionMenus();}"><span>سداد عام</span><b>💳</b></button><button onclick="openPurchaseInvoice();closeActionMenus()"><span>فاتورة مشتريات</span><b>🧾</b></button><div class="menu-sep"></div><button onclick="openModal('المرفقات');closeActionMenus()"><span>المرفقات</span><b>📎</b></button><button onclick="printSuppliersReport();closeActionMenus()"><span>طباعة</span><b>🖨️</b></button><div class="menu-sep"></div><button class="danger-item" onclick="openModal('حذف');closeActionMenus()"><span>حذف</span><b>🗑️</b></button></div></div>`;} return oldGeneric(k,id);};
 })();
@@ -3295,7 +3913,42 @@ seedProperties();
   window.setFinancialReportPeriod=function(v){setPeriodDates(v); renderFinanceReportPreview();};
   window.applyFinancialReportFilters=function(){const f=financeReportFilter(); f.period=$('fr_period')?.value||'custom'; f.from=$('fr_from')?.value||''; f.to=$('fr_to')?.value||''; f.center=$('fr_center')?.value||''; f.type=$('fr_type')?.value||'all'; f.method=$('fr_method')?.value||''; f.user=$('fr_user')?.value||''; renderFinanceReportPreview();};
   window.openFinancialReportModal=function(){const f=financeReportFilter(); const rows=allFinanceRows(); const methods=rows.map(r=>r['طريقة الدفع']).filter(Boolean); const users=rows.map(r=>r['المستخدم']||'النظام').filter(Boolean); $('modalTitle').textContent='📊 التقرير المالي'; $('modalBody').innerHTML=`<div class="panel"><div class="panel-title"><h3>فلاتر التقرير المالي</h3><div><button class="soft-btn" onclick="applyFinancialReportFilters()">بحث</button> <button class="primary" onclick="printFinancialReportFiltered()">طباعة التقرير</button> <button class="soft-btn" onclick="exportFinancialReportCSV()">Excel/CSV</button></div></div><div class="form"><div class="field"><label>الفترة</label><select id="fr_period" onchange="setFinancialReportPeriod(this.value)"><option value="today" ${f.period==='today'?'selected':''}>اليوم</option><option value="yesterday" ${f.period==='yesterday'?'selected':''}>أمس</option><option value="week" ${f.period==='week'?'selected':''}>آخر 7 أيام</option><option value="month" ${f.period==='month'?'selected':''}>هذا الشهر</option><option value="year" ${f.period==='year'?'selected':''}>هذه السنة</option><option value="custom" ${f.period==='custom'?'selected':''}>فترة مخصصة</option></select></div><div class="field"><label>من تاريخ</label><input id="fr_from" type="date" value="${E(f.from)}" onchange="applyFinancialReportFilters()"></div><div class="field"><label>إلى تاريخ</label><input id="fr_to" type="date" value="${E(f.to)}" onchange="applyFinancialReportFilters()"></div><div class="field"><label>مركز التكلفة</label><select id="fr_center" onchange="applyFinancialReportFilters()">${centerList(f.center)}</select></div><div class="field"><label>نوع الحركة</label><select id="fr_type" onchange="applyFinancialReportFilters()"><option value="all" ${f.type==='all'?'selected':''}>جميع العمليات</option><option value="in" ${f.type==='in'?'selected':''}>الإيرادات فقط</option><option value="out" ${f.type==='out'?'selected':''}>المصروفات فقط</option><option value="purchases" ${f.type==='purchases'?'selected':''}>سداد الموردين/المشتريات</option></select></div><div class="field"><label>طريقة الدفع</label><select id="fr_method" onchange="applyFinancialReportFilters()">${optionList(methods,f.method,'كل الطرق')}</select></div><div class="field"><label>المستخدم</label><select id="fr_user" onchange="applyFinancialReportFilters()">${optionList(users,f.user,'كل المستخدمين')}</select></div></div></div><div id="financial_report_preview"></div>`; $('modal').classList.add('show'); renderFinanceReportPreview();};
-  window.printFinancialReportFiltered=function(){const rows=financeReportRows(); const s=financeReportSummary(rows); const f=financeReportFilter(); const byMethod={}; rows.forEach(r=>{const m=r['طريقة الدفع']||'-'; byMethod[m]=(byMethod[m]||0)+N(r['المبلغ']);}); const byCenter={}; rows.forEach(r=>{const c=r['مركز التكلفة']||'-'; byCenter[c]=byCenter[c]||{in:0,out:0}; if(r['نوع العملية']==='سند قبض')byCenter[c].in+=N(r['المبلغ']); else byCenter[c].out+=N(r['المبلغ']);}); const methodRows=Object.entries(byMethod).map(([k,v])=>`<tr><td>${E(k)}</td><td>${M(v)}</td></tr>`).join(''); const centerRows=Object.entries(byCenter).map(([c,v])=>`<tr><td>${E(c)}</td><td>${M(v.in)}</td><td>${M(v.out)}</td><td>${M(v.in-v.out)}</td></tr>`).join(''); const moveRows=rows.map(r=>`<tr><td>${E(r['رقم السند']||'-')}</td><td>${E(d10(r['التاريخ']||r.created)||'-')}</td><td>${E(r['نوع العملية']||'-')}</td><td>${E(r['مركز التكلفة']||'-')}</td><td>${E(r['المستفيد']||r['المستلم منه']||r['المورد']||'-')}</td><td>${E(r['البيان']||'-')}</td><td>${r['نوع العملية']==='سند قبض'?M(r['المبلغ']):'-'}</td><td>${r['نوع العملية']==='سند صرف'?M(r['المبلغ']):'-'}</td><td>${E(r['طريقة الدفع']||'-')}</td></tr>`).join(''); const w=window.open('','_blank','width=1100,height=900'); w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>التقرير المالي</title><style>body{font-family:Arial,Tahoma;padding:25px;color:#111}.head{border-bottom:3px solid #0b2346;padding-bottom:12px;margin-bottom:18px}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.kpi{border:1px solid #ddd;border-radius:12px;padding:12px;background:#fafafa}.green{color:#15803d}.red{color:#b91c1c}.blue{color:#1d4ed8}table{width:100%;border-collapse:collapse;margin:14px 0}td,th{border:1px solid #ddd;padding:7px;text-align:center}th{background:#0b2346;color:white}.sign{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:55px}.sign div{border-top:1px solid #111;text-align:center;padding-top:8px}@media print{button{display:none}}</style></head><body><button onclick="print()">طباعة / PDF</button><div class="head"><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><h2>التقرير المالي</h2><p>الفترة: ${E(f.from||'-')} إلى ${E(f.to||'-')} — تاريخ الطباعة: ${new Date().toLocaleString('ar-SA')}</p></div><div class="kpis"><div class="kpi"><b>الإيرادات</b><h2 class="green">${M(s.income)}</h2></div><div class="kpi"><b>المصروفات</b><h2 class="red">${M(s.expense)}</h2></div><div class="kpi"><b>الصافي</b><h2 class="${s.net>=0?'green':'red'}">${M(s.net)}</h2></div><div class="kpi"><b>عدد الحركات</b><h2 class="blue">${s.count}</h2></div></div><h3>ملخص طرق الدفع</h3><table><thead><tr><th>طريقة الدفع</th><th>المبلغ</th></tr></thead><tbody>${methodRows||'<tr><td colspan="2">لا توجد بيانات</td></tr>'}</tbody></table><h3>ملخص حسب مركز التكلفة</h3><table><thead><tr><th>مركز التكلفة</th><th>إيراد</th><th>مصروف</th><th>الصافي</th></tr></thead><tbody>${centerRows||'<tr><td colspan="4">لا توجد بيانات</td></tr>'}</tbody></table><h3>جميع الحركات</h3><table><thead><tr><th>السند</th><th>التاريخ</th><th>العملية</th><th>المركز</th><th>الطرف</th><th>البيان</th><th>قبض</th><th>صرف</th><th>الدفع</th></tr></thead><tbody>${moveRows||'<tr><td colspan="9">لا توجد بيانات</td></tr>'}</tbody></table><div class="sign"><div>توقيع المحاسب</div><div>اعتماد المدير</div></div><script>setTimeout(()=>print(),300)<\/script></body></html>`); w.document.close();};
+  window.printFinancialReportFiltered=function(){const rows=financeReportRows(); const s=financeReportSummary(rows); const f=financeReportFilter(); const byMethod={}; rows.forEach(r=>{const m=r['طريقة الدفع']||'-'; byMethod[m]=(byMethod[m]||0)+N(r['المبلغ']);}); const byCenter={}; rows.forEach(r=>{const c=r['مركز التكلفة']||'-'; byCenter[c]=byCenter[c]||{in:0,out:0}; if(r['نوع العملية']==='سند قبض')byCenter[c].in+=N(r['المبلغ']); else byCenter[c].out+=N(r['المبلغ']);}); const methodRows=Object.entries(byMethod).map(([k,v])=>`<tr><td>${E(k)}</td><td>${M(v)}</td></tr>`).join(''); const centerRows=Object.entries(byCenter).map(([c,v])=>`<tr><td>${E(c)}</td><td>${M(v.in)}</td><td>${M(v.out)}</td><td>${M(v.in-v.out)}</td></tr>`).join(''); const moveRows=rows.map(r=>`<tr><td>${E(r['رقم السند']||'-')}</td><td>${E(d10(r['التاريخ']||r.created)||'-')}</td><td>${E(r['نوع العملية']||'-')}</td><td>${E(r['مركز التكلفة']||'-')}</td><td>${E(r['المستفيد']||r['المستلم منه']||r['المورد']||'-')}</td><td>${E(r['البيان']||'-')}</td><td>${r['نوع العملية']==='سند قبض'?M(r['المبلغ']):'-'}</td><td>${r['نوع العملية']==='سند صرف'?M(r['المبلغ']):'-'}</td><td>${E(r['طريقة الدفع']||'-')}</td></tr>`).join(''); const w=window.open('','_blank','width=1100,height=900'); w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>التقرير المالي</title><style>body{font-family:Arial,Tahoma;padding:25px;color:#111}.head{border-bottom:3px solid #0b2346;padding-bottom:12px;margin-bottom:18px}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.kpi{border:1px solid #ddd;border-radius:12px;padding:12px;background:#fafafa}.green{color:#15803d}.red{color:#b91c1c}.blue{color:#1d4ed8}table{width:100%;border-collapse:collapse;margin:14px 0}td,th{border:1px solid #ddd;padding:7px;text-align:center}th{background:#0b2346;color:white}.sign{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:55px}.sign div{border-top:1px solid #111;text-align:center;padding-top:8px}@media print{button{display:none}}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><button onclick="print()">طباعة / PDF</button><div class="head"><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><h2>التقرير المالي</h2><p>الفترة: ${E(f.from||'-')} إلى ${E(f.to||'-')} — تاريخ الطباعة: ${new Date().toLocaleString('ar-SA')}</p></div><div class="kpis"><div class="kpi"><b>الإيرادات</b><h2 class="green">${M(s.income)}</h2></div><div class="kpi"><b>المصروفات</b><h2 class="red">${M(s.expense)}</h2></div><div class="kpi"><b>الصافي</b><h2 class="${s.net>=0?'green':'red'}">${M(s.net)}</h2></div><div class="kpi"><b>عدد الحركات</b><h2 class="blue">${s.count}</h2></div></div><h3>ملخص طرق الدفع</h3><table><thead><tr><th>طريقة الدفع</th><th>المبلغ</th></tr></thead><tbody>${methodRows||'<tr><td colspan="2">لا توجد بيانات</td></tr>'}</tbody></table><h3>ملخص حسب مركز التكلفة</h3><table><thead><tr><th>مركز التكلفة</th><th>إيراد</th><th>مصروف</th><th>الصافي</th></tr></thead><tbody>${centerRows||'<tr><td colspan="4">لا توجد بيانات</td></tr>'}</tbody></table><h3>جميع الحركات</h3><table><thead><tr><th>السند</th><th>التاريخ</th><th>العملية</th><th>المركز</th><th>الطرف</th><th>البيان</th><th>قبض</th><th>صرف</th><th>الدفع</th></tr></thead><tbody>${moveRows||'<tr><td colspan="9">لا توجد بيانات</td></tr>'}</tbody></table><div class="sign"><div>توقيع المحاسب</div><div>اعتماد المدير</div></div><script>setTimeout(()=>print(),300)<\/script>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`); w.document.close();};
   window.exportFinancialReportCSV=function(){const rows=financeReportRows(); const cols=['رقم السند','التاريخ','العملية','مركز التكلفة','الطرف','البيان','قبض','صرف','طريقة الدفع']; const csv='\ufeff'+cols.join(',')+'\n'+rows.map(r=>[r['رقم السند']||'',d10(r['التاريخ']||r.created)||'',r['نوع العملية']||'',r['مركز التكلفة']||'',r['المستفيد']||r['المستلم منه']||r['المورد']||'',r['البيان']||'',r['نوع العملية']==='سند قبض'?N(r['المبلغ']):'',r['نوع العملية']==='سند صرف'?N(r['المبلغ']):'',r['طريقة الدفع']||''].map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download='التقرير_المالي.csv'; a.click();};
   window.printFinanceDailyReport=function(){openFinancialReportModal();};
   const oldRenderFinance=window.renderFinanceSection||renderFinanceSection;
@@ -3583,7 +4236,42 @@ seedProperties();
     closeModal(); renderServicesCenter(); try{renderDashboard()}catch(e){} alert('تم حفظ سند الصرف وترحيله مالياً على مركز التكلفة: '+bill.center);
   };
   window.openServiceStatement=function(accountId){const a=accountById(accountId); if(!a)return; const rows=billsByAccount(accountId); const trs=rows.map((b,i)=>{const prev=i?rows[i-1]:null; const d=prev?totalBill(b)-totalBill(prev):0; return `<tr><td>${esc(b.period)}</td><td>${esc(b.bill_no||'-')}</td><td>${fmt(num(b.prev_reading))}</td><td>${fmt(num(b.current_reading))}</td><td>${fmt(totalBill(b))}</td><td>${fmt(num(b.paid))}</td><td>${fmt(totalBill(b)-num(b.paid))}</td><td class="${d>0?'red':'green'}">${prev?fmt(d):'-'}</td><td>${badgeStatus(b.status)}</td></tr>`}); $('modalTitle').textContent='كشف حساب خدمة - '+a.type+' '+a.account_no; $('modalBody').innerHTML=`<div class="grid row3"><div class="report-box"><span>نوع الخدمة</span><b>${serviceIcon(a.type)} ${esc(a.type)}</b></div><div class="report-box"><span>رقم الحساب</span><b>${esc(a.account_no)}</b></div><div class="report-box"><span>مركز التكلفة</span><b>${esc(a.center)}</b></div></div>${rowTable(['الشهر','رقم الفاتورة','قراءة سابقة','قراءة حالية','الإجمالي','مدفوع','متبقي','فرق السابق','الحالة'],trs)}<div class="actions"><button class="primary" onclick="printServiceStatement('${a.id}')">طباعة كشف الحساب</button><button class="success" onclick="openServicePaymentForm('${a.id}')">سداد</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`; $('modal').classList.add('show');};
-  window.printServiceStatement=function(accountId){const a=accountById(accountId); const rows=billsByAccount(accountId); const total=rows.reduce((x,b)=>x+totalBill(b),0), paid=rows.reduce((x,b)=>x+num(b.paid),0); const detail=rows.map((b,i)=>{const p=i?rows[i-1]:null; const d=p?totalBill(b)-totalBill(p):0; return `<tr><td>${esc(b.period)}</td><td>${esc(b.bill_no||'-')}</td><td>${fmt(totalBill(b))}</td><td>${fmt(num(b.paid))}</td><td>${fmt(totalBill(b)-num(b.paid))}</td><td>${p?fmt(d):'-'}</td><td>${esc(b.status)}</td></tr>`}).join(''); const w=window.open('','_blank','width=950,height=1000'); w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>كشف حساب خدمة</title><style>body{font-family:Arial,Tahoma,sans-serif;background:#f3f6fb;margin:0}.doc{width:210mm;min-height:297mm;margin:auto;background:white;padding:18mm}.head{border-bottom:3px solid #0b2346;padding-bottom:12px;display:flex;justify-content:space-between}.logo{width:70px;height:70px;border-radius:18px;background:#0b2346;color:white;display:grid;place-items:center;font-size:34px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #d7e0ee;padding:9px;text-align:center}th{background:#0b2346;color:white}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}.kpi{border:1px solid #d7e0ee;border-radius:12px;padding:10px;text-align:center}.kpi b{font-size:20px}</style></head><body><button onclick="print()" style="position:fixed;top:12px;left:12px;padding:10px 18px">طباعة/PDF</button><main class="doc"><div class="head"><div><h1>مؤسسة حسن محمد الشريمي</h1><p>كشف حساب خدمة: ${esc(a.type)} - ${esc(a.account_no)}</p><p>مركز التكلفة: ${esc(a.center)} — الوحدة: ${esc(a.unit||'-')}</p></div><div class="logo">ح</div></div><div class="kpis"><div class="kpi"><span>إجمالي الفواتير</span><b>${fmt(total)}</b></div><div class="kpi"><span>المدفوع</span><b>${fmt(paid)}</b></div><div class="kpi"><span>المتبقي</span><b>${fmt(total-paid)}</b></div><div class="kpi"><span>عدد الفواتير</span><b>${rows.length}</b></div></div><table><thead><tr><th>الشهر</th><th>الفاتورة</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي</th><th>الفرق</th><th>الحالة</th></tr></thead><tbody>${detail||'<tr><td colspan="7">لا توجد بيانات</td></tr>'}</tbody></table></main></body></html>`); w.document.close(); setTimeout(()=>w.print(),300);};
+  window.printServiceStatement=function(accountId){const a=accountById(accountId); const rows=billsByAccount(accountId); const total=rows.reduce((x,b)=>x+totalBill(b),0), paid=rows.reduce((x,b)=>x+num(b.paid),0); const detail=rows.map((b,i)=>{const p=i?rows[i-1]:null; const d=p?totalBill(b)-totalBill(p):0; return `<tr><td>${esc(b.period)}</td><td>${esc(b.bill_no||'-')}</td><td>${fmt(totalBill(b))}</td><td>${fmt(num(b.paid))}</td><td>${fmt(totalBill(b)-num(b.paid))}</td><td>${p?fmt(d):'-'}</td><td>${esc(b.status)}</td></tr>`}).join(''); const w=window.open('','_blank','width=950,height=1000'); w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>كشف حساب خدمة</title><style>body{font-family:Arial,Tahoma,sans-serif;background:#f3f6fb;margin:0}.doc{width:210mm;min-height:297mm;margin:auto;background:white;padding:18mm}.head{border-bottom:3px solid #0b2346;padding-bottom:12px;display:flex;justify-content:space-between}.logo{width:70px;height:70px;border-radius:18px;background:#0b2346;color:white;display:grid;place-items:center;font-size:34px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #d7e0ee;padding:9px;text-align:center}th{background:#0b2346;color:white}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}.kpi{border:1px solid #d7e0ee;border-radius:12px;padding:10px;text-align:center}.kpi b{font-size:20px}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><button onclick="print()" style="position:fixed;top:12px;left:12px;padding:10px 18px">طباعة/PDF</button><main class="doc"><div class="head"><div><h1>مؤسسة حسن محمد الشريمي</h1><p>كشف حساب خدمة: ${esc(a.type)} - ${esc(a.account_no)}</p><p>مركز التكلفة: ${esc(a.center)} — الوحدة: ${esc(a.unit||'-')}</p></div><div class="logo">ح</div></div><div class="kpis"><div class="kpi"><span>إجمالي الفواتير</span><b>${fmt(total)}</b></div><div class="kpi"><span>المدفوع</span><b>${fmt(paid)}</b></div><div class="kpi"><span>المتبقي</span><b>${fmt(total-paid)}</b></div><div class="kpi"><span>عدد الفواتير</span><b>${rows.length}</b></div></div><table><thead><tr><th>الشهر</th><th>الفاتورة</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي</th><th>الفرق</th><th>الحالة</th></tr></thead><tbody>${detail||'<tr><td colspan="7">لا توجد بيانات</td></tr>'}</tbody></table></main>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`); w.document.close(); setTimeout(()=>w.print(),300);};
   window.openServiceComparison=function(){const accounts=svcAccounts(); const m=monthNow(), pm=prevMonth(m); const rows=accounts.map(a=>{const cur=svcBills().filter(b=>String(b.account_id)===String(a.id)&&b.period===m).reduce((x,b)=>x+totalBill(b),0); const prv=svcBills().filter(b=>String(b.account_id)===String(a.id)&&b.period===pm).reduce((x,b)=>x+totalBill(b),0); const d=cur-prv; const pct=prv?((d/prv)*100):0; return `<tr><td>${serviceIcon(a.type)} ${esc(a.type)}</td><td>${esc(a.account_no)}</td><td>${esc(a.center)}</td><td>${fmt(prv)}</td><td>${fmt(cur)}</td><td class="${d>0?'red':'green'}">${fmt(d)}</td><td>${pct.toFixed(1)}%</td></tr>`}); $('modalTitle').textContent='مقارنة الخدمات بين الشهر الحالي والسابق'; $('modalBody').innerHTML=rowTable(['الخدمة','الحساب','المركز',pm,m,'الفرق','النسبة'],rows)+`<div class="actions"><button class="primary" onclick="printPage()">طباعة</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`; $('modal').classList.add('show');};
   window.openServiceUnpaidList=function(){const rows=unpaidBills().map(b=>`<tr><td>${esc(b.type)}</td><td>${esc(b.account_no)}</td><td>${esc(b.center)}</td><td>${esc(b.period)}</td><td>${fmt(totalBill(b)-num(b.paid))}</td><td><button class="success" onclick="openServicePaymentForm('${b.account_id}','${b.id}')">سداد</button></td></tr>`); $('modalTitle').textContent='الخدمات غير المسددة'; $('modalBody').innerHTML=rowTable(['الخدمة','الحساب','مركز التكلفة','الشهر','المتبقي','إجراء'],rows)+`<div class="actions"><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`; $('modal').classList.add('show');};
   window.printServicesSummary=function(){openServiceComparison(); setTimeout(()=>printPage(),200)};
@@ -3699,7 +4387,42 @@ seedProperties();
   window.openServiceStatement=function(accountId){const a=accById(accountId); if(!a)return; const rows=paysFor(accountId); const trs=rows.map((p,i)=>{const prev=rows[i-1]; const d=prev?num(p.amount)-num(prev.amount):0; return `<tr><td>${esc(p.date)}</td><td>${esc(p.voucher_no||'-')}</td><td>${fmt(p.amount)}</td><td>${prev?fmt(prev.amount):'-'}</td><td class="${d>0?'red':'green'}">${prev?fmt(d):'-'}</td><td>${esc(p.method||'-')}</td><td>${esc(p.note||'-')}</td></tr>`}); const total=rows.reduce((x,p)=>x+num(p.amount),0), lp=lastPay(accountId); $('modalTitle').textContent='كشف حساب خدمة - '+a.type+' '+a.account_no; $('modalBody').innerHTML=`<div class="grid row3"><div class="report-box"><span>رقم الحساب</span><b>${esc(a.account_no)}</b></div><div class="report-box"><span>مركز التكلفة</span><b>${esc(a.center)}</b></div><div class="report-box"><span>آخر سداد</span><b>${lp?esc(lp.date):'-'}</b></div><div class="report-box"><span>إجمالي السداد</span><b>${fmt(total)} ر.س</b></div><div class="report-box"><span>عدد العمليات</span><b>${rows.length}</b></div><div class="report-box"><span>الحالة</span><b>${badgeLate(a)}</b></div></div>${table(['التاريخ','السند','المبلغ','السابق','الفرق','طريقة الدفع','البيان'],trs)}<div class="actions"><button class="primary" onclick="printServiceStatementV109('${a.id}')">طباعة كشف الحساب</button><button class="success" onclick="openServicePaymentV109('${a.id}')">سداد</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`; $('modal').classList.add('show');};
   window.openServiceComparisonV109=function(){const m=ym(),pm=prevMonth(m); const rows=accounts().map(a=>{const cur=monthTotal(a.id,m),pr=monthTotal(a.id,pm),d=cur-pr,pct=pr?(d/pr)*100:0; const c=accountCompare(a); return `<tr><td>${icon(a.type)} ${esc(a.type)}</td><td>${esc(a.account_no)}</td><td>${esc(a.center)}</td><td>${fmt(pr)}</td><td>${fmt(cur)}</td><td class="${d>0?'red':'green'}">${fmt(d)}</td><td>${pct.toFixed(1)}%</td><td>${esc(c.text)}</td></tr>`}); $('modalTitle').textContent='مقارنة سداد الخدمات'; $('modalBody').innerHTML=table(['الخدمة','الحساب','المركز',pm,m,'فرق الشهر','النسبة','مقارنة آخر سداد'],rows)+`<div class="actions"><button class="primary" onclick="printPage()">طباعة</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`; $('modal').classList.add('show');}
   window.openServiceLateListV109=function(){const rows=accounts().filter(a=>a.status!=='متوقف'&&(!lastPay(a.id)||daysSince(lastPay(a.id).date)>30)).map(a=>{const lp=lastPay(a.id);return `<tr><td>${icon(a.type)} ${esc(a.type)}</td><td>${esc(a.account_no)}</td><td>${esc(a.center)}</td><td>${lp?esc(lp.date):'-'}</td><td>${lp?daysSince(lp.date):'لم يسدد'}</td><td><button class="success" onclick="openServicePaymentV109('${a.id}')">سداد</button></td></tr>`}); $('modalTitle').textContent='حسابات الخدمات المتأخرة'; $('modalBody').innerHTML=table(['الخدمة','الحساب','المركز','آخر سداد','عدد الأيام','إجراء'],rows); $('modal').classList.add('show');}
-  window.printServiceStatementV109=function(accountId){const a=accById(accountId), rows=paysFor(accountId); const total=rows.reduce((x,p)=>x+num(p.amount),0); const detail=rows.map((p,i)=>{const pr=rows[i-1],d=pr?num(p.amount)-num(pr.amount):0;return `<tr><td>${esc(p.date)}</td><td>${esc(p.voucher_no)}</td><td>${fmt(p.amount)}</td><td>${pr?fmt(pr.amount):'-'}</td><td>${pr?fmt(d):'-'}</td><td>${esc(p.method)}</td></tr>`}).join(''); const w=window.open('','_blank','width=950,height=1000'); w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>كشف حساب خدمة</title><style>body{font-family:Arial,Tahoma;background:#f3f6fb;margin:0}.doc{width:210mm;min-height:297mm;margin:auto;background:white;padding:18mm}.head{border-bottom:3px solid #0b2346;padding-bottom:12px;display:flex;justify-content:space-between}.logo{width:70px;height:70px;border-radius:18px;background:#0b2346;color:white;display:grid;place-items:center;font-size:34px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #d7e0ee;padding:9px;text-align:center}th{background:#0b2346;color:white}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.kpi{border:1px solid #d7e0ee;border-radius:12px;padding:10px;text-align:center}.kpi b{font-size:20px}</style></head><body><button onclick="print()" style="position:fixed;top:12px;left:12px;padding:10px 18px">طباعة/PDF</button><main class="doc"><div class="head"><div><h1>مؤسسة حسن محمد الشريمي</h1><p>كشف حساب خدمة: ${esc(a.type)} - ${esc(a.account_no)}</p><p>مركز التكلفة: ${esc(a.center)} — الوحدة: ${esc(a.unit||'-')}</p></div><div class="logo">ح</div></div><div class="kpis"><div class="kpi"><span>إجمالي السداد</span><b>${fmt(total)}</b></div><div class="kpi"><span>عدد العمليات</span><b>${rows.length}</b></div><div class="kpi"><span>آخر سداد</span><b>${rows.at(-1)?esc(rows.at(-1).date):'-'}</b></div></div><table><thead><tr><th>التاريخ</th><th>السند</th><th>المبلغ</th><th>السابق</th><th>الفرق</th><th>الطريقة</th></tr></thead><tbody>${detail||'<tr><td colspan="6">لا توجد بيانات</td></tr>'}</tbody></table></main></body></html>`); w.document.close(); setTimeout(()=>w.print(),300);}
+  window.printServiceStatementV109=function(accountId){const a=accById(accountId), rows=paysFor(accountId); const total=rows.reduce((x,p)=>x+num(p.amount),0); const detail=rows.map((p,i)=>{const pr=rows[i-1],d=pr?num(p.amount)-num(pr.amount):0;return `<tr><td>${esc(p.date)}</td><td>${esc(p.voucher_no)}</td><td>${fmt(p.amount)}</td><td>${pr?fmt(pr.amount):'-'}</td><td>${pr?fmt(d):'-'}</td><td>${esc(p.method)}</td></tr>`}).join(''); const w=window.open('','_blank','width=950,height=1000'); w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>كشف حساب خدمة</title><style>body{font-family:Arial,Tahoma;background:#f3f6fb;margin:0}.doc{width:210mm;min-height:297mm;margin:auto;background:white;padding:18mm}.head{border-bottom:3px solid #0b2346;padding-bottom:12px;display:flex;justify-content:space-between}.logo{width:70px;height:70px;border-radius:18px;background:#0b2346;color:white;display:grid;place-items:center;font-size:34px}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #d7e0ee;padding:9px;text-align:center}th{background:#0b2346;color:white}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.kpi{border:1px solid #d7e0ee;border-radius:12px;padding:10px;text-align:center}.kpi b{font-size:20px}</style>
+<style id="property-center-permissions-v120">
+.property-scope-box{margin-top:16px;border:1px solid #dbe6f3;border-radius:20px;padding:16px;background:linear-gradient(135deg,#fbfdff,#f5f9ff)}
+.property-scope-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.property-scope-head h3{margin:0;font-size:18px}.property-scope-note{color:#64748b;font-size:13px;font-weight:800}
+.property-scope-mode{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.property-scope-mode label{display:flex;align-items:center;gap:7px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:10px 13px;font-weight:900}
+.property-center-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.property-center-choice{display:flex;align-items:center;gap:9px;border:1px solid #dbe6f3;background:#fff;border-radius:14px;padding:11px 12px;font-weight:900}
+.property-center-choice input{width:19px;height:19px;accent-color:#1766d8}
+.property-scope-warning{margin-top:10px;border-radius:13px;background:#fff7ed;border:1px solid #fed7aa;color:#9a5808;padding:9px 11px;font-size:12px;font-weight:900}
+.scope-hidden-message{padding:38px;text-align:center;border:1px dashed #cbd8e8;border-radius:20px;background:#f8fbff;color:#64748b;font-weight:900}
+</style>
+
+</head><body><button onclick="print()" style="position:fixed;top:12px;left:12px;padding:10px 18px">طباعة/PDF</button><main class="doc"><div class="head"><div><h1>مؤسسة حسن محمد الشريمي</h1><p>كشف حساب خدمة: ${esc(a.type)} - ${esc(a.account_no)}</p><p>مركز التكلفة: ${esc(a.center)} — الوحدة: ${esc(a.unit||'-')}</p></div><div class="logo">ح</div></div><div class="kpis"><div class="kpi"><span>إجمالي السداد</span><b>${fmt(total)}</b></div><div class="kpi"><span>عدد العمليات</span><b>${rows.length}</b></div><div class="kpi"><span>آخر سداد</span><b>${rows.at(-1)?esc(rows.at(-1).date):'-'}</b></div></div><table><thead><tr><th>التاريخ</th><th>السند</th><th>المبلغ</th><th>السابق</th><th>الفرق</th><th>الطريقة</th></tr></thead><tbody>${detail||'<tr><td colspan="6">لا توجد بيانات</td></tr>'}</tbody></table></main>
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
+
+</body></html>`); w.document.close(); setTimeout(()=>w.print(),300);}
   window.printServicesSummaryV109=function(){openServiceComparisonV109(); setTimeout(()=>printPage(),200)};
   window.exportServicesCSVV109=function(){let csv='\ufeffنوع الخدمة,رقم الحساب,المزود,مركز التكلفة,الوحدة,يوم السداد,الحالة\n'+accounts().map(a=>`"${a.type}","${a.account_no}","${a.provider||''}","${a.center||''}","${a.unit||''}","${a.due_day||''}","${a.status||''}"`).join('\n'); const link=document.createElement('a');link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));link.download='service_accounts.csv';link.click();};
   const oldOpenFinance=window.openFinancePaymentVoucher;
@@ -4624,10 +5347,47 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
  function allPerms(){return Object.fromEntries(SECTIONS.map(s=>[s.id,Object.fromEntries(ACTIONS.map(a=>[a[0],true]))]))}
  function blankPerms(){return Object.fromEntries(SECTIONS.map(s=>[s.id,Object.fromEntries(ACTIONS.map(a=>[a[0],false]))]))}
  function templatePerms(role){let p=blankPerms(),t=ROLE_TEMPLATES[role];if(t==='all')return allPerms();if(t==='all_except_users_delete'){p=allPerms();p.users.delete=false;return p}if(t)Object.entries(t).forEach(([sec,acts])=>acts.forEach(a=>{if(p[sec])p[sec][a]=true}));return p}
- function normalizeUser(u){return {id:u.id||Date.now(),name:u.name||u['اسم المستخدم']||'مستخدم',phone:u.phone||u['الجوال']||'',role:u.role||u['الدور']||'مشاهد فقط',pin:String(u.pin||u['الرقم السري']||'1234'),status:u.status||u['الحالة']||'نشط',permissions:u.permissions||templatePerms(u.role||u['الدور']||'مشاهد فقط'),created:u.created||new Date().toISOString()}}
+ function normalizeUser(u){
+  const role=u.role||u['الدور']||'مشاهد فقط';
+  const defaultScope=(role==='مالك النظام'||role==='مدير عام')
+    ?{mode:'all',centerIds:[],allowNew:true}
+    :{mode:'selected',centerIds:[],allowNew:false};
+  const rawScope=u.propertyCenterAccess||u.propertyCenters||defaultScope;
+  return {
+    id:u.id||Date.now(),name:u.name||u['اسم المستخدم']||'مستخدم',
+    phone:u.phone||u['الجوال']||'',role,
+    pin:String(u.pin||u['الرقم السري']||'1234'),
+    status:u.status||u['الحالة']||'نشط',
+    permissions:u.permissions||templatePerms(role),
+    propertyCenterAccess:{
+      mode:rawScope.mode==='all'?'all':'selected',
+      centerIds:Array.isArray(rawScope.centerIds)?rawScope.centerIds.map(String):[],
+      allowNew:!!rawScope.allowNew
+    },
+    created:u.created||new Date().toISOString()
+  }
+}
  function users(){let rows=[];try{rows=JSON.parse(localStorage.getItem(PERM_KEY)||'[]')}catch(e){}if(!rows.length){const old=load('users').map(normalizeUser);rows=old.length?old:[normalizeUser({id:1,name:'أبو قصي',role:'مالك النظام',pin:'1234',status:'نشط'})];localStorage.setItem(PERM_KEY,JSON.stringify(rows))}return rows.map(normalizeUser)}
  function saveUsers(rows){localStorage.setItem(PERM_KEY,JSON.stringify(rows));save('users',rows.map(u=>({id:u.id,'اسم المستخدم':u.name,'الجوال':u.phone,'الدور':u.role,'الصلاحية':'مخصصة','الحالة':u.status,created:u.created}))) }
  function current(){const base=getCurrentUser();return users().find(u=>u.name===base.name)||users()[0]}
+ window.currentPermissionUser=current;
+ window.canAccessPropertyCenter=function(centerId){
+   const u=current();
+   if(!u||u.status!=='نشط')return false;
+   if(u.role==='مالك النظام'||u.role==='مدير عام')return true;
+   const s=u.propertyCenterAccess||{mode:'selected',centerIds:[]};
+   if(s.mode==='all')return true;
+   return (s.centerIds||[]).map(String).includes(String(centerId));
+ };
+ window.allowedPropertyCenters=function(){
+   const all=typeof propLoad==='function'?propLoad(PROP_CENTERS_KEY):[];
+   return all.filter(c=>canAccessPropertyCenter(c.id));
+ };
+ window.guardPropertyCenter=function(centerId){
+   if(canAccessPropertyCenter(centerId))return true;
+   alert('ليست لديك صلاحية الدخول إلى مركز التكلفة العقاري المحدد');
+   return false;
+ };
  window.hasPermission=function(section,action='view'){const u=current();if(!u||u.status!=='نشط')return false;if(u.role==='مالك النظام')return true;return !!(u.permissions&&u.permissions[section]&&u.permissions[section][action])}
  function denied(section,action){const sec=SECTIONS.find(s=>s.id===section);alert(`ليست لديك صلاحية ${ACTIONS.find(a=>a[0]===action)?.[1]||action} في قسم ${sec?.name||section}`);return false}
  const oldShow=window.show;window.show=function(id){if(!hasPermission(id,'view')){const el=byId(id);if(el)el.innerHTML=`<div class="panel access-denied"><div class="lock">🔒</div><h2>لا توجد صلاحية</h2><p>ليس لديك إذن لعرض هذا القسم. تواصل مع مدير النظام.</p></div>`;return denied(id,'view')}return oldShow(id)};
@@ -4640,13 +5400,58 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
  const oldPrintPage=window.printPage;window.printPage=function(){const active=document.querySelector('.section.active')?.id||'dashboard';if(!hasPermission(active,'print'))return denied(active,'print');return oldPrintPage()};
  function applyNav(){tabs.forEach(t=>{const b=byId('nav_'+t[0]);if(b)b.style.display=hasPermission(t[0],'view')?'':'none'});const q=document.querySelector('.quickbar');if(q)q.classList.toggle('is-hidden',!SECTIONS.some(s=>hasPermission(s.id,'add')))}
  let selectedId=null;
- window.renderPermissionsCenter=function(){if(!hasPermission('users','view'))return denied('users','view');const rows=users();if(!selectedId&&rows.length)selectedId=rows[0].id;const u=rows.find(x=>x.id===selectedId)||rows[0];const sec=byId('users');sec.innerHTML=`<div class="perm-hero"><div><h2>👤 المستخدمون والصلاحيات الشاملة</h2><div>تحكم دقيق على مستوى القسم والإجراء: عرض، إضافة، تعديل، حذف، اعتماد، طباعة وتصدير.</div></div><div class="perm-actions"><button class="success" onclick="openPermissionUserForm()">+ مستخدم جديد</button><button class="soft-btn" onclick="applyRoleTemplate()">تطبيق قالب الدور</button><button class="primary" onclick="savePermissionMatrix()">حفظ الصلاحيات</button></div></div><div class="perm-grid"><div class="panel"><div class="panel-title"><h3>المستخدمون</h3><span class="role-chip">${rows.length} مستخدم</span></div><div class="perm-user-list">${rows.map(x=>`<div class="perm-user-card ${x.id===u.id?'active':''}" onclick="selectPermissionUser('${x.id}')"><b>${x.name}</b><small>${x.role} • ${x.status}</small></div>`).join('')}</div></div><div class="panel"><div class="panel-title"><div><h3>${u.name}</h3><small>${u.phone||'بدون جوال'} — <span class="role-chip">${u.role}</span></small></div><div class="perm-actions"><button class="soft-btn" onclick="editPermissionUser('${u.id}')">تعديل البيانات</button><button class="danger" onclick="removePermissionUser('${u.id}')">حذف</button></div></div><div class="perm-matrix"><table><thead><tr><th>القسم</th>${ACTIONS.map(a=>`<th>${a[1]}</th>`).join('')}</tr></thead><tbody>${SECTIONS.map(s=>`<tr><td>${s.icon} ${s.name}</td>${ACTIONS.map(a=>`<td><input class="perm-check" type="checkbox" data-sec="${s.id}" data-act="${a[0]}" ${u.permissions?.[s.id]?.[a[0]]?'checked':''} ${u.role==='مالك النظام'?'disabled':''}></td>`).join('')}</tr>`).join('')}</tbody></table></div></div></div>`}
+ window.renderPermissionsCenter=function(){
+   if(!hasPermission('users','view'))return denied('users','view');
+   const rows=users();if(!selectedId&&rows.length)selectedId=rows[0].id;
+   const u=rows.find(x=>String(x.id)===String(selectedId))||rows[0];
+   const centers=typeof propLoad==='function'?propLoad(PROP_CENTERS_KEY):[];
+   const scope=u.propertyCenterAccess||{mode:'selected',centerIds:[],allowNew:false};
+   const ownerLocked=u.role==='مالك النظام';
+   const sec=byId('users');
+   sec.innerHTML=`<div class="perm-hero"><div><h2>👤 المستخدمون والصلاحيات الشاملة</h2><div>تحكم على مستوى القسم والإجراء، مع تحديد مراكز العقارات المسموح بها لكل موظف.</div></div><div class="perm-actions"><button class="success" onclick="openPermissionUserForm()">+ مستخدم جديد</button><button class="soft-btn" onclick="applyRoleTemplate()">تطبيق قالب الدور</button><button class="primary" onclick="savePermissionMatrix()">حفظ الصلاحيات</button></div></div>
+   <div class="perm-grid">
+    <div class="panel"><div class="panel-title"><h3>المستخدمون</h3><span class="role-chip">${rows.length} مستخدم</span></div><div class="perm-user-list">${rows.map(x=>`<div class="perm-user-card ${String(x.id)===String(u.id)?'active':''}" onclick="selectPermissionUser('${x.id}')"><b>${x.name}</b><small>${x.role} • ${x.status}</small></div>`).join('')}</div></div>
+    <div class="panel">
+      <div class="panel-title"><div><h3>${u.name}</h3><small>${u.phone||'بدون جوال'} — <span class="role-chip">${u.role}</span></small></div><div class="perm-actions"><button class="soft-btn" onclick="editPermissionUser('${u.id}')">تعديل البيانات</button><button class="danger" onclick="removePermissionUser('${u.id}')">حذف</button></div></div>
+      <div class="perm-matrix"><table><thead><tr><th>القسم</th>${ACTIONS.map(a=>`<th>${a[1]}</th>`).join('')}</tr></thead><tbody>${SECTIONS.map(s=>`<tr><td>${s.icon} ${s.name}</td>${ACTIONS.map(a=>`<td><input class="perm-check" type="checkbox" data-sec="${s.id}" data-act="${a[0]}" ${u.permissions?.[s.id]?.[a[0]]?'checked':''} ${ownerLocked?'disabled':''}></td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      <div class="property-scope-box">
+        <div class="property-scope-head"><div><h3>🏘 نطاق مراكز العقارات</h3><div class="property-scope-note">حدد المراكز التي يمكن لهذا الموظف رؤيتها والتعامل مع وحداتها وعقودها.</div></div></div>
+        <div class="property-scope-mode">
+          <label><input type="radio" name="pc_scope_mode" value="all" ${scope.mode==='all'?'checked':''} ${ownerLocked?'disabled':''} onchange="togglePropertyScopeChoices()"> جميع المراكز الحالية والمستقبلية</label>
+          <label><input type="radio" name="pc_scope_mode" value="selected" ${scope.mode!=='all'?'checked':''} ${ownerLocked?'disabled':''} onchange="togglePropertyScopeChoices()"> مراكز محددة فقط</label>
+        </div>
+        <div id="propertyCenterChoices" class="property-center-list">
+          ${centers.map(c=>`<label class="property-center-choice"><input class="pc-center-check" type="checkbox" value="${c.id}" ${(scope.centerIds||[]).map(String).includes(String(c.id))?'checked':''} ${(scope.mode==='all'||ownerLocked)?'disabled':''}> ${c.type?.includes('محلات')?'🏢':'🏠'} ${c.name}</label>`).join('')||'<div class="property-scope-note">لا توجد مراكز عقارية مسجلة.</div>'}
+        </div>
+        <div class="property-scope-warning">عند اختيار «مراكز محددة»، أي مركز جديد يُضاف لاحقًا سيكون محجوبًا تلقائيًا حتى يمنحه المدير للموظف.</div>
+      </div>
+    </div>
+   </div>`;
+ }
  window.selectPermissionUser=function(id){selectedId=isNaN(Number(id))?id:Number(id);renderPermissionsCenter()}
  window.applyRoleTemplate=function(){const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;u.permissions=templatePerms(u.role);saveUsers(rows);renderPermissionsCenter()}
- window.savePermissionMatrix=function(){const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;if(u.role!=='مالك النظام')document.querySelectorAll('.perm-check').forEach(c=>u.permissions[c.dataset.sec][c.dataset.act]=c.checked);saveUsers(rows);applyNav();alert('تم حفظ صلاحيات المستخدم بنجاح')}
+ window.togglePropertyScopeChoices=function(){
+   const mode=document.querySelector('input[name="pc_scope_mode"]:checked')?.value||'selected';
+   document.querySelectorAll('.pc-center-check').forEach(c=>c.disabled=mode==='all');
+ }
+ window.savePermissionMatrix=function(){
+   const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;
+   if(u.role!=='مالك النظام'){
+     document.querySelectorAll('.perm-check').forEach(c=>u.permissions[c.dataset.sec][c.dataset.act]=c.checked);
+     const mode=document.querySelector('input[name="pc_scope_mode"]:checked')?.value||'selected';
+     u.propertyCenterAccess={
+       mode,
+       centerIds:mode==='selected'?[...document.querySelectorAll('.pc-center-check:checked')].map(c=>String(c.value)):[],
+       allowNew:mode==='all'
+     };
+   }else{
+     u.propertyCenterAccess={mode:'all',centerIds:[],allowNew:true};
+   }
+   saveUsers(rows);applyNav();alert('تم حفظ الصلاحيات ونطاق مراكز العقارات بنجاح');
+ }
  window.openPermissionUserForm=function(existingId){const rows=users(),u=rows.find(x=>String(x.id)===String(existingId));byId('modalTitle').textContent=u?'تعديل المستخدم':'إضافة مستخدم';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>اسم المستخدم</label><input id="pu_name" value="${u?.name||''}"></div><div class="field"><label>الجوال</label><input id="pu_phone" value="${u?.phone||''}"></div><div class="field"><label>الدور</label><select id="pu_role">${Object.keys(ROLE_TEMPLATES).map(r=>`<option ${u?.role===r?'selected':''}>${r}</option>`).join('')}</select></div><div class="field"><label>الرقم السري PIN</label><input class="pin-box" id="pu_pin" inputmode="numeric" maxlength="8" value="${u?.pin||''}"></div><div class="field"><label>الحالة</label><select id="pu_status"><option ${u?.status==='نشط'?'selected':''}>نشط</option><option ${u?.status==='موقوف'?'selected':''}>موقوف</option></select></div></div><div class="actions"><button class="success" onclick="savePermissionUser('${u?.id||''}')">حفظ المستخدم</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
  window.editPermissionUser=id=>openPermissionUserForm(id);
- window.savePermissionUser=function(id){const name=byId('pu_name').value.trim(),pin=byId('pu_pin').value.trim();if(!name||pin.length<4)return alert('أدخل الاسم ورقمًا سريًا من 4 أرقام على الأقل');const rows=users(),idx=rows.findIndex(x=>String(x.id)===String(id));const role=byId('pu_role').value;const obj=normalizeUser({id:id||Date.now(),name,phone:byId('pu_phone').value.trim(),role,pin,status:byId('pu_status').value,permissions:idx>-1?rows[idx].permissions:templatePerms(role)});if(idx>-1)rows[idx]=obj;else rows.push(obj);saveUsers(rows);selectedId=obj.id;closeModal();renderPermissionsCenter();applyNav()}
+ window.savePermissionUser=function(id){const name=byId('pu_name').value.trim(),pin=byId('pu_pin').value.trim();if(!name||pin.length<4)return alert('أدخل الاسم ورقمًا سريًا من 4 أرقام على الأقل');const rows=users(),idx=rows.findIndex(x=>String(x.id)===String(id));const role=byId('pu_role').value;const obj=normalizeUser({id:id||Date.now(),name,phone:byId('pu_phone').value.trim(),role,pin,status:byId('pu_status').value,permissions:idx>-1?rows[idx].permissions:templatePerms(role),propertyCenterAccess:idx>-1?rows[idx].propertyCenterAccess:((role==='مالك النظام'||role==='مدير عام')?{mode:'all',centerIds:[],allowNew:true}:{mode:'selected',centerIds:[],allowNew:false})});if(idx>-1)rows[idx]=obj;else rows.push(obj);saveUsers(rows);selectedId=obj.id;closeModal();renderPermissionsCenter();applyNav()}
  window.removePermissionUser=function(id){const rows=users(),u=rows.find(x=>String(x.id)===String(id));if(!u||u.role==='مالك النظام')return alert('لا يمكن حذف مالك النظام');if(!confirm('حذف المستخدم؟'))return;const next=rows.filter(x=>String(x.id)!==String(id));saveUsers(next);selectedId=next[0]?.id||null;renderPermissionsCenter()}
  const originalRenderModuleSection=window.renderModuleSection;window.renderModuleSection=function(k){if(k==='users')return renderPermissionsCenter();return originalRenderModuleSection(k)};
  const originalSetCurrent=window.setCurrentUserProfile;window.setCurrentUserProfile=function(name,role){originalSetCurrent(name,role);applyNav()}
@@ -4749,14 +5554,14 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
 (function(){
 'use strict';
 const SHC={
- version:'1.1',
+ version:'1.2',
  table:'shuraimi_app_state',
  workspaceId:'8b9ab303-9874-4ae7-8ffe-b4f83f7b5cd6',
  url:'https://rueapdmdkjytsxkfumpw.supabase.co',
  anonKey:'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9',
  workspaceKey:'55f12e62b20939d2559e79f747d097d413f1cb69991180bc',
  workspaceSecretHash:'304d0eccd5936c1d698efce6ad15f8040547e83d7937e558656b10c02e6f454f',
- metaKey:'__shuraimi_cloud_meta_v110',
+ metaKey:'__shuraimi_cloud_meta_v120',
  applying:false,busy:false,timer:null,poll:null,lastRemote:''
 };
 const nativeSet=Storage.prototype.setItem,nativeRemove=Storage.prototype.removeItem,nativeClear=Storage.prototype.clear;
@@ -4793,12 +5598,33 @@ function installUI(){
  if('serviceWorker'in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(console.warn);
  window.addEventListener('online',()=>initialSync());window.addEventListener('offline',()=>setStatus('err','غير متصل — الحفظ محلي مؤقتًا'));
 }
-function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V1.1 سحابي فعلي';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.1<br>مزامنة Supabase • جوال • آيباد • سطح المكتب'}
+function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V1.2 صلاحيات مراكز العقارات';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.2<br>مزامنة Supabase • جوال • آيباد • سطح المكتب'}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 window.shuraimiCloudSync=initialSync;
 })();
 </script>
 <!-- SHURAIMI_CLOUD_V1027_END -->
+
+
+<script id="property-center-runtime-guards-v120">
+(function(){
+ function unitById(id){return (typeof propLoad==='function'?propLoad(PROP_UNITS_KEY):[]).find(u=>String(u.id)===String(id))}
+ function permittedUnit(id){const u=unitById(id);return !!u && (typeof canAccessPropertyCenter!=='function'||canAccessPropertyCenter(u.center_id))}
+ function wrapUnitFunction(name){
+   const old=window[name];if(typeof old!=='function')return;
+   window[name]=function(id,...args){
+     if(!permittedUnit(id)){alert('لا تملك صلاحية الوصول إلى مركز التكلفة التابع لهذه الوحدة');return}
+     return old.call(this,id,...args);
+   };
+ }
+ ['unitAction','openUnitProfile','openEditUnitForm','openTenantMessage','openUnitContextMenu'].forEach(wrapUnitFunction);
+ const oldExport=window.exportPropertyCSV;
+ if(typeof oldExport==='function')window.exportPropertyCSV=function(){
+   if(!currentPropertyCenter||!canAccessPropertyCenter(currentPropertyCenter))return alert('لا توجد صلاحية لتصدير هذا المركز');
+   return oldExport();
+ };
+})();
+</script>
 
 </body>
 </html>
