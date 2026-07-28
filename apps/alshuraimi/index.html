@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نظام مؤسسة حسن محمد الشريمي - V1.0.27 سحابي كامل</title>
+<title>نظام مؤسسة حسن محمد الشريمي - V1.1 سحابي فعلي</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -4749,13 +4749,14 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
 (function(){
 'use strict';
 const SHC={
- version:'1.0.27',
+ version:'1.1',
  table:'shuraimi_app_state',
  workspaceId:'8b9ab303-9874-4ae7-8ffe-b4f83f7b5cd6',
  url:'https://rueapdmdkjytsxkfumpw.supabase.co',
  anonKey:'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9',
  workspaceKey:'55f12e62b20939d2559e79f747d097d413f1cb69991180bc',
- metaKey:'__shuraimi_cloud_meta_v1027',
+ workspaceSecretHash:'304d0eccd5936c1d698efce6ad15f8040547e83d7937e558656b10c02e6f454f',
+ metaKey:'__shuraimi_cloud_meta_v110',
  applying:false,busy:false,timer:null,poll:null,lastRemote:''
 };
 const nativeSet=Storage.prototype.setItem,nativeRemove=Storage.prototype.removeItem,nativeClear=Storage.prototype.clear;
@@ -4774,15 +4775,15 @@ Storage.prototype.setItem=function(k,v){const r=nativeSet.call(this,k,v);if(this
 Storage.prototype.removeItem=function(k){const r=nativeRemove.call(this,k);if(this===localStorage&&managed(k))schedulePush();return r};
 Storage.prototype.clear=function(){const r=nativeClear.call(this);if(this===localStorage)schedulePush();return r};
 async function getRemote(){const rows=await req('/rest/v1/'+SHC.table+'?workspace_id=eq.'+encodeURIComponent(SHC.workspaceId)+'&select=workspace_id,state,updated_at,device_id&limit=1');return rows&&rows[0]||null}
-async function push(force=false){if(SHC.busy||!navigator.onLine)return;SHC.busy=true;setStatus('sync','جارٍ رفع البيانات...');try{const m=meta(),payload={workspace_id:SHC.workspaceId,state:snapshot(),updated_at:now(),device_id:deviceId()};await req('/rest/v1/'+SHC.table,{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(payload)});setMeta({pending:false,lastPushAt:payload.updated_at,lastRemoteAt:payload.updated_at,localUpdatedAt:payload.updated_at});SHC.lastRemote=payload.updated_at;setStatus('ok','متزامن بين الأجهزة')}catch(e){console.error('Cloud push',e);setMeta({pending:true,lastError:e.message});setStatus('err','تعذر الاتصال بالسحابة')}finally{SHC.busy=false}}
+async function push(force=false){if(SHC.busy||!navigator.onLine)return;SHC.busy=true;setStatus('sync','جارٍ رفع البيانات...');try{const m=meta(),payload={workspace_id:SHC.workspaceId,state:snapshot(),updated_at:now(),device_id:deviceId(),workspace_secret_hash:SHC.workspaceSecretHash};await req('/rest/v1/'+SHC.table+'?on_conflict=workspace_id',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(payload)});setMeta({pending:false,lastPushAt:payload.updated_at,lastRemoteAt:payload.updated_at,localUpdatedAt:payload.updated_at});SHC.lastRemote=payload.updated_at;setStatus('ok','متزامن سحابيًا بين الأجهزة')}catch(e){console.error('Cloud push',e);setMeta({pending:true,lastError:e.message});setStatus('err','خطأ سحابي: '+String(e.message||e).slice(0,110))}finally{SHC.busy=false}}
 function applyState(state,remoteAt){SHC.applying=true;try{const incoming=state||{};const current=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(managed(k))current.push(k)}current.forEach(k=>{if(!(k in incoming))nativeRemove.call(localStorage,k)});Object.entries(incoming).forEach(([k,v])=>nativeSet.call(localStorage,k,v));setMeta({pending:false,lastRemoteAt:remoteAt,localUpdatedAt:remoteAt,reloadApplied:true});SHC.lastRemote=remoteAt}finally{SHC.applying=false}}
 async function initialSync(){setStatus('sync','جارٍ فحص السحابة...');try{const remote=await getRemote(),local=snapshot(),m=meta();if(!remote){if(hasData(local)){await push(true)}else setStatus('ok','السحابة جاهزة — لا توجد بيانات بعد');return}
  const rt=remote.updated_at||'',lt=m.localUpdatedAt||'';SHC.lastRemote=rt;
  if(!hasData(local)){applyState(remote.state,rt);location.reload();return}
  if(m.pending||lt>rt){await push(true);return}
  if(rt>lt && m.lastRemoteAt!==rt){applyState(remote.state,rt);location.reload();return}
- setStatus('ok','متزامن بين الأجهزة');
- }catch(e){console.error('Initial cloud sync',e);setStatus('err','تعذر الاتصال بالسحابة — البيانات المحلية تعمل');}}
+ setStatus('ok','متزامن سحابيًا بين الأجهزة');
+ }catch(e){console.error('Initial cloud sync',e);setStatus('err','خطأ سحابي: '+String(e.message||e).slice(0,110));}}
 async function poll(){if(SHC.busy||SHC.applying||!navigator.onLine)return;try{const remote=await getRemote();if(!remote)return;const m=meta();if(remote.updated_at && remote.updated_at!==SHC.lastRemote && remote.device_id!==deviceId() && !m.pending){applyState(remote.state,remote.updated_at);location.reload()}}catch(e){setStatus('err','تعذر الاتصال بالسحابة — البيانات المحلية تعمل')}}
 function installUI(){
  const bar=document.createElement('div');bar.id='shCloudBar';bar.className='sh-cloud-bar';bar.innerHTML='<span class="sh-cloud-dot"></span><span class="sh-cloud-text">بدء المزامنة...</span><button type="button" title="مزامنة الآن">↻</button>';bar.querySelector('button').onclick=()=>initialSync();document.body.appendChild(bar);
@@ -4792,7 +4793,7 @@ function installUI(){
  if('serviceWorker'in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(console.warn);
  window.addEventListener('online',()=>initialSync());window.addEventListener('offline',()=>setStatus('err','غير متصل — الحفظ محلي مؤقتًا'));
 }
-function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V1.0.27 سحابي كامل';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.0.27<br>نسخة سحابية كاملة • جوال • آيباد • سطح المكتب'}
+function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V1.1 سحابي فعلي';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.1<br>مزامنة Supabase • جوال • آيباد • سطح المكتب'}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 window.shuraimiCloudSync=initialSync;
 })();
