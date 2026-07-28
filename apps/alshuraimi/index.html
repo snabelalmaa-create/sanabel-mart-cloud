@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نظام مؤسسة حسن محمد الشريمي - V1.0.22 مركز المعدات اليومي المستقر</title>
+<title>نظام مؤسسة حسن محمد الشريمي - V1.0.27 سحابي كامل</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -143,6 +143,28 @@ body{background:#f6f9fd!important;color:var(--ink)!important;font-size:15px!impo
 @media(max-width:1000px){.app{grid-template-columns:1fr!important}.sidebar{position:relative!important;height:auto!important}.quickbar{right:0!important}.topbar{flex-wrap:wrap!important}.page-title{width:100%;margin-left:0}.search{flex:1;min-width:260px}}
 @media(max-width:700px){.main{padding:12px 12px 28px!important}.topbar{align-items:stretch!important}.top-icons{width:100%;overflow:auto}.sh-current-user{max-width:170px;overflow:hidden;text-overflow:ellipsis}.hero{padding:16px!important}.hero h1{font-size:24px!important}.quickbar{position:relative!important;grid-template-columns:repeat(2,1fr)!important}.cards,.mini-cards,.modules,.form,.row2,.row3{grid-template-columns:1fr!important}}
 </style>
+
+<!-- SHURAIMI_CLOUD_V1027_START -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#071a34">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="نظام الشريمي">
+<style id="sh-cloud-responsive-v1027">
+.sh-cloud-bar{position:fixed;left:18px;bottom:18px;z-index:5000;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #dbe6f3;border-radius:999px;padding:8px 12px;box-shadow:0 12px 35px rgba(2,20,45,.18);font-weight:800;font-size:13px;color:#334155}
+.sh-cloud-dot{width:10px;height:10px;border-radius:50%;background:#f59e0b}.sh-cloud-bar.ok .sh-cloud-dot{background:#16a34a}.sh-cloud-bar.err .sh-cloud-dot{background:#ef4444}.sh-cloud-bar.sync .sh-cloud-dot{background:#2563eb;animation:shpulse 1s infinite}.sh-cloud-bar button{background:transparent;color:#1d4ed8;font-weight:900;padding:3px 6px}
+@keyframes shpulse{50%{opacity:.35}}
+.sh-mobile-menu{display:none;position:fixed;right:14px;bottom:14px;z-index:5200;width:52px;height:52px;border-radius:16px;background:#09294e;color:#fff;box-shadow:0 12px 30px rgba(2,20,45,.25);font-size:24px}
+@media(max-width:1000px){
+ body{overflow-x:hidden}.app{display:block!important}.sidebar{position:fixed!important;top:0;right:0;bottom:0;width:min(86vw,320px)!important;height:100vh!important;z-index:5100;transform:translateX(110%);transition:transform .22s ease;overflow:auto!important}.sidebar.sh-open{transform:translateX(0)}
+ .main{width:100%!important;padding:14px 12px 84px!important;overflow:visible!important}.topbar{display:flex!important;flex-wrap:wrap!important;align-items:stretch!important}.page-title{width:100%}.page-title h2{font-size:25px!important}.search{order:3;width:100%!important;min-width:0!important}.top-icons{max-width:100%;overflow-x:auto;padding-bottom:4px}
+ .quickbar{right:0!important;left:0!important;grid-template-columns:repeat(4,minmax(90px,1fr))!important;overflow-x:auto!important;padding:8px!important}.sh-mobile-menu{display:grid;place-items:center}.sh-cloud-bar{left:12px;bottom:76px;max-width:calc(100vw - 85px)}
+ .cards,.mini-cards,.modules,.form,.row2,.row3,.layout,.command-center,.urgent-grid,.today-brief,.prop-toolbar,.prop-kpis,.unit-profile-head{grid-template-columns:1fr!important}.exec-grid,.main-grid{grid-template-columns:1fr!important}.panel,.metric,.module-card{min-width:0!important}.table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch}.modal{padding:8px!important}.modal-card{width:100%!important;max-height:96vh!important;border-radius:18px!important;padding:14px!important}.hero,.exec-header{grid-template-columns:1fr!important;display:grid!important}.hero h1{font-size:26px!important}
+}
+@media(min-width:701px) and (max-width:1000px){.cards,.mini-cards,.modules,.prop-kpis{grid-template-columns:repeat(2,1fr)!important}}
+</style>
+<!-- SHURAIMI_CLOUD_V1027_END -->
+
 </head>
 <body>
 <div class="app">
@@ -4721,5 +4743,61 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
  setTimeout(placeAccountControls,500);
 })();
 </script>
+
+<!-- SHURAIMI_CLOUD_V1027_START -->
+<script>
+(function(){
+'use strict';
+const SHC={
+ version:'1.0.27',
+ table:'shuraimi_app_state',
+ workspaceId:'8b9ab303-9874-4ae7-8ffe-b4f83f7b5cd6',
+ url:'https://rueapdmdkjytsxkfumpw.supabase.co',
+ anonKey:'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9',
+ workspaceKey:'55f12e62b20939d2559e79f747d097d413f1cb69991180bc',
+ metaKey:'__shuraimi_cloud_meta_v1027',
+ applying:false,busy:false,timer:null,poll:null,lastRemote:''
+};
+const nativeSet=Storage.prototype.setItem,nativeRemove=Storage.prototype.removeItem,nativeClear=Storage.prototype.clear;
+function managed(k){return !!k && (k.startsWith('hasan_')||k.startsWith('shuraimi_')||k.startsWith('erp_')||k.startsWith('hms_')||k==='communication_logs') && k!==SHC.metaKey;}
+function meta(){try{return JSON.parse(localStorage.getItem(SHC.metaKey)||'{}')}catch(_){return {}}}
+function setMeta(x){nativeSet.call(localStorage,SHC.metaKey,JSON.stringify({...meta(),...x}))}
+function now(){return new Date().toISOString()}
+function deviceId(){let m=meta();if(!m.deviceId){m.deviceId='dev_'+Math.random().toString(36).slice(2)+Date.now().toString(36);setMeta(m)}return m.deviceId}
+function snapshot(){const o={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(managed(k))o[k]=localStorage.getItem(k)}return o}
+function hasData(o){return Object.keys(o||{}).length>0}
+function setStatus(type,text){let b=document.getElementById('shCloudBar');if(!b)return;b.className='sh-cloud-bar '+type;const t=b.querySelector('.sh-cloud-text');if(t)t.textContent=text}
+function headers(extra={}){return {'apikey':SHC.anonKey,'Authorization':'Bearer '+SHC.anonKey,'Content-Type':'application/json','x-workspace-key':SHC.workspaceKey,...extra}}
+async function req(path,opt={}){const c=new AbortController();const tm=setTimeout(()=>c.abort(),12000);try{const r=await fetch(SHC.url+path,{...opt,headers:headers(opt.headers||{}),signal:c.signal});const tx=await r.text();if(!r.ok)throw new Error((tx||r.statusText).slice(0,250));return tx?JSON.parse(tx):null}finally{clearTimeout(tm)}}
+function schedulePush(){if(SHC.applying)return;setMeta({localUpdatedAt:now(),pending:true});clearTimeout(SHC.timer);SHC.timer=setTimeout(push,900)}
+Storage.prototype.setItem=function(k,v){const r=nativeSet.call(this,k,v);if(this===localStorage&&managed(k))schedulePush();return r};
+Storage.prototype.removeItem=function(k){const r=nativeRemove.call(this,k);if(this===localStorage&&managed(k))schedulePush();return r};
+Storage.prototype.clear=function(){const r=nativeClear.call(this);if(this===localStorage)schedulePush();return r};
+async function getRemote(){const rows=await req('/rest/v1/'+SHC.table+'?workspace_id=eq.'+encodeURIComponent(SHC.workspaceId)+'&select=workspace_id,state,updated_at,device_id&limit=1');return rows&&rows[0]||null}
+async function push(force=false){if(SHC.busy||!navigator.onLine)return;SHC.busy=true;setStatus('sync','جارٍ رفع البيانات...');try{const m=meta(),payload={workspace_id:SHC.workspaceId,state:snapshot(),updated_at:now(),device_id:deviceId()};await req('/rest/v1/'+SHC.table,{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(payload)});setMeta({pending:false,lastPushAt:payload.updated_at,lastRemoteAt:payload.updated_at,localUpdatedAt:payload.updated_at});SHC.lastRemote=payload.updated_at;setStatus('ok','متزامن بين الأجهزة')}catch(e){console.error('Cloud push',e);setMeta({pending:true,lastError:e.message});setStatus('err','تعذر الاتصال بالسحابة')}finally{SHC.busy=false}}
+function applyState(state,remoteAt){SHC.applying=true;try{const incoming=state||{};const current=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(managed(k))current.push(k)}current.forEach(k=>{if(!(k in incoming))nativeRemove.call(localStorage,k)});Object.entries(incoming).forEach(([k,v])=>nativeSet.call(localStorage,k,v));setMeta({pending:false,lastRemoteAt:remoteAt,localUpdatedAt:remoteAt,reloadApplied:true});SHC.lastRemote=remoteAt}finally{SHC.applying=false}}
+async function initialSync(){setStatus('sync','جارٍ فحص السحابة...');try{const remote=await getRemote(),local=snapshot(),m=meta();if(!remote){if(hasData(local)){await push(true)}else setStatus('ok','السحابة جاهزة — لا توجد بيانات بعد');return}
+ const rt=remote.updated_at||'',lt=m.localUpdatedAt||'';SHC.lastRemote=rt;
+ if(!hasData(local)){applyState(remote.state,rt);location.reload();return}
+ if(m.pending||lt>rt){await push(true);return}
+ if(rt>lt && m.lastRemoteAt!==rt){applyState(remote.state,rt);location.reload();return}
+ setStatus('ok','متزامن بين الأجهزة');
+ }catch(e){console.error('Initial cloud sync',e);setStatus('err','تعذر الاتصال بالسحابة — البيانات المحلية تعمل');}}
+async function poll(){if(SHC.busy||SHC.applying||!navigator.onLine)return;try{const remote=await getRemote();if(!remote)return;const m=meta();if(remote.updated_at && remote.updated_at!==SHC.lastRemote && remote.device_id!==deviceId() && !m.pending){applyState(remote.state,remote.updated_at);location.reload()}}catch(e){setStatus('err','تعذر الاتصال بالسحابة — البيانات المحلية تعمل')}}
+function installUI(){
+ const bar=document.createElement('div');bar.id='shCloudBar';bar.className='sh-cloud-bar';bar.innerHTML='<span class="sh-cloud-dot"></span><span class="sh-cloud-text">بدء المزامنة...</span><button type="button" title="مزامنة الآن">↻</button>';bar.querySelector('button').onclick=()=>initialSync();document.body.appendChild(bar);
+ const mb=document.createElement('button');mb.className='sh-mobile-menu';mb.type='button';mb.innerHTML='☰';mb.title='القائمة';mb.onclick=()=>document.querySelector('.sidebar')?.classList.toggle('sh-open');document.body.appendChild(mb);
+ document.addEventListener('click',e=>{const s=document.querySelector('.sidebar');if(innerWidth<=1000&&s?.classList.contains('sh-open')&&!s.contains(e.target)&&e.target!==mb)s.classList.remove('sh-open')});
+ let deferred;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;const btn=document.createElement('button');btn.className='iconbtn';btn.title='تثبيت التطبيق';btn.textContent='⬇️';btn.onclick=async()=>{deferred.prompt();await deferred.userChoice;deferred=null;btn.remove()};document.querySelector('.top-icons')?.prepend(btn)});
+ if('serviceWorker'in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(console.warn);
+ window.addEventListener('online',()=>initialSync());window.addEventListener('offline',()=>setStatus('err','غير متصل — الحفظ محلي مؤقتًا'));
+}
+function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V1.0.27 سحابي كامل';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.0.27<br>نسخة سحابية كاملة • جوال • آيباد • سطح المكتب'}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+window.shuraimiCloudSync=initialSync;
+})();
+</script>
+<!-- SHURAIMI_CLOUD_V1027_END -->
+
 </body>
 </html>
