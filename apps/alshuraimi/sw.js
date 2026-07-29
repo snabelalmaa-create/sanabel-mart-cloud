@@ -1,4 +1,4 @@
-const CACHE_NAME='shuraimi-v117';
+const CACHE_NAME='shuraimi-v200';
 const APP_SHELL=['./','./index.html','./manifest.webmanifest'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)));
