@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>مركز القرارات | المستشار المالي V17 Cloud</title>
+<title>مركز القرارات | المستشار المالي V17 Cloud — إصلاح تكرار الفواتير</title>
 <style>
 :root{
   --bg:#07111f;
@@ -3675,13 +3675,26 @@ function groupPdfItemsIntoRows(items){
 function parseSmartPdfRow(items){
   const cells=items.map(x=>x.str).filter(Boolean);
   const joined=cells.join(' ');
-  const tx=cells.find(x=>/^\d{7,10}$/.test(x));
   const dateMatch=joined.match(/20\d{2}-\d{2}-\d{2}/);
   const timeMatch=joined.match(/\b\d{2}:\d{2}:\d{2}\b/);
   const ref=cells.find(x=>/^\d+\/\d+$/.test(x));
-  if(!tx||!dateMatch||!ref)return null;
+  if(!dateMatch||!ref)return null;
 
-  const phoneIndex=cells.findIndex(x=>/^\d{8,14}$/.test(x)&&x!==tx);
+  // رقم العملية في تقرير سمارت يكون في عمود الرقم بعد التاريخ مباشرة.
+  // لا نستخدم أول رقم طويل في السطر لأنه قد يكون رقم جوال العميل،
+  // وهذا كان يجعل فواتير العميل المتكررة تُحذف خطأً.
+  const dateIndex=cells.findIndex(x=>x===dateMatch[0]);
+  const longNumbers=cells
+    .map((value,index)=>({value:englishDigits(value).replace(/\D/g,''),index}))
+    .filter(x=>/^\d{6,10}$/.test(x.value));
+  let txCandidate=longNumbers
+    .filter(x=>x.index>dateIndex)
+    .sort((a,b)=>a.index-b.index)[0];
+  if(!txCandidate)txCandidate=longNumbers.sort((a,b)=>a.index-b.index)[0];
+  const tx=txCandidate?.value||'';
+  if(!tx)return null;
+
+  const phoneIndex=cells.findIndex((x,index)=>/^\d{8,14}$/.test(englishDigits(x).replace(/\D/g,''))&&index!==txCandidate.index);
   const refIndex=cells.findIndex(x=>x===ref);
   let phone=phoneIndex>=0?cells[phoneIndex]:'';
   let name='';
