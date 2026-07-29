@@ -1,12 +1,12 @@
 {
   "name": "نظام مؤسسة حسن محمد الشريمي",
   "short_name": "نظام الشريمي",
-  "start_url": "./?v=111",
+  "start_url": "./?v=112",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f9fd",
   "theme_color": "#071a34",
   "lang": "ar",
   "dir": "rtl",
-  "description": "نظام الشريمي V1.1.1 — مركز التقارير الموحد"
+  "description": "نظام الشريمي V1.1.2 — فلاتر تفصيلية للعقارات والمعدات"
 }
