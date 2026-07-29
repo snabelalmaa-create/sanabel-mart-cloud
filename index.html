@@ -4258,7 +4258,7 @@ seedProperties();
   function equipmentOptions(sel=''){const e=arr(L.eq);return '<option value="">اختر المعدة</option>'+e.map(x=>`<option value="${x.id}" ${String(sel)===String(x.id)?'selected':''}>${safe(x['اسم المعدة'])} - ${safe(x['نوع المعدة']||'')}</option>`).join('')}
   function centersOptions(sel=''){try{return financeCostCentersOptions(sel)}catch(e){return '<option>عام</option>'}}
   function safe(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-  function getEq(id){return arr(L.eq).find(x=>String(x.id)===String(id))}
+  function getEq(id){const e=arr(L.eq).find(x=>String(x.id)===String(id));return e&&userCanCenter('equipment',e.id,e['اسم المعدة']||e['نوع المعدة']||'')?e:null}
   function getDriver(name){return arr(L.drivers).find(x=>String(x.name)===String(name))||{}}
   function calcOrder(){
     const method=byId('op_price_method')?.value||'بالساعة', qty=n(byId('op_qty')?.value||0), rate=n(byId('op_rate')?.value||0), fixed=n(byId('op_fixed')?.value||0);
@@ -4338,7 +4338,7 @@ seedProperties();
   function sums(){const o=arr(L.orders), m=arr(L.maint); return {gross:o.reduce((a,x)=>a+n(x.gross),0),cash:o.filter(x=>x.work_type==='external').reduce((a,x)=>a+n(x.gross),0),driver:o.reduce((a,x)=>a+n(x.driver_due),0),fuel:o.reduce((a,x)=>a+n(x.fuel),0),maint:m.reduce((a,x)=>a+n(x.amount),0),net:o.reduce((a,x)=>a+n(x.net),0)-m.reduce((a,x)=>a+n(x.amount),0)}}
   window.renderEquipmentCenter=function(tab='dashboard'){
     seedFleet();
-    const eqs=arr(L.eq), orders=arr(L.orders), drivers=arr(L.drivers), maint=arr(L.maint), s=sums();
+    const eqs=arr(L.eq).filter(e=>userCanCenter('equipment',e.id,e['اسم المعدة']||e['نوع المعدة']||'')), allowedEqIds=new Set(eqs.map(e=>String(e.id))), orders=arr(L.orders).filter(o=>allowedEqIds.has(String(o.equipment_id))), drivers=arr(L.drivers), maint=arr(L.maint).filter(m=>allowedEqIds.has(String(m.equipment_id))), s={gross:orders.reduce((a,x)=>a+n(x.gross),0),cash:orders.filter(x=>x.work_type==='external').reduce((a,x)=>a+n(x.gross),0),driver:orders.reduce((a,x)=>a+n(x.driver_due),0),fuel:orders.reduce((a,x)=>a+n(x.fuel),0),maint:maint.reduce((a,x)=>a+n(x.amount),0),net:orders.reduce((a,x)=>a+n(x.net),0)-maint.reduce((a,x)=>a+n(x.amount),0)};
     const equipmentCards=eqs.map(e=>{const eo=orders.filter(o=>String(o.equipment_id)===String(e.id)), em=maint.filter(m=>String(m.equipment_id)===String(e.id)); const gross=eo.reduce((a,x)=>a+n(x.gross),0), cash=eo.filter(x=>x.work_type==='external').reduce((a,x)=>a+n(x.gross),0), drv=eo.reduce((a,x)=>a+n(x.driver_due),0), mt=em.reduce((a,x)=>a+n(x.amount),0); const cls=e['الحالة']==='متوقفة'?'off':(e['الحالة']==='صيانة'?'maint':''); return `<div class="fleet-card ${cls}"><h3>🚜 ${safe(e['اسم المعدة'])}</h3><div class="fleet-row"><span>النوع</span><b>${safe(e['نوع المعدة'])}</b></div><div class="fleet-row"><span>السائق</span><b>${safe(e['السائق الافتراضي']||'-')}</b></div><div class="fleet-row"><span>الحالة</span><b>${safe(e['الحالة']||'-')}</b></div><div class="fleet-row"><span>قيمة التشغيل</span><b>${fmt(gross)}</b></div><div class="fleet-row"><span>إيراد فعلي للغير</span><b>${fmt(cash)}</b></div><div class="fleet-row"><span>مستحقات السائق</span><b>${fmt(drv)}</b></div><div class="fleet-row"><span>الصيانة</span><b>${fmt(mt)}</b></div><div class="fleet-actions"><button class="main" onclick="openOperationOrder('${e.id}')">أمر تشغيل</button><button onclick="openMaintenanceForm('${e.id}')">صيانة</button><button onclick="openEquipmentReport('${e.id}')">تقرير</button><button onclick="openEquipmentForm('${e.id}')">تعديل</button></div></div>`}).join('')||'<div class="empty">لا توجد معدات. أضف أول معدة للبدء.</div>';
     const ordersRows=orders.slice(0,80).map(o=>`<tr><td>${safe(o.date)}</td><td>${safe(o.equipment_name)}</td><td>${safe(o.driver||'-')}</td><td><span class="order-status ${orderTypeClass(o.work_type)}">${orderTypeLabel(o.work_type)}</span></td><td>${safe(o.price_method)}</td><td>${safe(o.party||'-')}</td><td>${fmt(o.gross)}</td><td>${fmt(o.driver_due)}</td><td>${fmt(o.net)}</td></tr>`);
     const driverRows=drivers.map(d=>{const os=orders.filter(o=>o.driver===d.name), due=os.reduce((a,x)=>a+n(x.driver_due),0), gross=os.reduce((a,x)=>a+n(x.gross),0); return `<tr><td>${safe(d.name)}</td><td>${safe(d.phone||'-')}</td><td>${d.default_share_type==='percent'?'نسبة':d.default_share_type==='fixed'?'مبلغ ثابت':'بدون'} ${n(d.default_share_value)||''}</td><td>${os.length}</td><td>${fmt(gross)}</td><td>${fmt(due)}</td><td><button class="soft-btn" onclick="openDriverForm('${safe(d.name)}')">تعديل</button></td></tr>`});
@@ -5189,19 +5189,63 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
  function currentPermissionUserForEditor(){const rows=users();return rows.find(x=>String(x.id)===String(selectedId))||rows[0]}
  window.userCanCenter=function(section,centerId,centerName=''){
   const u=current();if(!u||u.role==='مالك النظام'||u.role==='مدير عام')return true;
-  if(section!=='properties')return true;
-  const x=propertyScopeOf(u);if(x.mode==='all')return true;
+  const x=u.center_scopes?.[section];if(!x||x.mode==='all')return true;
+  if(x.mode==='none')return false;
   const allowed=(x.centers||[]).map(String);
   return [centerId,centerName].filter(Boolean).map(String).some(v=>allowed.includes(v));
  }
  window.filterByCenterPermission=function(rows,section,idKey='center_id',nameKey='مركز التكلفة'){return (rows||[]).filter(r=>userCanCenter(section,r?.[idKey],r?.[nameKey]||r?.center_name||''))}
  function allowedPropertyCenters(){return permissionPropertyCenters().filter(c=>userCanCenter('properties',c.id,c.name))}
  let selectedId=null;
- window.renderPermissionsCenter=function(){if(!hasPermission('users','view'))return denied('users','view');const rows=users();if(!selectedId&&rows.length)selectedId=rows[0].id;const u=rows.find(x=>x.id===selectedId)||rows[0];const sec=byId('users');sec.innerHTML=`<div class="perm-hero"><div><h2>👤 المستخدمون والصلاحيات الشاملة</h2><div>تحكم دقيق على مستوى القسم والإجراء: عرض، إضافة، تعديل، حذف، اعتماد، طباعة وتصدير.</div></div><div class="perm-actions"><button class="success" onclick="openPermissionUserForm()">+ مستخدم جديد</button><button class="soft-btn" onclick="applyRoleTemplate()">تطبيق قالب الدور</button><button class="primary" onclick="savePermissionMatrix()">حفظ الصلاحيات</button></div></div><div class="perm-grid"><div class="panel"><div class="panel-title"><h3>المستخدمون</h3><span class="role-chip">${rows.length} مستخدم</span></div><div class="perm-user-list">${rows.map(x=>`<div class="perm-user-card ${x.id===u.id?'active':''}" onclick="selectPermissionUser('${x.id}')"><b>${x.name}</b><small>${x.role} • ${x.status}</small></div>`).join('')}</div></div><div class="panel"><div class="panel-title"><div><h3>${u.name}</h3><small>${u.phone||'بدون جوال'} — <span class="role-chip">${u.role}</span></small></div><div class="perm-actions"><button class="soft-btn" onclick="editPermissionUser('${u.id}')">تعديل البيانات</button><button class="danger" onclick="removePermissionUser('${u.id}')">حذف</button></div></div><div class="perm-matrix"><table><thead><tr><th>القسم</th>${ACTIONS.map(a=>`<th>${a[1]}</th>`).join('')}</tr></thead><tbody>${SECTIONS.map(s=>`<tr><td>${s.icon} ${s.name}</td>${ACTIONS.map(a=>`<td><input class="perm-check" type="checkbox" data-sec="${s.id}" data-act="${a[0]}" ${u.permissions?.[s.id]?.[a[0]]?'checked':''} ${u.role==='مالك النظام'?'disabled':''} onchange="if(this.dataset.sec==='properties')refreshPropertyScopeVisibility()"></td>`).join('')}</tr>`).join('')}</tbody></table></div>${renderPropertyBranchScopes(u)}</div></div>`}
- window.selectPermissionUser=function(id){selectedId=isNaN(Number(id))?id:Number(id);renderPermissionsCenter()}
+ window.renderPermissionsCenter=function(){
+ if(!hasPermission('users','view'))return denied('users','view');
+ const rows=users();
+ if(!selectedId&&rows.length)selectedId=String(rows[0].id);
+ const u=rows.find(x=>String(x.id)===String(selectedId))||rows[0];
+ if(!u)return;
+ selectedId=String(u.id);
+ const subItems=(sec)=>{
+   if(sec==='properties') return permissionPropertyCenters().map(x=>({id:String(x.id),name:x.name,meta:x.type||''}));
+   if(sec==='equipment') return (load('equipment')||[]).map(x=>({id:String(x.id),name:x['اسم المعدة']||x['نوع المعدة']||'معدة',meta:x['نوع المعدة']||''}));
+   if(sec==='projects') return (load('projects')||[]).map(x=>({id:String(x.id),name:x['اسم المشروع']||'مشروع',meta:x['الموقع']||''}));
+   return [];
+ };
+ const sectionEnabled=(sec)=>!!Object.values(u.permissions?.[sec]||{}).some(Boolean);
+ const branchRow=(s)=>{
+   if(!['properties','equipment','projects'].includes(s.id)||!sectionEnabled(s.id))return '';
+   const items=subItems(s.id),scope=u.center_scopes?.[s.id]||{mode:'selected',centers:[]},selected=(scope.centers||[]).map(String);
+   return `<tr class="branch-permission-row"><td colspan="${ACTIONS.length+1}">
+    <div class="inline-branches">
+      <div class="inline-branches-head"><b>${s.id==='properties'?'فروع العقارات المسموح بها':s.id==='equipment'?'المعدات المسموح بها':'المشاريع المسموح بها'}</b>
+      <label><input type="checkbox" class="scope-all" data-sec="${s.id}" ${scope.mode==='all'?'checked':''} onchange="toggleSectionAll('${s.id}',this.checked)"> الكل</label></div>
+      <div class="inline-branch-list" id="scope_list_${s.id}">
+       ${items.length?items.map(x=>`<label><input type="checkbox" class="scope-item" data-sec="${s.id}" value="${x.id}" ${selected.includes(x.id)?'checked':''} ${scope.mode==='all'?'disabled':''}><span>${x.name}</span>${x.meta?`<small>${x.meta}</small>`:''}</label>`).join(''):`<span class="muted">لا توجد عناصر مسجلة داخل هذا القسم.</span>`}
+      </div>
+    </div>
+   </td></tr>`;
+ };
+ const body=SECTIONS.map(s=>`<tr><td>${s.icon} ${s.name}</td>${ACTIONS.map(a=>`<td><input class="perm-check" type="checkbox" data-sec="${s.id}" data-act="${a[0]}" ${u.permissions?.[s.id]?.[a[0]]?'checked':''} ${u.role==='مالك النظام'?'disabled':''} onchange="if(['properties','equipment','projects'].includes(this.dataset.sec))renderPermissionsCenter()"></td>`).join('')}</tr>${branchRow(s)}`).join('');
+ const sec=byId('users');
+ sec.innerHTML=`<div class="perm-hero"><div><h2>👤 المستخدمون والصلاحيات الشاملة</h2><div>اختر القسم، ثم حدد الفروع أو المعدات أو المشاريع التي تظهر للموظف.</div></div><div class="perm-actions"><button class="success" onclick="openPermissionUserForm()">+ مستخدم جديد</button><button class="soft-btn" onclick="applyRoleTemplate()">تطبيق قالب الدور</button><button class="primary" onclick="savePermissionMatrix()">حفظ الصلاحيات</button></div></div>
+ <div class="perm-grid"><div class="panel"><div class="panel-title"><h3>المستخدمون</h3><span class="role-chip">${rows.length} مستخدم</span></div><div class="perm-user-list">${rows.map(x=>`<div class="perm-user-card ${String(x.id)===String(u.id)?'active':''}" onclick="selectPermissionUser('${x.id}')"><b>${x.name}</b><small>${x.role} • ${x.status}</small></div>`).join('')}</div></div>
+ <div class="panel"><div class="panel-title"><div><h3>${u.name}</h3><small>${u.phone||'بدون جوال'} — <span class="role-chip">${u.role}</span></small></div><div class="perm-actions"><button class="soft-btn" onclick="editPermissionUser('${u.id}')">تعديل البيانات</button><button class="danger" onclick="removePermissionUser('${u.id}')">حذف</button></div></div>
+ <div class="perm-matrix"><table><thead><tr><th>القسم</th>${ACTIONS.map(a=>`<th>${a[1]}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div></div></div>`;
+}
+window.toggleSectionAll=function(sec,checked){document.querySelectorAll(`.scope-item[data-sec="${sec}"]`).forEach(x=>x.disabled=checked)}
+window.selectPermissionUser=function(id){selectedId=isNaN(Number(id))?id:Number(id);renderPermissionsCenter()}
  window.applyRoleTemplate=function(){const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;u.permissions=templatePerms(u.role);saveUsers(rows);renderPermissionsCenter()}
- window.savePermissionMatrix=function(){const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;if(u.role!=='مالك النظام')document.querySelectorAll('.perm-check').forEach(c=>u.permissions[c.dataset.sec][c.dataset.act]=c.checked);u.center_scopes={...(u.center_scopes||{}),...collectCenterScopes()};saveUsers(rows);applyNav();alert('تم حفظ الصلاحيات والفروع العقارية بنجاح')}
- window.openPermissionUserForm=function(existingId){const rows=users(),u=rows.find(x=>String(x.id)===String(existingId));byId('modalTitle').textContent=u?'تعديل المستخدم':'إضافة مستخدم';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>اسم المستخدم</label><input id="pu_name" value="${u?.name||''}"></div><div class="field"><label>الجوال</label><input id="pu_phone" value="${u?.phone||''}"></div><div class="field"><label>الدور</label><select id="pu_role">${Object.keys(ROLE_TEMPLATES).map(r=>`<option ${u?.role===r?'selected':''}>${r}</option>`).join('')}</select></div><div class="field"><label>الرقم السري PIN</label><input class="pin-box" id="pu_pin" inputmode="numeric" maxlength="8" value="${u?.pin||''}"></div><div class="field"><label>الحالة</label><select id="pu_status"><option ${u?.status==='نشط'?'selected':''}>نشط</option><option ${u?.status==='موقوف'?'selected':''}>موقوف</option></select></div></div><div class="actions"><button class="success" onclick="savePermissionUser('${u?.id||''}')">حفظ المستخدم</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
+ window.savePermissionMatrix=function(){
+ const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;
+ if(u.role!=='مالك النظام')document.querySelectorAll('.perm-check').forEach(c=>{if(!u.permissions[c.dataset.sec])u.permissions[c.dataset.sec]={};u.permissions[c.dataset.sec][c.dataset.act]=c.checked});
+ u.center_scopes=u.center_scopes||{};
+ ['properties','equipment','projects'].forEach(sec=>{
+   const all=document.querySelector(`.scope-all[data-sec="${sec}"]`);
+   if(!all)return;
+   u.center_scopes[sec]={mode:all.checked?'all':'selected',centers:[...document.querySelectorAll(`.scope-item[data-sec="${sec}"]:checked`)].map(x=>x.value)};
+ });
+ saveUsers(rows);applyNav();alert('تم حفظ الصلاحيات والفروع المحددة بنجاح');
+}
+window.openPermissionUserForm=function(existingId){const rows=users(),u=rows.find(x=>String(x.id)===String(existingId));byId('modalTitle').textContent=u?'تعديل المستخدم':'إضافة مستخدم';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>اسم المستخدم</label><input id="pu_name" value="${u?.name||''}"></div><div class="field"><label>الجوال</label><input id="pu_phone" value="${u?.phone||''}"></div><div class="field"><label>الدور</label><select id="pu_role">${Object.keys(ROLE_TEMPLATES).map(r=>`<option ${u?.role===r?'selected':''}>${r}</option>`).join('')}</select></div><div class="field"><label>الرقم السري PIN</label><input class="pin-box" id="pu_pin" inputmode="numeric" maxlength="8" value="${u?.pin||''}"></div><div class="field"><label>الحالة</label><select id="pu_status"><option ${u?.status==='نشط'?'selected':''}>نشط</option><option ${u?.status==='موقوف'?'selected':''}>موقوف</option></select></div></div><div class="actions"><button class="success" onclick="savePermissionUser('${u?.id||''}')">حفظ المستخدم</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
  window.editPermissionUser=id=>openPermissionUserForm(id);
  window.savePermissionUser=function(id){const name=byId('pu_name').value.trim(),pin=byId('pu_pin').value.trim();if(!name||pin.length<4)return alert('أدخل الاسم ورقمًا سريًا من 4 أرقام على الأقل');const rows=users(),idx=rows.findIndex(x=>String(x.id)===String(id));const role=byId('pu_role').value;const obj=normalizeUser({id:id||Date.now(),name,phone:byId('pu_phone').value.trim(),role,pin,status:byId('pu_status').value,permissions:idx>-1?rows[idx].permissions:templatePerms(role),center_scopes:idx>-1?(rows[idx].center_scopes||{}):{}});if(idx>-1)rows[idx]=obj;else rows.push(obj);saveUsers(rows);selectedId=obj.id;closeModal();renderPermissionsCenter();applyNav()}
  window.removePermissionUser=function(id){const rows=users(),u=rows.find(x=>String(x.id)===String(id));if(!u||u.role==='مالك النظام')return alert('لا يمكن حذف مالك النظام');if(!confirm('حذف المستخدم؟'))return;const next=rows.filter(x=>String(x.id)!==String(id));saveUsers(next);selectedId=next[0]?.id||null;renderPermissionsCenter()}
@@ -5360,7 +5404,7 @@ window.shuraimiCloudSync=initialSync;
 </body>
 </html>
 
-<style id="property-branch-permissions-v250">
+<style id="property-branch-permissions-v260">
 .cc-scope-wrap,.cc-scope-card{display:none!important}
 .property-branch-permission{margin-top:16px;border:2px solid #cfe0f2;border-radius:18px;background:#f8fbff;padding:16px}
 .property-branch-permission.hidden-scope{background:#fffaf0;border-color:#f0d59a}
@@ -5377,4 +5421,15 @@ window.shuraimiCloudSync=initialSync;
 .property-center-checks span{font-weight:900;font-size:15px}.property-center-checks small{color:#64748b;font-size:12px}
 .property-groups.scope-disabled{opacity:.55;pointer-events:none}
 .property-scope-note{font-weight:800;color:#8a5a13;padding:5px}
+</style>
+
+<style id="inline-section-branches-v260">
+.property-branch-permission,.cc-scope-wrap,.cc-scope-card{display:none!important}
+.branch-permission-row td{padding:0 12px 12px!important;background:#f7fbff}
+.inline-branches{border:1px solid #cfe0ef;border-radius:14px;background:#fff;padding:12px}
+.inline-branches-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;color:#0b4560}
+.inline-branches-head label{display:flex;align-items:center;gap:7px;background:#edf8f4;padding:7px 11px;border-radius:10px}
+.inline-branch-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.inline-branch-list label{display:grid;grid-template-columns:24px 1fr;column-gap:7px;align-items:center;border:1px solid #dbe6f0;border-radius:10px;padding:9px;background:#fbfdff;cursor:pointer}
+.inline-branch-list input{grid-row:1/3;width:18px;height:18px}.inline-branch-list span{font-weight:900}.inline-branch-list small{color:#64748b;font-size:11px}
 </style>
