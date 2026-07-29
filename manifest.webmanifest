@@ -1,0 +1,12 @@
+{
+  "name": "نظام مؤسسة حسن محمد الشريمي",
+  "short_name": "نظام الشريمي",
+  "start_url": "./?v=240",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f9fd",
+  "theme_color": "#071a34",
+  "lang": "ar",
+  "dir": "rtl",
+  "description": "نظام الشريمي V2.4 — صلاحيات العقارات المباشرة حسب مركز التكلفة"
+}
