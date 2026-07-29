@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نظام مؤسسة حسن محمد الشريمي - V1.1.6 فلاتر التقارير</title>
+<title>نظام مؤسسة حسن محمد الشريمي - V1.1.7 فلاتر التقارير</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -318,7 +318,7 @@ function closeModal(){byId('modal').classList.remove('show')}
 function openModuleManager(){byId('modalTitle').textContent='إدارة واجهة المؤسسة';byId('modalBody').innerHTML=`<div class="grid row3">${Object.keys(modules).map(k=>`<div class="report-box"><span>${modules[k].icon} ${modules[k].title}</span><input type="checkbox" checked></div>`).join('')}</div><div class="actions"><button class="success" onclick="closeModal()">حفظ الواجهة</button></div>`;byId('modal').classList.add('show')}
 function renderReportsSection(){if(byId('reports')?.classList.contains('active'))renderUnifiedReports()}
 
-/* ===== Unified Reports Center V1.1.6 ===== */
+/* ===== Unified Reports Center V1.1.7 ===== */
 let UR_STATE={type:'financial',from:'',to:'',activity:'all',entity:'',status:'',search:''};
 function urToday(){return new Date().toISOString().slice(0,10)}
 function urMonthStart(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`}
@@ -820,42 +820,31 @@ function printContract(contractId){
  .signatures{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:42px}.sig{height:105px;border:1px dashed #b6c5d6;border-radius:18px;padding:12px;text-align:center;background:#fbfdff}.sig b{display:block;color:#0b2346;margin-bottom:42px}.sig span{border-top:1px solid #0f172a;display:block;padding-top:8px;color:#475569;font-weight:800}
  .footer{margin-top:18px;border-top:1px solid #dbe4ef;padding-top:8px;display:flex;justify-content:space-between;color:#64748b;font-size:11px;position:relative;z-index:1}.print-btn{position:fixed;top:14px;left:14px;background:#0b2346;color:white;border:0;border-radius:12px;padding:10px 16px;font-weight:900;cursor:pointer}.seal{position:absolute;left:24mm;bottom:32mm;width:95px;height:95px;border:3px solid rgba(180,123,37,.25);border-radius:50%;display:grid;place-items:center;color:rgba(180,123,37,.38);font-weight:900;transform:rotate(-12deg);font-size:14px;text-align:center}
  @media print{
-      html,body{background:#fff!important;margin:0!important;padding:0!important}
-      body{font-size:11px!important;line-height:1.55!important}
-      body *{visibility:visible!important}
-      .doc{
-        display:block!important;visibility:visible!important;
-        box-shadow:none!important;margin:0 auto!important;
-        width:190mm!important;min-height:auto!important;
-        padding:8mm 9mm 10mm!important;overflow:visible!important
-      }
-      .print-btn{display:none!important}
-      .header{display:grid!important;grid-template-columns:34mm 1fr 25mm!important;gap:7mm!important;align-items:start!important}
-      .header h1{font-size:18px!important;margin:0 0 2mm!important}
-      .header .sub{font-size:9px!important}
-      .title{font-size:20px!important;margin:5mm 0 3mm!important;padding:3mm!important}
-      .meta-grid{grid-template-columns:repeat(2,1fr)!important;gap:3mm!important}
-      .meta-card{padding:3mm!important;min-height:16mm!important}
-      .parties{grid-template-columns:1fr 1fr!important;gap:4mm!important}
-      .party{padding:4mm!important}
-      .party h3,.section h3{font-size:13px!important;margin:0 0 2mm!important}
-      .terms{padding:4mm!important;font-size:10px!important}
-      .terms ol{margin:0!important;padding-right:5mm!important}
-      .terms li{margin-bottom:1.5mm!important}
-      table{width:100%!important;border-collapse:collapse!important;font-size:9.5px!important}
-      th,td{padding:2.2mm 1.5mm!important;border:1px solid #d6dee8!important}
-      thead{display:table-header-group!important}
-      tr{break-inside:avoid!important;page-break-inside:avoid!important}
-      .summary{grid-template-columns:repeat(3,1fr)!important;gap:3mm!important}
-      .summary>div{padding:3mm!important}
-      .signatures{grid-template-columns:1fr 1fr!important;gap:12mm!important;margin-top:8mm!important}
-      .signature{min-height:25mm!important;padding-top:4mm!important}
-      .footer{position:static!important;margin-top:7mm!important;font-size:8px!important}
-      .seal{opacity:.05!important}
-      .section{break-inside:auto!important;page-break-inside:auto!important}
-      .party,.meta-grid,.summary,.signatures{break-inside:avoid!important;page-break-inside:avoid!important}
-      @page{size:A4 portrait;margin:7mm}
-    }
+  html,body{margin:0!important;padding:0!important;background:#fff!important;width:100%!important;height:auto!important}
+  body{font-family:Arial,'Tahoma',sans-serif!important;color:#0f172a!important;line-height:1.55!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .print-btn{display:none!important}
+  .doc{width:190mm!important;min-height:0!important;margin:0 auto!important;padding:8mm 9mm 9mm!important;background:#fff!important;box-shadow:none!important;overflow:visible!important;position:relative!important}
+  .top-border{height:3mm!important}
+  .header{grid-template-columns:24mm 1fr 34mm!important;gap:4mm!important;padding-bottom:4mm!important;margin-bottom:4mm!important;align-items:center!important;break-inside:avoid!important;page-break-inside:avoid!important}
+  .logo{width:22mm!important;height:22mm!important;border-radius:6mm!important;font-size:24px!important}
+  .brand h1{font-size:17px!important;line-height:1.35!important;margin:0!important}.brand p{font-size:8.5px!important;margin:1mm 0 0!important}.brand .sub{font-size:9px!important}
+  .doc-meta{font-size:8px!important;padding:2mm!important;border-radius:3mm!important}.doc-meta div{padding:1mm 0!important}
+  .title{margin:4mm 0 3mm!important}.title h2{font-size:20px!important;line-height:1.3!important}.title span{font-size:9px!important;padding:1.5mm 4mm!important;margin-top:2mm!important}
+  .section-title{font-size:13px!important;margin:4mm 0 2mm!important;break-after:avoid!important;page-break-after:avoid!important}
+  .meta-grid{grid-template-columns:1fr 1fr!important;gap:2.5mm!important;break-inside:avoid!important;page-break-inside:avoid!important}
+  .info{min-height:14mm!important;padding:2.5mm 3mm!important;border-radius:3mm!important}.info .lab{font-size:8px!important}.info .val{font-size:12px!important;margin-top:1mm!important}
+  .party{grid-template-columns:1fr 1fr!important;gap:3mm!important;margin-top:2mm!important;break-inside:avoid!important;page-break-inside:avoid!important}
+  .party-card{padding:3mm!important;border-radius:4mm!important}.party-card h3{font-size:11px!important;margin:0 0 2mm!important}.party-line{font-size:8.5px!important;padding:1.3mm 0!important;gap:3mm!important}
+  .terms{padding:3mm 4mm!important;font-size:8.5px!important;border-radius:4mm!important;break-inside:avoid!important;page-break-inside:avoid!important}.terms ol{padding-right:5mm!important}.terms li{margin:1mm 0!important}
+  table{width:100%!important;border-collapse:collapse!important;border-spacing:0!important;margin-top:2mm!important;font-size:8.5px!important;overflow:visible!important;break-inside:auto!important;page-break-inside:auto!important}
+  thead{display:table-header-group!important}tfoot{display:table-footer-group!important}tr{break-inside:avoid!important;page-break-inside:avoid!important}th{padding:2mm 1mm!important}td{padding:1.8mm 1mm!important}
+  .summary{grid-template-columns:repeat(3,1fr)!important;gap:2.5mm!important;margin-top:3mm!important;break-inside:avoid!important;page-break-inside:avoid!important}.sum{padding:2.5mm!important;border-radius:3mm!important}.sum b{font-size:12px!important}.sum span{font-size:8px!important}
+  .signatures{grid-template-columns:1fr 1fr!important;gap:10mm!important;margin-top:8mm!important;break-inside:avoid!important;page-break-inside:avoid!important}.sig{height:26mm!important;padding:3mm!important;border-radius:4mm!important}.sig b{font-size:10px!important;margin-bottom:11mm!important}.sig span{font-size:8px!important;padding-top:2mm!important}
+  .seal{width:24mm!important;height:24mm!important;left:12mm!important;bottom:20mm!important;font-size:9px!important;opacity:.22!important}
+  .footer{font-size:7.5px!important;margin-top:4mm!important;padding-top:2mm!important;break-inside:avoid!important;page-break-inside:avoid!important}
+  .watermark{font-size:85px!important;opacity:.035!important}
+  @page{size:A4 portrait;margin:5mm}
+}
  </style></head><body><button class="print-btn" onclick="print()">طباعة العقد</button><main class="doc"><div class="top-border"></div><div class="watermark">HASAN ERP</div><div class="header"><div class="logo">ح</div><div class="brand"><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><p>عقود وإدارة أملاك — Hasan ERP Powered by Sanabel OS</p><p class="sub">وثيقة عقد إيجار رسمية</p></div><div class="doc-meta"><div><span>رقم العقد</span><b>${contractNo}</b></div><div><span>تاريخ الطباعة</span><b>${today}</b></div><div><span>حالة العقد</span><b>${ct['الحالة']||'نشط'}</b></div></div></div><div class="title"><h2>عقد إيجار ${ct['نوع الوحدة']||''} ${ct['الوحدة']||''}</h2><span>مركز التكلفة: ${ct['مركز التكلفة']||'-'}</span></div>
  <div class="section-title">بيانات العقد</div><div class="meta-grid"><div class="info"><span class="lab">نوع العقد</span><span class="val">${ct['نوع العقد']||'-'}</span></div><div class="info"><span class="lab">الوحدة</span><span class="val">${ct['نوع الوحدة']||''} ${ct['الوحدة']||''}</span></div><div class="info"><span class="lab">تاريخ البداية</span><span class="val">${ct['تاريخ البداية']||'-'}</span></div><div class="info"><span class="lab">تاريخ النهاية</span><span class="val">${ct['تاريخ النهاية']||'-'}</span></div><div class="info gold"><span class="lab">الإيجار قبل الضريبة لكل دفعة</span><span class="val">${moneyProp(ct['الإيجار'])} ر.س</span></div><div class="info gold"><span class="lab">عدد الدفعات</span><span class="val">${ct['عدد الدفعات']||'-'}</span></div>${ct['نوع الوحدة']==='محل'?`<div class="info"><span class="lab">نوع الفاتورة</span><span class="val">${ct['نوع الفاتورة']||'غير ضريبي'}</span></div><div class="info"><span class="lab">الضريبة لكل دفعة</span><span class="val">${moneyProp(ct['الضريبة لكل دفعة'])} ر.س</span></div><div class="info gold"><span class="lab">الإجمالي بعد الضريبة</span><span class="val">${moneyProp(ct['الإجمالي لكل دفعة']||ct['الإيجار'])} ر.س</span></div>`:''}</div>
  <div class="section-title">أطراف العقد</div><div class="party"><div class="party-card"><h3>الطرف الأول: المؤجر</h3><div class="party-line"><span>الاسم</span><b>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</b></div><div class="party-line"><span>الصفة</span><b>مالك/مؤجر</b></div><div class="party-line"><span>النظام</span><b>Hasan ERP</b></div></div><div class="party-card"><h3>الطرف الثاني: المستأجر</h3><div class="party-line"><span>الاسم</span><b>${ct['المستأجر']||'-'}</b></div><div class="party-line"><span>الجوال</span><b>${ct['الجوال']||'-'}</b></div><div class="party-line"><span>${ct['نوع الوحدة']==='محل'?'السجل التجاري':'الهوية/السجل'}</span><b>${ct['رقم الهوية/السجل']||'-'}</b></div>${ct['نوع الوحدة']==='محل'?`<div class="party-line"><span>الرقم الضريبي</span><b>${ct['الرقم الضريبي']||'-'}</b></div><div class="party-line"><span>النشاط التجاري</span><b>${ct['النشاط التجاري']||'-'}</b></div><div class="party-line"><span>العنوان الوطني</span><b>${ct['العنوان الوطني']||'-'}</b></div><div class="party-line"><span>البريد الإلكتروني</span><b>${ct['البريد الإلكتروني']||'-'}</b></div>`:''}</div></div>
@@ -5199,7 +5188,7 @@ function installUI(){
  if('serviceWorker'in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(console.warn);
  window.addEventListener('online',()=>initialSync());window.addEventListener('offline',()=>setStatus('err','غير متصل — الحفظ محلي مؤقتًا'));
 }
-function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V1.1.6 فلاتر التقارير';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.1.1<br>مزامنة Supabase • جوال • آيباد • سطح المكتب'}
+function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V1.1.7 فلاتر التقارير';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.1.1<br>مزامنة Supabase • جوال • آيباد • سطح المكتب'}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 window.shuraimiCloudSync=initialSync;
 })();
