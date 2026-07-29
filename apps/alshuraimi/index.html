@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نظام مؤسسة حسن محمد الشريمي - V1.1.5 فلاتر التقارير</title>
+<title>نظام مؤسسة حسن محمد الشريمي - V1.1.6 فلاتر التقارير</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -318,7 +318,7 @@ function closeModal(){byId('modal').classList.remove('show')}
 function openModuleManager(){byId('modalTitle').textContent='إدارة واجهة المؤسسة';byId('modalBody').innerHTML=`<div class="grid row3">${Object.keys(modules).map(k=>`<div class="report-box"><span>${modules[k].icon} ${modules[k].title}</span><input type="checkbox" checked></div>`).join('')}</div><div class="actions"><button class="success" onclick="closeModal()">حفظ الواجهة</button></div>`;byId('modal').classList.add('show')}
 function renderReportsSection(){if(byId('reports')?.classList.contains('active'))renderUnifiedReports()}
 
-/* ===== Unified Reports Center V1.1.5 ===== */
+/* ===== Unified Reports Center V1.1.6 ===== */
 let UR_STATE={type:'financial',from:'',to:'',activity:'all',entity:'',status:'',search:''};
 function urToday(){return new Date().toISOString().slice(0,10)}
 function urMonthStart(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`}
@@ -821,15 +821,40 @@ function printContract(contractId){
  .footer{margin-top:18px;border-top:1px solid #dbe4ef;padding-top:8px;display:flex;justify-content:space-between;color:#64748b;font-size:11px;position:relative;z-index:1}.print-btn{position:fixed;top:14px;left:14px;background:#0b2346;color:white;border:0;border-radius:12px;padding:10px 16px;font-weight:900;cursor:pointer}.seal{position:absolute;left:24mm;bottom:32mm;width:95px;height:95px;border:3px solid rgba(180,123,37,.25);border-radius:50%;display:grid;place-items:center;color:rgba(180,123,37,.38);font-weight:900;transform:rotate(-12deg);font-size:14px;text-align:center}
  @media print{
       html,body{background:#fff!important;margin:0!important;padding:0!important}
+      body{font-size:11px!important;line-height:1.55!important}
       body *{visibility:visible!important}
-      .doc{display:block!important;visibility:visible!important;box-shadow:none!important;margin:0 auto!important;width:186mm!important;min-height:auto!important;padding:10mm 9mm 14mm!important;overflow:visible!important}
+      .doc{
+        display:block!important;visibility:visible!important;
+        box-shadow:none!important;margin:0 auto!important;
+        width:190mm!important;min-height:auto!important;
+        padding:8mm 9mm 10mm!important;overflow:visible!important
+      }
       .print-btn{display:none!important}
-      .header,.title,.meta-grid,.party,.terms,.summary,.signatures,table{break-inside:avoid;page-break-inside:avoid}
-      thead{display:table-header-group}
-      tr{break-inside:avoid;page-break-inside:avoid}
-      .footer{position:static!important;margin-top:10mm!important}
-      .seal{position:absolute}
-      @page{size:A4 portrait;margin:8mm}
+      .header{display:grid!important;grid-template-columns:34mm 1fr 25mm!important;gap:7mm!important;align-items:start!important}
+      .header h1{font-size:18px!important;margin:0 0 2mm!important}
+      .header .sub{font-size:9px!important}
+      .title{font-size:20px!important;margin:5mm 0 3mm!important;padding:3mm!important}
+      .meta-grid{grid-template-columns:repeat(2,1fr)!important;gap:3mm!important}
+      .meta-card{padding:3mm!important;min-height:16mm!important}
+      .parties{grid-template-columns:1fr 1fr!important;gap:4mm!important}
+      .party{padding:4mm!important}
+      .party h3,.section h3{font-size:13px!important;margin:0 0 2mm!important}
+      .terms{padding:4mm!important;font-size:10px!important}
+      .terms ol{margin:0!important;padding-right:5mm!important}
+      .terms li{margin-bottom:1.5mm!important}
+      table{width:100%!important;border-collapse:collapse!important;font-size:9.5px!important}
+      th,td{padding:2.2mm 1.5mm!important;border:1px solid #d6dee8!important}
+      thead{display:table-header-group!important}
+      tr{break-inside:avoid!important;page-break-inside:avoid!important}
+      .summary{grid-template-columns:repeat(3,1fr)!important;gap:3mm!important}
+      .summary>div{padding:3mm!important}
+      .signatures{grid-template-columns:1fr 1fr!important;gap:12mm!important;margin-top:8mm!important}
+      .signature{min-height:25mm!important;padding-top:4mm!important}
+      .footer{position:static!important;margin-top:7mm!important;font-size:8px!important}
+      .seal{opacity:.05!important}
+      .section{break-inside:auto!important;page-break-inside:auto!important}
+      .party,.meta-grid,.summary,.signatures{break-inside:avoid!important;page-break-inside:avoid!important}
+      @page{size:A4 portrait;margin:7mm}
     }
  </style></head><body><button class="print-btn" onclick="print()">طباعة العقد</button><main class="doc"><div class="top-border"></div><div class="watermark">HASAN ERP</div><div class="header"><div class="logo">ح</div><div class="brand"><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><p>عقود وإدارة أملاك — Hasan ERP Powered by Sanabel OS</p><p class="sub">وثيقة عقد إيجار رسمية</p></div><div class="doc-meta"><div><span>رقم العقد</span><b>${contractNo}</b></div><div><span>تاريخ الطباعة</span><b>${today}</b></div><div><span>حالة العقد</span><b>${ct['الحالة']||'نشط'}</b></div></div></div><div class="title"><h2>عقد إيجار ${ct['نوع الوحدة']||''} ${ct['الوحدة']||''}</h2><span>مركز التكلفة: ${ct['مركز التكلفة']||'-'}</span></div>
  <div class="section-title">بيانات العقد</div><div class="meta-grid"><div class="info"><span class="lab">نوع العقد</span><span class="val">${ct['نوع العقد']||'-'}</span></div><div class="info"><span class="lab">الوحدة</span><span class="val">${ct['نوع الوحدة']||''} ${ct['الوحدة']||''}</span></div><div class="info"><span class="lab">تاريخ البداية</span><span class="val">${ct['تاريخ البداية']||'-'}</span></div><div class="info"><span class="lab">تاريخ النهاية</span><span class="val">${ct['تاريخ النهاية']||'-'}</span></div><div class="info gold"><span class="lab">الإيجار قبل الضريبة لكل دفعة</span><span class="val">${moneyProp(ct['الإيجار'])} ر.س</span></div><div class="info gold"><span class="lab">عدد الدفعات</span><span class="val">${ct['عدد الدفعات']||'-'}</span></div>${ct['نوع الوحدة']==='محل'?`<div class="info"><span class="lab">نوع الفاتورة</span><span class="val">${ct['نوع الفاتورة']||'غير ضريبي'}</span></div><div class="info"><span class="lab">الضريبة لكل دفعة</span><span class="val">${moneyProp(ct['الضريبة لكل دفعة'])} ر.س</span></div><div class="info gold"><span class="lab">الإجمالي بعد الضريبة</span><span class="val">${moneyProp(ct['الإجمالي لكل دفعة']||ct['الإيجار'])} ر.س</span></div>`:''}</div>
@@ -1127,17 +1152,27 @@ function saveFinancePayment(){
   if(taxable==='ضريبي'&&tax>0){const tx=load('tax');tx.unshift({id:rec.id,'نوع الفاتورة':'مدخلات','الرقم':rec['رقم السند'],'المبلغ الخاضع':base,'الضريبة':tax,'الفترة':String(rec['التاريخ']).slice(0,7),'مركز التكلفة':center,'المورد':rec['المورد'],created:rec.created});save('tax',tx)}
   closeModal(); renderFinanceSection(); renderDashboard();
 }
-function printFinanceVoucher(id){const r=load('finance').find(x=>x.id===id);if(!r)return;const w=window.open('','_blank','width=900,height=1000');const isPay=r['نوع العملية']==='سند صرف';w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${r['رقم السند']}</title><style>body{font-family:Arial,Tahoma,sans-serif;background:#eef2f7;margin:0}.doc{width:210mm;min-height:297mm;background:white;margin:auto;padding:18mm;box-shadow:0 20px 60px #0002}.head{display:flex;align-items:center;gap:15px;border-bottom:3px solid #0b2346;padding-bottom:14px}.logo{width:70px;height:70px;border-radius:18px;background:linear-gradient(135deg,#0b2346,#b47b25);color:white;display:grid;place-items:center;font-size:34px;font-weight:bold}h1,h2{margin:0}.title{text-align:center;margin:25px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{border:1px solid #d7e0ee;border-radius:12px;padding:11px;background:#fbfdff}.amount{font-size:26px;font-weight:bold;color:${isPay?'#dc2626':'#16a34a'}}.sign{display:grid;grid-template-columns:1fr 1fr;gap:70px;margin-top:70px}.sign div{border-top:1px solid #111;text-align:center;padding-top:8px}button{position:fixed;top:12px;left:12px;padding:10px 18px}</style><style id="unified-reports-v111">
-.report-center{display:grid;gap:16px}.report-hero{background:linear-gradient(135deg,#0b3470,#155cc5);color:#fff;border-radius:24px;padding:22px;display:flex;justify-content:space-between;gap:16px;align-items:center;box-shadow:0 16px 38px rgba(21,92,197,.18)}.report-hero h2{margin:0 0 5px;font-size:28px}.report-hero p{margin:0;color:#dbeafe;font-weight:800}
-.report-toolbar{background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow)}.report-filters{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr auto;gap:10px;align-items:end}.report-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px}.quick-periods{display:flex;gap:7px;flex-wrap:wrap}.quick-periods button{padding:7px 10px;border-radius:11px;background:#eef5ff;color:#155cc5;border:1px solid #cfe0f7;font-weight:900;font-size:12px}
-.report-kpis{display:grid;grid-template-columns:repeat(6,minmax(140px,1fr));gap:12px}.report-kpi{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:var(--shadow)}.report-kpi span{display:block;color:var(--muted);font-size:12px;font-weight:900}.report-kpi b{display:block;font-size:23px;margin-top:5px;color:#071a34}.report-kpi.good b{color:#109264}.report-kpi.bad b{color:#dc2626}.report-kpi.info b{color:#155cc5}
-.report-layout{display:grid;grid-template-columns:1.25fr .75fr;gap:14px}.report-table-panel,.report-insight{background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow)}.report-section-title{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.report-section-title h3{margin:0}
-.report-table{width:100%;border-collapse:separate;border-spacing:0 7px}.report-table th{font-size:12px;color:#64748b;padding:0 8px}.report-table td{padding:10px 8px;background:#fbfdff;border-top:1px solid #e7eef8;border-bottom:1px solid #e7eef8;font-size:13px}.report-table td:first-child{border-right:1px solid #e7eef8;border-radius:0 12px 12px 0}.report-table td:last-child{border-left:1px solid #e7eef8;border-radius:12px 0 0 12px}
-.report-insight-list{display:grid;gap:9px}.report-insight-item{border:1px solid #e4edf7;background:#f8fbff;border-radius:15px;padding:11px;font-weight:850;line-height:1.7}.report-empty{text-align:center;padding:42px 14px;color:#64748b;font-weight:900}.report-print-head{display:none}
-@media(max-width:1200px){.report-filters{grid-template-columns:repeat(3,1fr)}.report-kpis{grid-template-columns:repeat(3,1fr)}.report-layout{grid-template-columns:1fr}}@media(max-width:700px){.report-hero{display:block}.report-actions{justify-content:stretch}.report-actions button{flex:1}.report-filters,.report-kpis{grid-template-columns:1fr 1fr}}
-@media print{body *{visibility:hidden!important}#reports,#reports *{visibility:visible!important}#reports{position:absolute;inset:0;width:100%;padding:0!important}.sidebar,.topbar,.quickbar,.report-toolbar,.report-actions,.soft-btn,.primary,.success,.danger{display:none!important}.report-hero{background:#fff!important;color:#000!important;border:1px solid #bbb!important;box-shadow:none!important;padding:12px!important}.report-hero p{color:#333!important}.report-print-head{display:block!important;text-align:center;border-bottom:2px solid #222;padding-bottom:10px;margin-bottom:12px}.report-kpis{grid-template-columns:repeat(3,1fr)!important}.report-kpi,.report-table-panel,.report-insight{box-shadow:none!important;border:1px solid #bbb!important}.report-layout{grid-template-columns:1fr!important}.report-center{display:block!important}.report-layout{display:block!important}.report-table-panel,.report-insight{break-inside:auto!important;page-break-inside:auto!important}.report-table tr{break-inside:avoid!important;page-break-inside:avoid!important}@page{size:A4 landscape;margin:10mm}}
-</style>
-</head><body><button onclick="print()">طباعة / PDF</button><main class="doc"><div class="head"><div class="logo">ح</div><div><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><p>سند مالي رسمي — Hasan ERP</p></div></div><div class="title"><h2>${r['نوع العملية']}</h2><p>${r['رقم السند']||''}</p></div><div class="grid"><div class="box"><b>التاريخ:</b> ${r['التاريخ']||'-'}</div><div class="box"><b>مركز التكلفة:</b> ${r['مركز التكلفة']||'-'}</div><div class="box"><b>${isPay?'المستفيد':'المستلم منه'}:</b> ${isPay?(r['المستفيد']||r['المورد']||'-'):(r['المستلم منه']||'-')}</div><div class="box"><b>طريقة الدفع:</b> ${r['طريقة الدفع']||'-'} — ${r['الحساب']||'-'}</div><div class="box"><b>بند الصرف:</b> ${r['بند الصرف']||'-'}</div><div class="box"><b>الضريبة:</b> ${r['ضريبي']||'غير ضريبي'}</div></div><div class="box" style="margin-top:12px"><b>البيان:</b><br>${r['البيان']||'-'}</div>${isPay?`<div class="grid" style="margin-top:12px"><div class="box"><b>قبل الضريبة:</b> ${money(r['قبل الضريبة'])}</div><div class="box"><b>قيمة الضريبة:</b> ${money(r['الضريبة'])}</div></div>`:''}<div class="box" style="margin-top:18px;text-align:center"><div>الإجمالي</div><div class="amount">${money(r['المبلغ'])} ر.س</div></div><div class="sign"><div>توقيع المستلم</div><div>اعتماد الإدارة</div></div></main></body></html>`);w.document.close()}
+function printFinanceVoucher(id){const r=load('finance').find(x=>x.id===id);if(!r)return;const w=window.open('','_blank','width=900,height=1000');const isPay=r['نوع العملية']==='سند صرف';w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${r['رقم السند']}</title><style>body{font-family:Arial,Tahoma,sans-serif;background:#eef2f7;margin:0}.doc{width:210mm;min-height:297mm;background:white;margin:auto;padding:18mm;box-shadow:0 20px 60px #0002}.head{display:flex;align-items:center;gap:15px;border-bottom:3px solid #0b2346;padding-bottom:14px}.logo{width:70px;height:70px;border-radius:18px;background:linear-gradient(135deg,#0b2346,#b47b25);color:white;display:grid;place-items:center;font-size:34px;font-weight:bold}h1,h2{margin:0}.title{text-align:center;margin:25px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{border:1px solid #d7e0ee;border-radius:12px;padding:11px;background:#fbfdff}.amount{font-size:26px;font-weight:bold;color:${isPay?'#dc2626':'#16a34a'}}.sign{display:grid;grid-template-columns:1fr 1fr;gap:70px;margin-top:70px}.sign div{border-top:1px solid #111;text-align:center;padding-top:8px}button{position:fixed;top:12px;left:12px;padding:10px 18px}
+    @media print{
+      html,body{background:#fff!important;margin:0!important;padding:0!important}
+      body *{visibility:visible!important}
+      button{display:none!important}
+      .doc{
+        display:block!important;visibility:visible!important;
+        width:190mm!important;min-height:260mm!important;
+        margin:0 auto!important;padding:12mm!important;
+        box-shadow:none!important;overflow:visible!important
+      }
+      .head,.title,.grid,.box,.sign{break-inside:avoid!important;page-break-inside:avoid!important}
+      .head{padding-bottom:5mm!important}
+      .title{margin:8mm 0!important}
+      .grid{gap:4mm!important}
+      .box{padding:4mm!important}
+      .sign{margin-top:22mm!important}
+      @page{size:A4 portrait;margin:8mm}
+    }</style></head><body><button onclick="print()">طباعة / PDF</button><main class="doc"><div class="head"><div class="logo">ح</div><div><h1>مؤسسة حسن محمد الشريمي للتجارة والمقاولات</h1><p>سند مالي رسمي — Hasan ERP</p></div></div><div class="title"><h2>${r['نوع العملية']}</h2><p>${r['رقم السند']||''}</p></div><div class="grid"><div class="box"><b>التاريخ:</b> ${r['التاريخ']||'-'}</div><div class="box"><b>مركز التكلفة:</b> ${r['مركز التكلفة']||'-'}</div><div class="box"><b>${isPay?'المستفيد':'المستلم منه'}:</b> ${isPay?(r['المستفيد']||r['المورد']||'-'):(r['المستلم منه']||'-')}</div><div class="box"><b>طريقة الدفع:</b> ${r['طريقة الدفع']||'-'} — ${r['الحساب']||'-'}</div><div class="box"><b>بند الصرف:</b> ${r['بند الصرف']||'-'}</div><div class="box"><b>الضريبة:</b> ${r['ضريبي']||'غير ضريبي'}</div></div><div class="box" style="margin-top:12px"><b>البيان:</b><br>${r['البيان']||'-'}</div>${isPay?`<div class="grid" style="margin-top:12px"><div class="box"><b>قبل الضريبة:</b> ${money(r['قبل الضريبة'])}</div><div class="box"><b>قيمة الضريبة:</b> ${money(r['الضريبة'])}</div></div>`:''}<div class="box" style="margin-top:18px;text-align:center"><div>الإجمالي</div><div class="amount">${money(r['المبلغ'])} ر.س</div></div><div class="sign"><div>توقيع المستلم</div><div>اعتماد الإدارة</div></div></main></body></html>`);w.document.close();w.focus();
+ const doPrint=()=>setTimeout(()=>w.print(),450);
+ if(w.document.readyState==='complete')doPrint();else w.onload=doPrint}
 function printFinanceDailyReport(){const rows=load('finance').filter(r=>(r['التاريخ']||'').slice(0,10)===new Date().toISOString().slice(0,10));const w=window.open('','_blank','width=1000,height=800');w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><style>body{font-family:Arial;padding:25px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:center}th{background:#0b2346;color:white}</style><style id="unified-reports-v111">
 .report-center{display:grid;gap:16px}.report-hero{background:linear-gradient(135deg,#0b3470,#155cc5);color:#fff;border-radius:24px;padding:22px;display:flex;justify-content:space-between;gap:16px;align-items:center;box-shadow:0 16px 38px rgba(21,92,197,.18)}.report-hero h2{margin:0 0 5px;font-size:28px}.report-hero p{margin:0;color:#dbeafe;font-weight:800}
 .report-toolbar{background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow)}.report-filters{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr auto;gap:10px;align-items:end}.report-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px}.quick-periods{display:flex;gap:7px;flex-wrap:wrap}.quick-periods button{padding:7px 10px;border-radius:11px;background:#eef5ff;color:#155cc5;border:1px solid #cfe0f7;font-weight:900;font-size:12px}
@@ -5164,7 +5199,7 @@ function installUI(){
  if('serviceWorker'in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(console.warn);
  window.addEventListener('online',()=>initialSync());window.addEventListener('offline',()=>setStatus('err','غير متصل — الحفظ محلي مؤقتًا'));
 }
-function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V1.1.5 فلاتر التقارير';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.1.1<br>مزامنة Supabase • جوال • آيباد • سطح المكتب'}
+function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V1.1.6 فلاتر التقارير';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.1.1<br>مزامنة Supabase • جوال • آيباد • سطح المكتب'}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 window.shuraimiCloudSync=initialSync;
 })();
