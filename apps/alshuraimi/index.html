@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نظام مؤسسة حسن محمد الشريمي - V2.0 فلاتر التقارير</title>
+<title>نظام مؤسسة حسن محمد الشريمي - V2.1 فلاتر التقارير</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -63,7 +63,7 @@ button,input,select,textarea{font-size:14px}.app{grid-template-columns:282px 1fr
 .unit-edit-note{background:#fff7ed;border:1px solid #fed7aa;color:#92400e;border-radius:14px;padding:10px 12px;font-weight:900;margin:10px 0}.danger-outline{background:#fff1f2!important;color:#be123c!important;border:1px solid #fecdd3!important}
 
 
-/* ===== V2.0.0 Executive Dashboard Redesign ===== */
+/* ===== V2.1.0 Executive Dashboard Redesign ===== */
 .executive-v2{--exec-blue:#2563eb;--exec-green:#16a34a;--exec-orange:#f59e0b;--exec-red:#ef4444;--exec-slate:#0f172a}
 .exec-header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:14px;background:linear-gradient(135deg,#ffffff,#f8fbff);border:1px solid var(--line);border-radius:24px;padding:18px 22px;box-shadow:var(--shadow)}
 .exec-header h1{margin:0;font-size:34px;font-weight:900;color:#081632}.exec-header p{margin:5px 0 0;color:var(--muted);font-weight:800}.exec-tools{display:flex;gap:8px;flex-wrap:wrap}
@@ -318,7 +318,7 @@ function closeModal(){byId('modal').classList.remove('show')}
 function openModuleManager(){byId('modalTitle').textContent='إدارة واجهة المؤسسة';byId('modalBody').innerHTML=`<div class="grid row3">${Object.keys(modules).map(k=>`<div class="report-box"><span>${modules[k].icon} ${modules[k].title}</span><input type="checkbox" checked></div>`).join('')}</div><div class="actions"><button class="success" onclick="closeModal()">حفظ الواجهة</button></div>`;byId('modal').classList.add('show')}
 function renderReportsSection(){if(byId('reports')?.classList.contains('active'))renderUnifiedReports()}
 
-/* ===== Unified Reports Center V2.0 ===== */
+/* ===== Unified Reports Center V2.1 ===== */
 let UR_STATE={type:'financial',from:'',to:'',activity:'all',entity:'',status:'',search:''};
 function urToday(){return new Date().toISOString().slice(0,10)}
 function urMonthStart(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`}
@@ -790,50 +790,73 @@ function openContractForm(u,c){
  const isShop=u.type==='محل';const typeOptions=isShop?'<option>شهري</option><option>سنوي</option>':'<option>شهري</option><option>سنوي</option><option>يومي</option>';const businessFields=isShop?`<div class="field"><label>اسم المنشأة/المستأجر</label><input id="ct_tenant" value="${u.tenant||''}" placeholder="اسم المؤسسة أو المستأجر"></div><div class="field"><label>رقم الجوال</label><input id="ct_phone" placeholder="05xxxxxxxx" value="${u.phone||''}"></div><div class="field"><label>رقم السجل التجاري</label><input id="ct_idno" placeholder="رقم السجل التجاري"></div><div class="field"><label>الرقم الضريبي</label><input id="ct_tax_number" placeholder="3xxxxxxxxxxxxxx"></div><div class="field wide"><label>العنوان الوطني</label><input id="ct_national_address" placeholder="المدينة، الحي، الشارع، رقم المبنى، الرمز البريدي"></div><div class="field"><label>النشاط التجاري</label><input id="ct_activity" placeholder="مثال: تموينات، مطعم، مكتب خدمات"></div><div class="field"><label>البريد الإلكتروني</label><input id="ct_email" placeholder="اختياري"></div><div class="field"><label>هل العقد ضريبي؟</label><select id="ct_taxable" onchange="updateContractTax()"><option>لا</option><option>نعم</option></select></div><div class="field"><label>نوع الفاتورة</label><select id="ct_invoice_type"><option>غير ضريبي</option><option>ضريبي</option><option>ضريبي مبسط</option></select></div>`:`<div class="field"><label>اسم المستأجر</label><input id="ct_tenant" value="${u.tenant||''}"></div><div class="field"><label>رقم الجوال</label><input id="ct_phone" placeholder="05xxxxxxxx" value="${u.phone||''}"></div><div class="field"><label>رقم الهوية/السجل</label><input id="ct_idno"></div>`;byId('modalBody').innerHTML=`${propHidden(u,c)}<div class="notice" style="margin-bottom:12px">${isShop?'نموذج محل تجاري: شهري أو سنوي فقط. لا يسمح بالتأجير اليومي للمحلات، وسيتم توليد جدول الدفعات تلقائيًا حسب مدة العقد.':'نموذج شقة سكنية: يدعم اليومي/الشهري/السنوي حسب الحاجة.'}</div><div class="form">${businessFields}<div class="field"><label>نوع العقد</label><select id="ct_type" onchange="updateContractEnd()">${typeOptions}</select></div><div class="field"><label>تاريخ البداية</label><input id="ct_start" type="date" value="${today}" onchange="updateContractEnd()"></div><div class="field"><label>عدد الدفعات / مدة العقد</label><input id="ct_count" type="number" min="1" value="${isShop?12:1}" oninput="updateContractEnd()"></div><div class="field"><label>تاريخ النهاية تلقائي</label><input id="ct_end" type="date" readonly></div><div class="field"><label>${isShop?'الإيجار قبل الضريبة لكل دفعة':'الإيجار لكل دفعة'}</label><input id="ct_rent" type="number" step="0.01" value="${u.rent||0}" oninput="updateContractTax()"></div>${isShop?'<div class="field"><label>ضريبة 15%</label><input id="ct_vat" type="number" readonly value="0.00"></div><div class="field"><label>الإجمالي بعد الضريبة</label><input id="ct_total" type="number" readonly value="0.00"></div>':''}<div class="field"><label>رصيد افتتاحي/مستحق سابق</label><input id="ct_due" type="number" step="0.01" value="${u.due||0}"></div><div class="field wide"><label>ملاحظة</label><input id="ct_note"></div></div><div class="notice" style="margin-top:12px">سيتم توليد الدفعات تلقائياً حسب نوع العقد وعدد الدفعات، وربطها بمركز التكلفة والوحدة والتقارير${isShop?'، وترحيل الضريبة تلقائياً عند اختيار عقد ضريبي.':''}</div><div class="actions"><button class="success" onclick="saveContract('${u.id}')">حفظ العقد وتوليد الدفعات</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;
  byId('modal').classList.add('show'); updateContractEnd();
 }
-function saveContract(unitId){const u=getUnit(unitId),c=getCenter(u.center_id)||{};const isShop=u.type==='محل';const tenant=byId('ct_tenant').value.trim();if(!tenant)return alert('أدخل اسم المستأجر');let contractType=byId('ct_type').value;if(isShop&&contractType==='يومي')return alert('المحل التجاري لا يقبل عقد يومي. اختر شهري أو سنوي فقط.');const rent=n(byId('ct_rent').value),openingDue=n(byId('ct_due').value),count=Number(byId('ct_count').value||1),phone=byId('ct_phone').value.trim(),taxable=isShop&&((byId('ct_taxable')?.value||'لا')==='نعم'),vatPer=taxable?rent*0.15:0,totalPer=rent+vatPer;const contract=pushLinked('contracts',{'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'نوع الوحدة':u.type,'المستأجر':tenant,'الجوال':phone,'رقم الهوية/السجل':byId('ct_idno').value,'نوع العقد':contractType,'تاريخ البداية':byId('ct_start').value,'تاريخ النهاية':byId('ct_end').value,'عدد الدفعات':count,'الإيجار':rent,'الرصيد/المستحق':openingDue,'الحالة':'نشط','ملاحظة':byId('ct_note').value,unit_id:unitId,center_id:u.center_id,'نوع الفاتورة':isShop?(byId('ct_invoice_type')?.value||'غير ضريبي'):'غير ضريبي','عقد ضريبي':taxable?'نعم':'لا','الضريبة لكل دفعة':vatPer,'الإجمالي لكل دفعة':totalPer,'الرقم الضريبي':isShop?(byId('ct_tax_number')?.value||''):'','العنوان الوطني':isShop?(byId('ct_national_address')?.value||''):'','النشاط التجاري':isShop?(byId('ct_activity')?.value||''):'','البريد الإلكتروني':isShop?(byId('ct_email')?.value||''):''});const installments=generateRentInstallments(contract,u,c,totalPer,count,byId('ct_start').value,contractType,openingDue);if(taxable){pushLinked('tax',{'نوع الفاتورة':'مخرجات','الرقم':'RENT-'+contract.id,'المبلغ الخاضع':rent*count,'الضريبة':vatPer*count,'الفترة':(byId('ct_start').value||'').slice(0,7),'مركز التكلفة':c.name||'','الوحدة':u.unit_no,unit_id:unitId,center_id:u.center_id,contract_id:contract.id,'البيان':'ضريبة عقد إيجار محل تجاري'});}updateUnit(unitId,{status:'مؤجر',tenant,phone,rent:totalPer,due:dueUntilToday(unitId),contract_id:contract.id,contract_end:byId('ct_end').value});renderProperties();renderDashboard();byId('modalTitle').textContent='تم حفظ العقد - '+u.type+' '+u.unit_no;byId('modalBody').innerHTML=`${propHidden(u,c)}<div class="success-box" style="background:#ecfdf5;border:1px solid #86efac;color:#14532d;border-radius:18px;padding:16px;font-weight:900">✅ تم حفظ العقد وربطه وتوليد ${installments.length} دفعة تلقائية${taxable?' مع ترحيل الضريبة لمركز الضريبة.':''}</div><div class="grid row3" style="margin-top:12px"><div class="report-box"><span>المستأجر</span><b>${tenant}</b></div><div class="report-box"><span>الجوال</span><b>${phone||'-'}</b></div><div class="report-box"><span>نهاية العقد</span><b>${contract['تاريخ النهاية']}</b></div>${isShop?`<div class="report-box"><span>نوع الفاتورة</span><b>${contract['نوع الفاتورة']}</b></div><div class="report-box"><span>ضريبة الدفعة</span><b>${moneyProp(vatPer)} ر.س</b></div><div class="report-box"><span>الإجمالي بعد الضريبة</span><b>${moneyProp(totalPer)} ر.س</b></div>`:''}</div><div class="actions"><button class="primary" onclick="printContract('${contract.id}')">طباعة العقد الرسمي</button><button class="soft-btn" onclick="openUnitReport('${unitId}', getCenter('${u.center_id}'))">تقرير الوحدة</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`;}
+function saveContract(unitId){const u=getUnit(unitId),c=getCenter(u.center_id)||{};const isShop=u.type==='محل';const tenant=byId('ct_tenant').value.trim();if(!tenant)return alert('أدخل اسم المستأجر');let contractType=byId('ct_type').value;if(isShop&&contractType==='يومي')return alert('المحل التجاري لا يقبل عقد يومي. اختر شهري أو سنوي فقط.');const rent=n(byId('ct_rent').value),openingDue=n(byId('ct_due').value),count=Number(byId('ct_count').value||1),phone=byId('ct_phone').value.trim(),taxable=isShop&&((byId('ct_taxable')?.value||'لا')==='نعم'),vatPer=taxable?rent*0.15:0,totalPer=rent+vatPer;const contract=pushLinked('contracts',{'مركز التكلفة':c.name||'','الوحدة':u.unit_no,'نوع الوحدة':u.type,'المستأجر':tenant,'الجوال':phone,'رقم الهوية/السجل':byId('ct_idno').value,'نوع العقد':contractType,'تاريخ البداية':byId('ct_start').value,'تاريخ النهاية':byId('ct_end').value,'عدد الدفعات':count,'الإيجار':rent,'الرصيد/المستحق':openingDue,'الحالة':'نشط','ملاحظة':byId('ct_note').value,unit_id:unitId,center_id:u.center_id,'نوع الفاتورة':isShop?(byId('ct_invoice_type')?.value||'غير ضريبي'):'غير ضريبي','عقد ضريبي':taxable?'نعم':'لا','الضريبة لكل دفعة':vatPer,'الإجمالي لكل دفعة':totalPer,'الرقم الضريبي':isShop?(byId('ct_tax_number')?.value||''):'','العنوان الوطني':isShop?(byId('ct_national_address')?.value||''):'','النشاط التجاري':isShop?(byId('ct_activity')?.value||''):'','البريد الإلكتروني':isShop?(byId('ct_email')?.value||''):''});const installments=generateRentInstallments(contract,u,c,totalPer,count,byId('ct_start').value,contractType,openingDue);if(taxable){pushLinked('tax',{'نوع الفاتورة':'مخرجات','الرقم':'RENT-'+contract.id,'المبلغ الخاضع':rent*count,'الضريبة':vatPer*count,'الفترة':(byId('ct_start').value||'').slice(0,7),'مركز التكلفة':c.name||'','الوحدة':u.unit_no,unit_id:unitId,center_id:u.center_id,contract_id:contract.id,'البيان':'ضريبة عقد إيجار محل تجاري'});}updateUnit(unitId,{status:'مؤجر',tenant,phone,rent:totalPer,due:dueUntilToday(unitId),contract_id:contract.id,contract_end:byId('ct_end').value});renderProperties();renderDashboard();byId('modalTitle').textContent='تم حفظ العقد - '+u.type+' '+u.unit_no;byId('modalBody').innerHTML=`${propHidden(u,c)}<div class="success-box" style="background:#ecfdf5;border:1px solid #86efac;color:#14532d;border-radius:18px;padding:16px;font-weight:900">✅ تم حفظ العقد وربطه وتوليد ${installments.length} دفعة تلقائية${taxable?' مع ترحيل الضريبة لمركز الضريبة.':''}</div><div class="grid row3" style="margin-top:12px"><div class="report-box"><span>المستأجر</span><b>${tenant}</b></div><div class="report-box"><span>الجوال</span><b>${phone||'-'}</b></div><div class="report-box"><span>نهاية العقد</span><b>${contract['تاريخ النهاية']}</b></div>${isShop?`<div class="report-box"><span>نوع الفاتورة</span><b>${contract['نوع الفاتورة']}</b></div><div class="report-box"><span>ضريبة الدفعة</span><b>${moneyProp(vatPer)} ر.س</b></div><div class="report-box"><span>الإجمالي بعد الضريبة</span><b>${moneyProp(totalPer)} ر.س</b></div>`:''}</div><div class="actions"><button class="primary" onclick="printContract('${contract.id}')">طباعة العقد الرسمي</button><button class="soft-btn" onclick="openUnitReport('${unitId}', getCenter('${u.center_id}'))">تقرير الوحدة</button><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`;setTimeout(()=>printContract('${contract.id}'),160);}
 
 /* ===== Hasan ERP Unified Print Engine V2 ===== */
 const ERPPrintEngine={
-  print({title='مستند',body='',orientation='portrait',extraCss=''}){
-    const frame=document.createElement('iframe');
-    frame.setAttribute('aria-hidden','true');
-    frame.style.cssText='position:fixed;left:-10000px;top:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none';
-    document.body.appendChild(frame);
-    const baseCss=`
+  current:null,
+  css(extraCss='',orientation='portrait'){
+    return `
       @page{size:A4 ${orientation};margin:0}
       *{box-sizing:border-box}
-      html,body{margin:0!important;padding:0!important;background:#fff!important;color:#0f172a;font-family:Arial,Tahoma,sans-serif;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+      html,body{margin:0!important;padding:0!important;background:#fff!important;color:#0f172a;font-family:Arial,Tahoma,sans-serif;font-size:16px;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
       .print-page{width:210mm;min-height:297mm;margin:0 auto;padding:11mm 12mm 12mm;background:#fff;position:relative;overflow:hidden;page-break-after:always;break-after:page}
       .print-page:last-child{page-break-after:auto;break-after:auto}
       .p-topline{position:absolute;top:0;right:0;left:0;height:3mm;background:linear-gradient(90deg,#081a33,#0b4560,#b47b25)}
-      .p-header{display:grid;grid-template-columns:25mm 1fr 39mm;gap:5mm;align-items:center;border-bottom:1.2mm solid #0b2346;padding:4mm 0 4mm;margin-bottom:5mm}
-      .p-logo{width:23mm;height:23mm;border-radius:6mm;background:#0b4560;color:#f7d58a;border:1mm solid #c99536;display:grid;place-items:center;font-size:25px;font-weight:900}
-      .p-brand h1{margin:0;font-size:18px;line-height:1.35;color:#0b1f3d}.p-brand p{margin:1mm 0 0;font-size:9px;color:#64748b;font-weight:700}.p-brand .gold{color:#946516;font-weight:900}
-      .p-meta{border:.4mm solid #d7e1ec;border-radius:3mm;padding:2.5mm;background:#f8fafc;font-size:8.5px}.p-meta div{display:flex;justify-content:space-between;gap:2mm;padding:1mm 0;border-bottom:.2mm dashed #d7e1ec}.p-meta div:last-child{border:0}
-      .p-title{text-align:center;margin:5mm 0}.p-title h2{margin:0;font-size:21px;color:#07172e}.p-chip{display:inline-block;margin-top:2mm;padding:1.3mm 4mm;border:.3mm solid #f0bd62;border-radius:99mm;background:#fff8e8;color:#8a5411;font-size:9px;font-weight:900}
-      .p-section-title{display:flex;align-items:center;gap:3mm;font-size:13px;font-weight:900;color:#0b2346;margin:5mm 0 2.5mm}.p-section-title:after{content:"";height:.25mm;background:#d6e0eb;flex:1}
-      .p-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm}.p-box{border:.35mm solid #d7e1ec;border-radius:3.5mm;padding:3mm;background:#fbfdff;min-height:15mm}.p-box.gold{background:#fff9e9;border-color:#e9ba59}.p-lab{font-size:8px;color:#64748b;font-weight:800}.p-val{font-size:12px;font-weight:900;margin-top:1mm}
-      .p-parties{display:grid;grid-template-columns:1fr 1fr;gap:3mm}.p-party{border:.35mm solid #d7e1ec;border-radius:4mm;padding:3.5mm}.p-party h3{font-size:11px;margin:0 0 2mm;color:#0b2346}.p-line{display:flex;justify-content:space-between;gap:4mm;padding:1.5mm 0;border-bottom:.2mm dashed #dfe7ef;font-size:8.5px}.p-line:last-child{border:0}.p-line b{text-align:left}
-      .p-terms{border:.35mm solid #d7e1ec;border-radius:4mm;padding:3.5mm 5mm;background:#fbfdff;font-size:9px;line-height:1.7}.p-terms ol{margin:0;padding-right:5mm}.p-terms li{margin:1mm 0}
-      .p-table{width:100%;border-collapse:collapse;font-size:8.5px}.p-table th{background:#0b2346;color:#fff;padding:2.3mm 1mm;border:.2mm solid #0b2346}.p-table td{padding:2.1mm 1mm;text-align:center;border:.25mm solid #dbe3ec}.p-table tr:nth-child(even) td{background:#f8fafc}
-      .p-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin-top:4mm}.p-sum{border:.35mm solid #d7e1ec;border-radius:3mm;padding:3mm;text-align:center;background:#f8fafc}.p-sum span{display:block;font-size:8px;color:#64748b}.p-sum b{display:block;font-size:13px;color:#0b2346;margin-top:1mm}
-      .p-signatures{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:14mm}.p-sign{height:30mm;border:.35mm dashed #aebdcd;border-radius:4mm;text-align:center;padding:3mm}.p-sign b{display:block;font-size:10px;margin-bottom:13mm}.p-sign span{display:block;border-top:.3mm solid #111;padding-top:2mm;font-size:8px}
-      .p-footer{position:absolute;right:12mm;left:12mm;bottom:6mm;border-top:.25mm solid #d7e1ec;padding-top:2mm;display:flex;justify-content:space-between;font-size:7.5px;color:#64748b}
+      .p-header{display:grid;grid-template-columns:25mm 1fr 42mm;gap:5mm;align-items:center;border-bottom:1.2mm solid #0b2346;padding:4mm 0 4mm;margin-bottom:5mm}
+      .p-logo{width:23mm;height:23mm;border-radius:6mm;background:#0b4560;color:#f7d58a;border:1mm solid #c99536;display:grid;place-items:center;font-size:30px;font-weight:900}
+      .p-brand h1{margin:0;font-size:18px;line-height:1.35;color:#0b1f3d}.p-brand p{margin:1mm 0 0;font-size:13px;color:#64748b;font-weight:700}.p-brand .gold{color:#946516;font-weight:900}
+      .p-meta{border:.4mm solid #d7e1ec;border-radius:3mm;padding:2.5mm;background:#f8fafc;font-size:12px}.p-meta div{display:flex;justify-content:space-between;gap:2mm;padding:1mm 0;border-bottom:.2mm dashed #d7e1ec}.p-meta div:last-child{border:0}
+      .p-title{text-align:center;margin:5mm 0}.p-title h2{margin:0;font-size:24px;color:#07172e}.p-chip{display:inline-block;margin-top:2mm;padding:1.3mm 4mm;border:.3mm solid #f0bd62;border-radius:99mm;background:#fff8e8;color:#8a5411;font-size:13px;font-weight:900}
+      .p-section-title{display:flex;align-items:center;gap:3mm;font-size:16px;font-weight:900;color:#0b2346;margin:5mm 0 2.5mm}.p-section-title:after{content:"";height:.25mm;background:#d6e0eb;flex:1}
+      .p-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm}.p-box{border:.35mm solid #d7e1ec;border-radius:3.5mm;padding:3mm;background:#fbfdff;min-height:16mm}.p-box.gold{background:#fff9e9;border-color:#e9ba59}.p-lab{font-size:13px;color:#64748b;font-weight:800}.p-val{font-size:16px;font-weight:900;margin-top:1mm;line-height:1.55}
+      .p-parties{display:grid;grid-template-columns:1fr 1fr;gap:3mm}.p-party{border:.35mm solid #d7e1ec;border-radius:4mm;padding:3.5mm}.p-party h3{font-size:16px;margin:0 0 2mm;color:#0b2346}.p-line{display:flex;justify-content:space-between;gap:4mm;padding:1.5mm 0;border-bottom:.2mm dashed #dfe7ef;font-size:14px;line-height:1.5}.p-line:last-child{border:0}.p-line b{text-align:left}
+      .p-terms{border:.35mm solid #d7e1ec;border-radius:4mm;padding:3.5mm 5mm;background:#fbfdff;font-size:15px;line-height:1.75}.p-terms ol{margin:0;padding-right:5mm}.p-terms li{margin:1mm 0}
+      .p-table{width:100%;border-collapse:collapse;font-size:13px}.p-table th{background:#0b2346;color:#fff;padding:2.3mm 1mm;border:.2mm solid #0b2346;font-size:13px}.p-table td{padding:2.1mm 1mm;text-align:center;border:.25mm solid #dbe3ec;font-size:13px}.p-table tr:nth-child(even) td{background:#f8fafc}
+      .p-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin-top:4mm}.p-sum{border:.35mm solid #d7e1ec;border-radius:3mm;padding:3mm;text-align:center;background:#f8fafc}.p-sum span{display:block;font-size:13px;color:#64748b}.p-sum b{display:block;font-size:17px;color:#0b2346;margin-top:1mm}
+      .p-signatures{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:12mm}.p-sign{height:28mm;border:.35mm dashed #aebdcd;border-radius:4mm;text-align:center;padding:3mm}.p-sign b{display:block;font-size:15px;margin-bottom:11mm}.p-sign span{display:block;border-top:.3mm solid #111;padding-top:2mm;font-size:13px}
+      .p-footer{position:absolute;right:12mm;left:12mm;bottom:6mm;border-top:.25mm solid #d7e1ec;padding-top:2mm;display:flex;justify-content:space-between;font-size:11px;color:#64748b}
       .p-watermark{position:absolute;inset:0;display:grid;place-items:center;font-size:95px;font-weight:900;color:#b47b25;opacity:.025;transform:rotate(-18deg);pointer-events:none}
-      .voucher-amount{font-size:27px;font-weight:900;text-align:center;color:#0b7a50;padding:6mm;border:.5mm solid #9fd5bf;border-radius:5mm;background:#f0fff8;margin:6mm 0}
-      .voucher-note{min-height:30mm}
+      .voucher-amount{font-size:28px;font-weight:900;text-align:center;color:#0b7a50;padding:5mm;border:.5mm solid #9fd5bf;border-radius:5mm;background:#f0fff8;margin:5mm 0}
+      .voucher-note{min-height:24mm}
+      .official-declaration{border:.45mm solid #cbd5e1;border-radius:4mm;background:#fff;padding:3mm 4mm;margin-top:4mm;font-size:14px;line-height:1.7}
       table,thead,tbody,tr,td,th{break-inside:avoid;page-break-inside:avoid}
-      ${extraCss}
-    `;
-    const doc=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${ERPPrintEngine.escape(title)}</title><style>${baseCss}</style></head><body>${body}</body></html>`;
+      ${extraCss}`;
+  },
+  document(job){
+    return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${this.escape(job.title||'مستند')}</title><style>${this.css(job.extraCss||'',job.orientation||'portrait')}</style></head><body>${job.body||''}</body></html>`;
+  },
+  print(job){
+    this.current=job;
+    const modal=document.getElementById('modal'), title=document.getElementById('modalTitle'), body=document.getElementById('modalBody');
+    if(!modal||!title||!body)return this.printNow(job);
+    title.textContent='معاينة المستند الرسمي';
+    body.innerHTML=`<div style="background:#e8eef5;border-radius:16px;padding:10px">
+      <iframe id="erp_print_preview" title="معاينة المستند" style="display:block;width:100%;height:68vh;border:0;border-radius:12px;background:white"></iframe>
+    </div>
+    <div class="actions" style="position:sticky;bottom:0;background:white;padding-top:12px;z-index:3">
+      <button class="primary" onclick="ERPPrintEngine.printNow()">🖨️ طباعة / حفظ PDF</button>
+      <button class="soft-btn" onclick="closeModal()">إغلاق</button>
+    </div>`;
+    modal.classList.add('show');
+    const iframe=document.getElementById('erp_print_preview');
+    iframe.srcdoc=this.document(job);
+  },
+  printNow(job=null){
+    job=job||this.current;
+    if(!job)return alert('لا يوجد مستند جاهز للطباعة');
+    const frame=document.createElement('iframe');
+    frame.setAttribute('aria-hidden','true');
+    frame.style.cssText='position:fixed;left:-10000px;top:0;width:210mm;height:297mm;border:0;opacity:0;pointer-events:none';
+    document.body.appendChild(frame);
     frame.onload=()=>{
       const win=frame.contentWindow;
-      const clean=()=>setTimeout(()=>frame.remove(),600);
+      const clean=()=>setTimeout(()=>frame.remove(),900);
       win.onafterprint=clean;
-      setTimeout(()=>{win.focus();win.print();},700);
+      setTimeout(()=>{win.focus();win.print();},900);
       setTimeout(clean,120000);
     };
-    frame.srcdoc=doc;
+    frame.srcdoc=this.document(job);
   },
   escape(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]))}
 };
@@ -1144,7 +1167,7 @@ function openFinanceReceiptVoucher(){
 function saveFinanceReceipt(){
   const amount=n(byId('rv_amount').value); if(amount<=0)return alert('أدخل مبلغ سند القبض');
   const method=byId('rv_method').value; const rec={id:Date.now(),created:new Date().toISOString(),'نوع العملية':'سند قبض','رقم السند':byId('rv_no').value,'التاريخ':byId('rv_date').value,'المستلم منه':byId('rv_from').value,'نوع السند':byId('rv_type').value,'مركز التكلفة':byId('rv_center').value||'عام','طريقة الدفع':method,'الحساب':financeAccountByMethod(method),'المبلغ':amount,'البيان':byId('rv_note').value,'ضريبي':'غير ضريبي','حالة الاعتماد':'معتمد'};
-  const rows=load('finance'); rows.unshift(rec); save('finance',rows); closeModal(); renderFinanceSection(); renderDashboard();
+  const rows=load('finance'); rows.unshift(rec); save('finance',rows); closeModal(); renderFinanceSection(); renderDashboard(); setTimeout(()=>printFinanceVoucher(rec.id),120);
 }
 function openFinancePaymentVoucher(){
   byId('modalTitle').textContent='إضافة سند صرف';
@@ -1169,7 +1192,7 @@ function saveFinancePayment(){
   const rows=load('finance'); rows.unshift(rec); save('finance',rows);
   const ex=load('expenses'); ex.unshift({id:rec.id,'البند':item,'مركز التكلفة':center,'المبلغ':base,'الضريبة':tax,'طريقة الدفع':method,'البيان':rec['البيان'],created:rec.created}); save('expenses',ex);
   if(taxable==='ضريبي'&&tax>0){const tx=load('tax');tx.unshift({id:rec.id,'نوع الفاتورة':'مدخلات','الرقم':rec['رقم السند'],'المبلغ الخاضع':base,'الضريبة':tax,'الفترة':String(rec['التاريخ']).slice(0,7),'مركز التكلفة':center,'المورد':rec['المورد'],created:rec.created});save('tax',tx)}
-  closeModal(); renderFinanceSection(); renderDashboard();
+  closeModal(); renderFinanceSection(); renderDashboard(); setTimeout(()=>printFinanceVoucher(rec.id),120);
 }
 function printFinanceVoucher(id){
  const r=load('finance').find(x=>String(x.id)===String(id));if(!r)return alert('السند غير موجود');
@@ -1181,8 +1204,13 @@ function printFinanceVoucher(id){
  <div class="p-box"><div class="p-lab">مركز التكلفة</div><div class="p-val">${pe(r['مركز التكلفة']||'-')}</div></div>
  <div class="p-box"><div class="p-lab">${isPay?'المستفيد':'المستلم منه'}</div><div class="p-val">${pe(person)}</div></div>
  <div class="p-box"><div class="p-lab">طريقة الدفع / الحساب</div><div class="p-val">${pe(r['طريقة الدفع']||'-')} — ${pe(r['الحساب']||'-')}</div></div>
- ${isPay?`<div class="p-box"><div class="p-lab">بند الصرف</div><div class="p-val">${pe(r['بند الصرف']||'-')}</div></div><div class="p-box"><div class="p-lab">الحالة الضريبية</div><div class="p-val">${pe(r['ضريبي']||'غير ضريبي')}</div></div>`:''}</div>
+ ${isPay?`<div class="p-box"><div class="p-lab">بند الصرف</div><div class="p-val">${pe(r['بند الصرف']||'-')}</div></div><div class="p-box"><div class="p-lab">الحالة الضريبية</div><div class="p-val">${pe(r['ضريبي']||'غير ضريبي')}</div></div>
+ <div class="p-box"><div class="p-lab">المورد / الجهة</div><div class="p-val">${pe(r['المورد']||r['المستفيد']||'-')}</div></div>
+ <div class="p-box"><div class="p-lab">السجل والرقم الضريبي</div><div class="p-val">${pe(r['السجل التجاري']||'-')} — ${pe(r['الرقم الضريبي']||'-')}</div></div>`:''}</div>
  <div class="p-section-title">البيان</div><div class="p-box voucher-note"><div class="p-val">${pe(r['البيان']||'-')}</div></div>
+ <div class="official-declaration">${isPay
+ ? `أقر المستفيد باستلام المبلغ الموضح أعلاه، وقدره <b>${money(r['المبلغ'])} ريال سعودي</b>، وذلك مقابل البيان المثبت في هذا السند، وتحت مسؤوليته النظامية.`
+ : `استلمنا من المذكور أعلاه مبلغًا وقدره <b>${money(r['المبلغ'])} ريال سعودي</b>، وفق طريقة الدفع والبيان المثبتين في هذا السند، ويُعد هذا السند إثبات قبض رسميًا بعد اعتماده.`}</div>
  ${isPay?`<div class="p-grid" style="margin-top:4mm"><div class="p-box"><div class="p-lab">قبل الضريبة</div><div class="p-val">${money(r['قبل الضريبة'])} ر.س</div></div><div class="p-box"><div class="p-lab">قيمة الضريبة</div><div class="p-val">${money(r['الضريبة'])} ر.س</div></div></div>`:''}
  <div class="voucher-amount" style="color:${isPay?'#b42318':'#087a50'}">الإجمالي: ${money(r['المبلغ'])} ر.س</div>
  <div class="p-grid"><div class="p-box"><div class="p-lab">أنشأ السند</div><div class="p-val">${pe(r['أنشأ بواسطة']||r['المستخدم']||r.created_by||'-')}</div></div><div class="p-box"><div class="p-lab">اعتماد الإدارة</div><div class="p-val">${pe(r['اعتمد بواسطة']||r.approved_by||'-')}</div></div></div>
@@ -1804,24 +1832,7 @@ function deleteFinanceVoucher(id){
   if(!confirm('سيتم حذف السند غير المعتمد نهائيًا. هل أنت متأكد؟')) return;
   rows.splice(idx,1); save('finance',rows); renderFinanceSection(); renderDashboard();
 }
-const oldPrintFinanceVoucher = typeof printFinanceVoucher==='function' ? printFinanceVoucher : null;
-function printFinanceVoucher(id){
-  const {row:r}=findFinanceVoucher(id); if(!r) return alert('لم يتم العثور على السند');
-  const w=window.open('','_blank','width=900,height=760');
-  w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${safeText(r['رقم السند']||'سند')}</title><style>body{font-family:Arial;padding:32px;color:#111} .head{border-bottom:3px solid #0b2346;padding-bottom:14px;margin-bottom:18px;display:flex;justify-content:space-between}.brand{font-size:24px;font-weight:bold}.box{border:1px solid #ddd;border-radius:12px;padding:14px;margin:10px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row{display:flex;justify-content:space-between;border-bottom:1px dashed #ddd;padding:7px}.status{padding:5px 10px;border-radius:20px;background:#eef} .sig{display:flex;justify-content:space-between;margin-top:60px}.sig div{width:40%;border-top:1px solid #333;text-align:center;padding-top:10px}</style><style id="unified-reports-v111">
-.report-center{display:grid;gap:16px}.report-hero{background:linear-gradient(135deg,#0b3470,#155cc5);color:#fff;border-radius:24px;padding:22px;display:flex;justify-content:space-between;gap:16px;align-items:center;box-shadow:0 16px 38px rgba(21,92,197,.18)}.report-hero h2{margin:0 0 5px;font-size:28px}.report-hero p{margin:0;color:#dbeafe;font-weight:800}
-.report-toolbar{background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow)}.report-filters{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr auto;gap:10px;align-items:end}.report-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px}.quick-periods{display:flex;gap:7px;flex-wrap:wrap}.quick-periods button{padding:7px 10px;border-radius:11px;background:#eef5ff;color:#155cc5;border:1px solid #cfe0f7;font-weight:900;font-size:12px}
-.report-kpis{display:grid;grid-template-columns:repeat(6,minmax(140px,1fr));gap:12px}.report-kpi{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:var(--shadow)}.report-kpi span{display:block;color:var(--muted);font-size:12px;font-weight:900}.report-kpi b{display:block;font-size:23px;margin-top:5px;color:#071a34}.report-kpi.good b{color:#109264}.report-kpi.bad b{color:#dc2626}.report-kpi.info b{color:#155cc5}
-.report-layout{display:grid;grid-template-columns:1.25fr .75fr;gap:14px}.report-table-panel,.report-insight{background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow)}.report-section-title{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.report-section-title h3{margin:0}
-.report-table{width:100%;border-collapse:separate;border-spacing:0 7px}.report-table th{font-size:12px;color:#64748b;padding:0 8px}.report-table td{padding:10px 8px;background:#fbfdff;border-top:1px solid #e7eef8;border-bottom:1px solid #e7eef8;font-size:13px}.report-table td:first-child{border-right:1px solid #e7eef8;border-radius:0 12px 12px 0}.report-table td:last-child{border-left:1px solid #e7eef8;border-radius:12px 0 0 12px}
-.report-insight-list{display:grid;gap:9px}.report-insight-item{border:1px solid #e4edf7;background:#f8fbff;border-radius:15px;padding:11px;font-weight:850;line-height:1.7}.report-empty{text-align:center;padding:42px 14px;color:#64748b;font-weight:900}.report-print-head{display:none}
-@media(max-width:1200px){.report-filters{grid-template-columns:repeat(3,1fr)}.report-kpis{grid-template-columns:repeat(3,1fr)}.report-layout{grid-template-columns:1fr}}@media(max-width:700px){.report-hero{display:block}.report-actions{justify-content:stretch}.report-actions button{flex:1}.report-filters,.report-kpis{grid-template-columns:1fr 1fr}}
-@media print{body *{visibility:hidden!important}#reports,#reports *{visibility:visible!important}#reports{position:absolute;inset:0;width:100%;padding:0!important}.sidebar,.topbar,.quickbar,.report-toolbar,.report-actions,.soft-btn,.primary,.success,.danger{display:none!important}.report-hero{background:#fff!important;color:#000!important;border:1px solid #bbb!important;box-shadow:none!important;padding:12px!important}.report-hero p{color:#333!important}.report-print-head{display:block!important;text-align:center;border-bottom:2px solid #222;padding-bottom:10px;margin-bottom:12px}.report-kpis{grid-template-columns:repeat(3,1fr)!important}.report-kpi,.report-table-panel,.report-insight{box-shadow:none!important;border:1px solid #bbb!important}.report-layout{grid-template-columns:1fr!important}.report-center{display:block!important}.report-layout{display:block!important}.report-table-panel,.report-insight{break-inside:auto!important;page-break-inside:auto!important}.report-table tr{break-inside:avoid!important;page-break-inside:avoid!important}@page{size:A4 landscape;margin:10mm}}
-</style>
-</head><body><div class="head"><div><div class="brand">مؤسسة حسن محمد الشريمي</div><div>سند مالي رسمي</div></div><div><b>${safeText(r['نوع العملية']||'-')}</b><br>${statusBadgeVoucher(statusOfVoucher(r))}</div></div><div class="grid"><div class="box"><div class="row"><span>رقم السند</span><b>${safeText(r['رقم السند']||'-')}</b></div><div class="row"><span>التاريخ</span><b>${safeText(r['التاريخ']||'-')}</b></div><div class="row"><span>مركز التكلفة</span><b>${safeText(r['مركز التكلفة']||'-')}</b></div><div class="row"><span>طريقة الدفع</span><b>${safeText(r['طريقة الدفع']||'-')}</b></div></div><div class="box"><div class="row"><span>المستفيد/المستلم منه</span><b>${safeText(r['المستلم منه']||r['المستفيد']||r['المورد']||'-')}</b></div><div class="row"><span>المبلغ</span><b>${money(r['المبلغ'])} ر.س</b></div><div class="row"><span>الضريبة</span><b>${money(r['الضريبة'])} ر.س</b></div><div class="row"><span>المستخدم</span><b>${safeText(r['المستخدم']||r.user||'النظام')}</b></div></div></div><div class="box"><b>البيان:</b><p>${safeText(r['البيان']||'-')}</p></div><div class="sig"><div>المحاسب</div><div>المدير / الاعتماد</div></div><script>setTimeout(()=>window.print(),300)<\/script></body></html>`);
-  w.document.close();
-  const {rows,idx}=findFinanceVoucher(id); if(idx>-1){addAuditToVoucher(rows[idx],'طباعة','تمت طباعة السند / PDF');save('finance',rows)}
-}
+/* Legacy voucher printer removed in V2.1: it caused blank pages and overrode the unified engine. */
 function renderFinanceRow(r){
   const isIn=r['نوع العملية']==='سند قبض';
   const user=r['المستخدم']||r.user||r['أنشأ بواسطة']||'النظام';
@@ -2098,7 +2109,7 @@ function openCommandDetail(key){
 
 
 
-// ===== V2.0.0 Executive Dashboard Redesign =====
+// ===== V2.1.0 Executive Dashboard Redesign =====
 (function(){
   const st=document.createElement('style');
   st.textContent=`
@@ -2173,7 +2184,7 @@ function renderDashboard(){
   const x=v2ExecData();
   const dashboard=byId('dashboard');
   dashboard.innerHTML=`<div class="v2-dashboard">
-    <div class="hero"><div><span class="kicker">الإصدار V2.0.0</span><h1>لوحة القيادة التنفيذية</h1><p>كل رقم قابل للنقر، وكل بطاقة تفتح التقرير أو الملف المرتبط مباشرة.</p></div><div class="health"><span>النظام يعمل بكفاءة</span><b>98%</b><span>صحة النظام</span></div></div>
+    <div class="hero"><div><span class="kicker">الإصدار V2.1.0</span><h1>لوحة القيادة التنفيذية</h1><p>كل رقم قابل للنقر، وكل بطاقة تفتح التقرير أو الملف المرتبط مباشرة.</p></div><div class="health"><span>النظام يعمل بكفاءة</span><b>98%</b><span>صحة النظام</span></div></div>
     <div class="v2-top-kpis">
       ${v2KpiCard('الإيرادات اليوم',money(x.receiptToday),'ريال سعودي','💳','v2-blue',"openCommandDetail('finance_waiting')")}
       ${v2KpiCard('المصروفات اليوم',money(x.payToday),'ريال سعودي','👛','v2-orange',"show('finance')")}
@@ -2205,7 +2216,7 @@ function renderDashboard(){
 
 
 
-// ===== V2.0.0 Executive Dashboard Redesign =====
+// ===== V2.1.0 Executive Dashboard Redesign =====
 function sameDay(a,b){return a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
 function recordDate(r){return dateStart(r.created||r['التاريخ']||r['تاريخ السداد']||r['تاريخ']||new Date())||todayStart()}
 function dayOffsetDate(offset){const d=todayStart();d.setDate(d.getDate()+offset);return d}
@@ -5215,7 +5226,7 @@ function installUI(){
  if('serviceWorker'in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(console.warn);
  window.addEventListener('online',()=>initialSync());window.addEventListener('offline',()=>setStatus('err','غير متصل — الحفظ محلي مؤقتًا'));
 }
-function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V2.0 فلاتر التقارير';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.1.1<br>مزامنة Supabase • جوال • آيباد • سطح المكتب'}
+function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V2.1 فلاتر التقارير';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.1.1<br>مزامنة Supabase • جوال • آيباد • سطح المكتب'}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 window.shuraimiCloudSync=initialSync;
 })();
