@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نظام مؤسسة حسن محمد الشريمي - V2.2 فلاتر التقارير</title>
+<title>نظام مؤسسة حسن محمد الشريمي - V2.3 فلاتر التقارير</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -63,7 +63,7 @@ button,input,select,textarea{font-size:14px}.app{grid-template-columns:282px 1fr
 .unit-edit-note{background:#fff7ed;border:1px solid #fed7aa;color:#92400e;border-radius:14px;padding:10px 12px;font-weight:900;margin:10px 0}.danger-outline{background:#fff1f2!important;color:#be123c!important;border:1px solid #fecdd3!important}
 
 
-/* ===== V2.2.0 Executive Dashboard Redesign ===== */
+/* ===== V2.3.0 Executive Dashboard Redesign ===== */
 .executive-v2{--exec-blue:#2563eb;--exec-green:#16a34a;--exec-orange:#f59e0b;--exec-red:#ef4444;--exec-slate:#0f172a}
 .exec-header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:14px;background:linear-gradient(135deg,#ffffff,#f8fbff);border:1px solid var(--line);border-radius:24px;padding:18px 22px;box-shadow:var(--shadow)}
 .exec-header h1{margin:0;font-size:34px;font-weight:900;color:#081632}.exec-header p{margin:5px 0 0;color:var(--muted);font-weight:800}.exec-tools{display:flex;gap:8px;flex-wrap:wrap}
@@ -85,6 +85,12 @@ button,input,select,textarea{font-size:14px}.app{grid-template-columns:282px 1fr
 .actions-menu .menu-sep{height:1px;background:#edf2f7;margin:6px 4px}
 td:has(.action-cell), .table-wrap{overflow:visible!important}
 
+
+.cc-scope-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px;margin-top:16px}
+.cc-scope-card{border:1px solid #d6e2ef;background:#f8fbff;border-radius:16px;padding:13px}
+.cc-scope-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.cc-scope-head select{min-width:180px}
+.cc-scope-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-top:12px;padding-top:10px;border-top:1px dashed #c8d6e5}
+.cc-scope-list label{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #dce6f0;border-radius:10px;padding:9px;font-weight:800}
 </style>
 
 <!-- Release: V1.0.2
@@ -318,7 +324,7 @@ function closeModal(){byId('modal').classList.remove('show')}
 function openModuleManager(){byId('modalTitle').textContent='إدارة واجهة المؤسسة';byId('modalBody').innerHTML=`<div class="grid row3">${Object.keys(modules).map(k=>`<div class="report-box"><span>${modules[k].icon} ${modules[k].title}</span><input type="checkbox" checked></div>`).join('')}</div><div class="actions"><button class="success" onclick="closeModal()">حفظ الواجهة</button></div>`;byId('modal').classList.add('show')}
 function renderReportsSection(){if(byId('reports')?.classList.contains('active'))renderUnifiedReports()}
 
-/* ===== Unified Reports Center V2.2 ===== */
+/* ===== Unified Reports Center V2.3 ===== */
 let UR_STATE={type:'financial',from:'',to:'',activity:'all',entity:'',status:'',search:''};
 function urToday(){return new Date().toISOString().slice(0,10)}
 function urMonthStart(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`}
@@ -918,6 +924,8 @@ function openPaymentForm(u,c){
  byId('modal').classList.add('show');updatePaymentAutoNote(u.id)
 }
 function savePayment(unitId){
+const __scopePayUnit=(load('units')||[]).find(x=>String(x.id)===String(unitId));if(__scopePayUnit&&!userCanCenter('properties',__scopePayUnit.center_id,__scopePayUnit['مركز التكلفة']||'')){alert('ليس لديك صلاحية لإضافة حركة على مركز التكلفة هذا');return;}
+
  const u=getUnit(unitId),c=getCenter(u.center_id)||{},amount=n(byId('pay_amount').value),activeCt=activeContractForUnit(unitId);if(amount<=0)return alert('أدخل مبلغ السداد');
  const payDate=byId('pay_date').value, method=byId('pay_method').value, tenant=byId('pay_tenant').value, note=byId('pay_note').value;
  const cov=paymentCoverage(unitId,amount);
@@ -1474,7 +1482,9 @@ openContractArchive=function(contractId){
 function ensureContextMenu(){let m=document.getElementById('unitContextMenu');if(!m){m=document.createElement('div');m.id='unitContextMenu';m.className='context-menu';document.body.appendChild(m);document.addEventListener('click',()=>m.style.display='none')}return m}
 function openUnitContextMenu(e,unitId){e.preventDefault();const u=getUnit(unitId);if(!u)return;const m=ensureContextMenu();m.innerHTML=`<button onclick="openUnitProfile('${unitId}')">📂 فتح ملف الوحدة</button><button onclick="openEditUnitForm('${unitId}')">✏️ تعديل بيانات الوحدة</button><button onclick="unitAction('${unitId}','${u.status==='مؤجر'?'سداد':'عقد'}')">${u.status==='مؤجر'?'💵 سداد':'📄 إصدار عقد'}</button><button onclick="openUnitProfile('${unitId}','finance')">💰 كشف مالي</button><button onclick="openUnitProfile('${unitId}','services')">⚡ الكهرباء والخدمات</button><button onclick="openUnitProfile('${unitId}','maintenance')">🛠 الصيانة</button><button onclick="openTenantMessage('${unitId}','عقد')">📬 إرسال واتساب</button><button onclick="openUnitReport('${unitId}',getCenter('${u.center_id}'))">📊 تقرير تفصيلي</button>`;m.style.right=(window.innerWidth-e.clientX)+'px';m.style.top=e.clientY+'px';m.style.display='block'}
 function unitProfileData(unitId){const u=getUnit(unitId),c=u?getCenter(u.center_id)||{}:{};const active=u?activeContractForUnit(u.id):null;const fs=active?contractFinancialSummary(active.id):{inst:[],total:0,paid:0,remaining:0,paidCount:0,partialCount:0,lateCount:0,lastPaid:'-'};const contracts=linkedLoad('contracts').filter(x=>u&&String(x.unit_id)===String(u.id)&&x['نوع العقد']!=='خروج').sort((a,b)=>String(b.created||b.id||'').localeCompare(String(a.created||a.id||'')));const old=active?contracts.filter(x=>String(x.id)!==String(active.id)):contracts;const payments=linkedLoad('payments').filter(x=>u&&String(x.unit_id)===String(u.id));const expenses=linkedLoad('expenses').filter(x=>u&&String(x.unit_id)===String(u.id));const services=linkedLoad('services').filter(x=>u&&String(x.unit_id)===String(u.id));return {u,c,active,fs,contracts,old,payments,expenses,services}}
-function openUnitProfile(unitId,tab='overview'){const d=unitProfileData(unitId);if(!d.u)return alert('لم يتم العثور على الوحدة');byId('modalTitle').textContent='ملف الوحدة - '+d.u.type+' '+d.u.unit_no;byId('modalBody').innerHTML=renderUnitProfileShell(d,tab);byId('modal').classList.add('show')}
+function openUnitProfile(unitId,tab='overview'){
+const __scopeUnit=(load('units')||[]).find(x=>String(x.id)===String(unitId));if(__scopeUnit&&!userCanCenter('properties',__scopeUnit.center_id,__scopeUnit['مركز التكلفة']||'')){alert('ليس لديك صلاحية على مركز التكلفة الخاص بهذه الوحدة');return;}
+const d=unitProfileData(unitId);if(!d.u)return alert('لم يتم العثور على الوحدة');byId('modalTitle').textContent='ملف الوحدة - '+d.u.type+' '+d.u.unit_no;byId('modalBody').innerHTML=renderUnitProfileShell(d,tab);byId('modal').classList.add('show')}
 function switchUnitTab(unitId,tab){const d=unitProfileData(unitId);const box=byId('unitTabContent');if(!box)return;document.querySelectorAll('.unit-tabs button').forEach(b=>b.classList.remove('active'));const btn=byId('tab_'+tab);if(btn)btn.classList.add('active');box.innerHTML=renderUnitTab(d,tab)}
 function renderUnitProfileShell(d,tab){return `<div class="unit-profile-head"><div class="unit-profile-card"><div class="unit-profile-title"><h3>${d.u.type==='محل'?'🏢':'🏠'} ${d.u.type} ${d.u.unit_no}</h3>${statusBadge(d.u.status)}</div><div class="grid row3" style="margin-top:12px"><div class="report-box"><span>مركز التكلفة</span><b>${d.c.name||'-'}</b></div><div class="report-box"><span>المستأجر الحالي</span><b>${d.u.tenant||'-'}</b></div><div class="report-box"><span>حساب الكهرباء</span><b>${d.u.electric_account||'-'}</b></div></div><div class="unit-quick-actions"><button onclick="unitAction('${d.u.id}','${d.u.status==='مؤجر'?'سداد':'عقد'}')">${d.u.status==='مؤجر'?'💵 سداد':'📄 عقد جديد'}</button><button onclick="unitAction('${d.u.id}','خروج')">🚪 خروج</button><button onclick="openTenantMessage('${d.u.id}','عقد')">📬 واتساب</button><button onclick="printPage()">🖨️ طباعة</button><button onclick="openEditUnitForm('${d.u.id}')">✏️ تعديل الوحدة</button></div></div><div class="unit-profile-card"><h3 style="margin:0 0 10px">الملخص المالي</h3><div class="report-box"><span>قيمة العقد الحالي</span><b>${moneyProp(d.fs.total)} ر.س</b></div><div class="report-box"><span>المسدد</span><b class="green">${moneyProp(d.fs.paid)} ر.س</b></div><div class="report-box"><span>المتبقي</span><b class="red">${moneyProp(d.fs.remaining)} ر.س</b></div></div></div><div class="compact-note">لتقليل الأيقونات: كل تفاصيل الشقة أو المحل موجودة هنا داخل ملف الوحدة، ولا تظهر كأيقونات مستقلة في القائمة الرئيسية.</div><div class="unit-tabs"><button id="tab_overview" class="${tab==='overview'?'active':''}" onclick="switchUnitTab('${d.u.id}','overview')">نظرة عامة</button><button id="tab_contracts" class="${tab==='contracts'?'active':''}" onclick="switchUnitTab('${d.u.id}','contracts')">العقود</button><button id="tab_finance" class="${tab==='finance'?'active':''}" onclick="switchUnitTab('${d.u.id}','finance')">المالية</button><button id="tab_services" class="${tab==='services'?'active':''}" onclick="switchUnitTab('${d.u.id}','services')">الكهرباء والخدمات</button><button id="tab_maintenance" class="${tab==='maintenance'?'active':''}" onclick="switchUnitTab('${d.u.id}','maintenance')">الصيانة</button><button id="tab_files" class="${tab==='files'?'active':''}" onclick="switchUnitTab('${d.u.id}','files')">المرفقات</button><button id="tab_stats" class="${tab==='stats'?'active':''}" onclick="switchUnitTab('${d.u.id}','stats')">الإحصائيات</button></div><div id="unitTabContent">${renderUnitTab(d,tab)}</div><div class="actions"><button class="soft-btn" onclick="closeModal()">إغلاق</button></div>`}
 function renderUnitTab(d,tab){if(tab==='contracts')return renderUnitContractsTab(d);if(tab==='finance')return renderUnitFinanceTab(d);if(tab==='services')return renderUnitServicesTab(d);if(tab==='maintenance')return renderUnitMaintenanceTab(d);if(tab==='files')return renderUnitFilesTab(d);if(tab==='stats')return renderUnitStatsTab(d);return renderUnitOverviewTab(d)}
@@ -1835,7 +1845,7 @@ function deleteFinanceVoucher(id){
   if(!confirm('سيتم حذف السند غير المعتمد نهائيًا. هل أنت متأكد؟')) return;
   rows.splice(idx,1); save('finance',rows); renderFinanceSection(); renderDashboard();
 }
-/* Legacy voucher printer removed in V2.2: it caused blank pages and overrode the unified engine. */
+/* Legacy voucher printer removed in V2.3: it caused blank pages and overrode the unified engine. */
 function renderFinanceRow(r){
   const isIn=r['نوع العملية']==='سند قبض';
   const user=r['المستخدم']||r.user||r['أنشأ بواسطة']||'النظام';
@@ -2112,7 +2122,7 @@ function openCommandDetail(key){
 
 
 
-// ===== V2.2.0 Executive Dashboard Redesign =====
+// ===== V2.3.0 Executive Dashboard Redesign =====
 (function(){
   const st=document.createElement('style');
   st.textContent=`
@@ -2187,7 +2197,7 @@ function renderDashboard(){
   const x=v2ExecData();
   const dashboard=byId('dashboard');
   dashboard.innerHTML=`<div class="v2-dashboard">
-    <div class="hero"><div><span class="kicker">الإصدار V2.2.0</span><h1>لوحة القيادة التنفيذية</h1><p>كل رقم قابل للنقر، وكل بطاقة تفتح التقرير أو الملف المرتبط مباشرة.</p></div><div class="health"><span>النظام يعمل بكفاءة</span><b>98%</b><span>صحة النظام</span></div></div>
+    <div class="hero"><div><span class="kicker">الإصدار V2.3.0</span><h1>لوحة القيادة التنفيذية</h1><p>كل رقم قابل للنقر، وكل بطاقة تفتح التقرير أو الملف المرتبط مباشرة.</p></div><div class="health"><span>النظام يعمل بكفاءة</span><b>98%</b><span>صحة النظام</span></div></div>
     <div class="v2-top-kpis">
       ${v2KpiCard('الإيرادات اليوم',money(x.receiptToday),'ريال سعودي','💳','v2-blue',"openCommandDetail('finance_waiting')")}
       ${v2KpiCard('المصروفات اليوم',money(x.payToday),'ريال سعودي','👛','v2-orange',"show('finance')")}
@@ -2219,7 +2229,7 @@ function renderDashboard(){
 
 
 
-// ===== V2.2.0 Executive Dashboard Redesign =====
+// ===== V2.3.0 Executive Dashboard Redesign =====
 function sameDay(a,b){return a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
 function recordDate(r){return dateStart(r.created||r['التاريخ']||r['تاريخ السداد']||r['تاريخ']||new Date())||todayStart()}
 function dayOffsetDate(offset){const d=todayStart();d.setDate(d.getDate()+offset);return d}
@@ -3089,7 +3099,7 @@ seedProperties();
     const expRows=(d.expenses||[]).map(r=>({kind:'expense',id:r.id,type:'مصروف',note:r['البيان']||r['البند'],amount:num(r['المبلغ'])+num(r['الضريبة']),date:r['التاريخ']||String(r.created||'').slice(0,10),method:r['طريقة الدفع'],raw:r}));
     const paymentIds=new Set((d.payments||[]).map(r=>String(r.id)));
     const financeIdsFromPayments=new Set((d.payments||[]).map(r=>String(r.finance_id||'')).filter(Boolean));
-    const finRows=(loadAny('finance')||[]).filter(r=>{
+    const finRows=filterByCenterPermission(loadAny('finance')||[],'properties','center_id','مركز التكلفة').filter(r=>{
       const belongs=String(r.unit_id||'')===String(d.u.id) || ((r['الفرع / الوحدة']||r['الوحدة']||'')===unitNo && (!center || (r['مركز التكلفة']||'')===center));
       const pairedPayment=paymentIds.has(String(r.payment_id||''))||financeIdsFromPayments.has(String(r.id||''));
       return belongs&&!pairedPayment;
@@ -5135,9 +5145,9 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
  function allPerms(){return Object.fromEntries(SECTIONS.map(s=>[s.id,Object.fromEntries(ACTIONS.map(a=>[a[0],true]))]))}
  function blankPerms(){return Object.fromEntries(SECTIONS.map(s=>[s.id,Object.fromEntries(ACTIONS.map(a=>[a[0],false]))]))}
  function templatePerms(role){let p=blankPerms(),t=ROLE_TEMPLATES[role];if(t==='all')return allPerms();if(t==='all_except_users_delete'){p=allPerms();p.users.delete=false;return p}if(t)Object.entries(t).forEach(([sec,acts])=>acts.forEach(a=>{if(p[sec])p[sec][a]=true}));return p}
- function normalizeUser(u){return {id:u.id||Date.now(),name:u.name||u['اسم المستخدم']||'مستخدم',phone:u.phone||u['الجوال']||'',role:u.role||u['الدور']||'مشاهد فقط',pin:String(u.pin||u['الرقم السري']||'1234'),status:u.status||u['الحالة']||'نشط',permissions:u.permissions||templatePerms(u.role||u['الدور']||'مشاهد فقط'),created:u.created||new Date().toISOString()}}
+ function normalizeUser(u){return {id:u.id||Date.now(),name:u.name||u['اسم المستخدم']||'مستخدم',phone:u.phone||u['الجوال']||'',role:u.role||u['الدور']||'مشاهد فقط',pin:String(u.pin||u['الرقم السري']||'1234'),status:u.status||u['الحالة']||'نشط',permissions:u.permissions||templatePerms(u.role||u['الدور']||'مشاهد فقط'),center_scopes:(u.center_scopes&&typeof u.center_scopes==='object')?u.center_scopes:{},created:u.created||new Date().toISOString()}}
  function users(){let rows=[];try{rows=JSON.parse(localStorage.getItem(PERM_KEY)||'[]')}catch(e){}if(!rows.length){const old=load('users').map(normalizeUser);rows=old.length?old:[normalizeUser({id:1,name:'أبو قصي',role:'مالك النظام',pin:'1234',status:'نشط'})];localStorage.setItem(PERM_KEY,JSON.stringify(rows))}return rows.map(normalizeUser)}
- function saveUsers(rows){localStorage.setItem(PERM_KEY,JSON.stringify(rows));save('users',rows.map(u=>({id:u.id,'اسم المستخدم':u.name,'الجوال':u.phone,'الدور':u.role,'الصلاحية':'مخصصة','الحالة':u.status,created:u.created}))) }
+ function saveUsers(rows){localStorage.setItem(PERM_KEY,JSON.stringify(rows));save('users',rows.map(u=>({id:u.id,'اسم المستخدم':u.name,'الجوال':u.phone,'الدور':u.role,'الصلاحية':'مخصصة','الحالة':u.status,center_scopes:u.center_scopes||{},created:u.created}))) }
  function current(){const base=getCurrentUser();return users().find(u=>u.name===base.name)||users()[0]}
  window.hasPermission=function(section,action='view'){const u=current();if(!u||u.status!=='نشط')return false;if(u.role==='مالك النظام')return true;return !!(u.permissions&&u.permissions[section]&&u.permissions[section][action])}
  function denied(section,action){const sec=SECTIONS.find(s=>s.id===section);alert(`ليست لديك صلاحية ${ACTIONS.find(a=>a[0]===action)?.[1]||action} في قسم ${sec?.name||section}`);return false}
@@ -5150,14 +5160,30 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
  const oldExportCSV=window.exportCSV;window.exportCSV=function(k){if(!hasPermission(k,'export'))return denied(k,'export');return oldExportCSV(k)};
  const oldPrintPage=window.printPage;window.printPage=function(){const active=document.querySelector('.section.active')?.id||'dashboard';if(!hasPermission(active,'print'))return denied(active,'print');return oldPrintPage()};
  function applyNav(){tabs.forEach(t=>{const b=byId('nav_'+t[0]);if(b)b.style.display=hasPermission(t[0],'view')?'':'none'});const q=document.querySelector('.quickbar');if(q)q.classList.toggle('is-hidden',!SECTIONS.some(s=>hasPermission(s.id,'add')))}
+
+ function allCostCentersForPermissions(){
+  const out=[],seen=new Set();
+  const add=(id,name,section='properties')=>{id=String(id||name||'').trim();name=String(name||id||'').trim();if(!id||!name||seen.has(section+'|'+id))return;seen.add(section+'|'+id);out.push({id,name,section})};
+  (load('centers')||[]).forEach(c=>add(c.id,c.name||c['الاسم']||c['مركز التكلفة'],'properties'));
+  (load('cost_centers')||[]).forEach(c=>add(c.id,c.name||c['الاسم']||c['مركز التكلفة'],c.section||c['القسم']||'general'));
+  (load('equipment')||[]).forEach(e=>add(e.center_id||e['مركز التكلفة'],e.center_name||e['مركز التكلفة'],'equipment'));
+  (load('projects')||[]).forEach(x=>add(x.center_id||x['مركز التكلفة'],x.center_name||x['مركز التكلفة'],'projects'));
+  return out;
+ }
+ function scopeSections(){return [{id:'properties',name:'العقارات'},{id:'equipment',name:'المعدات'},{id:'projects',name:'المشاريع والمقاولات'},{id:'general',name:'الإدارة العامة'}]}
+ function centersForScope(sec){const a=allCostCentersForPermissions();return sec==='properties'?a.filter(x=>x.section==='properties'||x.section==='general'):a.filter(x=>x.section===sec||x.section==='general')}
+ function renderCenterScopes(u){return `<div class="cc-scope-wrap">${scopeSections().map(sec=>{const x=u.center_scopes?.[sec.id]||{mode:'all',centers:[]},mode=x.mode||'all',sel=x.centers||[],key='cc_'+u.id+'_'+sec.id,cs=centersForScope(sec.id);return `<div class="cc-scope-card" data-section="${sec.id}"><div class="cc-scope-head"><b>نطاق مراكز التكلفة — ${sec.name}</b><select id="${key}_mode" onchange="document.getElementById('${key}_list').style.display=this.value==='selected'?'grid':'none'"><option value="all" ${mode==='all'?'selected':''}>جميع مراكز التكلفة</option><option value="selected" ${mode==='selected'?'selected':''}>مراكز محددة</option><option value="none" ${mode==='none'?'selected':''}>بدون صلاحية</option></select></div><div id="${key}_list" class="cc-scope-list" style="${mode==='selected'?'':'display:none'}">${cs.length?cs.map(c=>`<label><input type="checkbox" value="${c.id}" ${sel.map(String).includes(String(c.id))||sel.map(String).includes(String(c.name))?'checked':''}> ${c.name}</label>`).join(''):'<span>لا توجد مراكز تكلفة مسجلة.</span>'}</div></div>`}).join('')}</div>`}
+ function collectCenterScopes(){const out={};document.querySelectorAll('.cc-scope-card').forEach(card=>{out[card.dataset.section]={mode:card.querySelector('select').value,centers:[...card.querySelectorAll('input:checked')].map(x=>x.value)}});return out}
+ window.userCanCenter=function(section,centerId,centerName=''){const u=current();if(!u||u.role==='مالك النظام'||u.role==='مدير عام')return true;const x=u.center_scopes?.[section];if(!x||x.mode==='all')return true;if(x.mode==='none')return false;const a=(x.centers||[]).map(String);return [centerId,centerName].filter(Boolean).map(String).some(v=>a.includes(v))}
+ window.filterByCenterPermission=function(rows,section,idKey='center_id',nameKey='مركز التكلفة'){return (rows||[]).filter(r=>userCanCenter(section,r?.[idKey],r?.[nameKey]||r?.center_name||''))}
  let selectedId=null;
- window.renderPermissionsCenter=function(){if(!hasPermission('users','view'))return denied('users','view');const rows=users();if(!selectedId&&rows.length)selectedId=rows[0].id;const u=rows.find(x=>x.id===selectedId)||rows[0];const sec=byId('users');sec.innerHTML=`<div class="perm-hero"><div><h2>👤 المستخدمون والصلاحيات الشاملة</h2><div>تحكم دقيق على مستوى القسم والإجراء: عرض، إضافة، تعديل، حذف، اعتماد، طباعة وتصدير.</div></div><div class="perm-actions"><button class="success" onclick="openPermissionUserForm()">+ مستخدم جديد</button><button class="soft-btn" onclick="applyRoleTemplate()">تطبيق قالب الدور</button><button class="primary" onclick="savePermissionMatrix()">حفظ الصلاحيات</button></div></div><div class="perm-grid"><div class="panel"><div class="panel-title"><h3>المستخدمون</h3><span class="role-chip">${rows.length} مستخدم</span></div><div class="perm-user-list">${rows.map(x=>`<div class="perm-user-card ${x.id===u.id?'active':''}" onclick="selectPermissionUser('${x.id}')"><b>${x.name}</b><small>${x.role} • ${x.status}</small></div>`).join('')}</div></div><div class="panel"><div class="panel-title"><div><h3>${u.name}</h3><small>${u.phone||'بدون جوال'} — <span class="role-chip">${u.role}</span></small></div><div class="perm-actions"><button class="soft-btn" onclick="editPermissionUser('${u.id}')">تعديل البيانات</button><button class="danger" onclick="removePermissionUser('${u.id}')">حذف</button></div></div><div class="perm-matrix"><table><thead><tr><th>القسم</th>${ACTIONS.map(a=>`<th>${a[1]}</th>`).join('')}</tr></thead><tbody>${SECTIONS.map(s=>`<tr><td>${s.icon} ${s.name}</td>${ACTIONS.map(a=>`<td><input class="perm-check" type="checkbox" data-sec="${s.id}" data-act="${a[0]}" ${u.permissions?.[s.id]?.[a[0]]?'checked':''} ${u.role==='مالك النظام'?'disabled':''}></td>`).join('')}</tr>`).join('')}</tbody></table></div></div></div>`}
+ window.renderPermissionsCenter=function(){if(!hasPermission('users','view'))return denied('users','view');const rows=users();if(!selectedId&&rows.length)selectedId=rows[0].id;const u=rows.find(x=>x.id===selectedId)||rows[0];const sec=byId('users');sec.innerHTML=`<div class="perm-hero"><div><h2>👤 المستخدمون والصلاحيات الشاملة</h2><div>تحكم دقيق على مستوى القسم والإجراء: عرض، إضافة، تعديل، حذف، اعتماد، طباعة وتصدير.</div></div><div class="perm-actions"><button class="success" onclick="openPermissionUserForm()">+ مستخدم جديد</button><button class="soft-btn" onclick="applyRoleTemplate()">تطبيق قالب الدور</button><button class="primary" onclick="savePermissionMatrix()">حفظ الصلاحيات</button></div></div><div class="perm-grid"><div class="panel"><div class="panel-title"><h3>المستخدمون</h3><span class="role-chip">${rows.length} مستخدم</span></div><div class="perm-user-list">${rows.map(x=>`<div class="perm-user-card ${x.id===u.id?'active':''}" onclick="selectPermissionUser('${x.id}')"><b>${x.name}</b><small>${x.role} • ${x.status}</small></div>`).join('')}</div></div><div class="panel"><div class="panel-title"><div><h3>${u.name}</h3><small>${u.phone||'بدون جوال'} — <span class="role-chip">${u.role}</span></small></div><div class="perm-actions"><button class="soft-btn" onclick="editPermissionUser('${u.id}')">تعديل البيانات</button><button class="danger" onclick="removePermissionUser('${u.id}')">حذف</button></div></div><div class="perm-matrix"><table><thead><tr><th>القسم</th>${ACTIONS.map(a=>`<th>${a[1]}</th>`).join('')}</tr></thead><tbody>${SECTIONS.map(s=>`<tr><td>${s.icon} ${s.name}</td>${ACTIONS.map(a=>`<td><input class="perm-check" type="checkbox" data-sec="${s.id}" data-act="${a[0]}" ${u.permissions?.[s.id]?.[a[0]]?'checked':''} ${u.role==='مالك النظام'?'disabled':''}></td>`).join('')}</tr>`).join('')}</tbody></table></div>${renderCenterScopes(u)}</div></div>`}
  window.selectPermissionUser=function(id){selectedId=isNaN(Number(id))?id:Number(id);renderPermissionsCenter()}
  window.applyRoleTemplate=function(){const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;u.permissions=templatePerms(u.role);saveUsers(rows);renderPermissionsCenter()}
- window.savePermissionMatrix=function(){const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;if(u.role!=='مالك النظام')document.querySelectorAll('.perm-check').forEach(c=>u.permissions[c.dataset.sec][c.dataset.act]=c.checked);saveUsers(rows);applyNav();alert('تم حفظ صلاحيات المستخدم بنجاح')}
+ window.savePermissionMatrix=function(){const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;if(u.role!=='مالك النظام')document.querySelectorAll('.perm-check').forEach(c=>u.permissions[c.dataset.sec][c.dataset.act]=c.checked);u.center_scopes=collectCenterScopes();saveUsers(rows);applyNav();alert('تم حفظ الصلاحيات ونطاق مراكز التكلفة بنجاح')}
  window.openPermissionUserForm=function(existingId){const rows=users(),u=rows.find(x=>String(x.id)===String(existingId));byId('modalTitle').textContent=u?'تعديل المستخدم':'إضافة مستخدم';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>اسم المستخدم</label><input id="pu_name" value="${u?.name||''}"></div><div class="field"><label>الجوال</label><input id="pu_phone" value="${u?.phone||''}"></div><div class="field"><label>الدور</label><select id="pu_role">${Object.keys(ROLE_TEMPLATES).map(r=>`<option ${u?.role===r?'selected':''}>${r}</option>`).join('')}</select></div><div class="field"><label>الرقم السري PIN</label><input class="pin-box" id="pu_pin" inputmode="numeric" maxlength="8" value="${u?.pin||''}"></div><div class="field"><label>الحالة</label><select id="pu_status"><option ${u?.status==='نشط'?'selected':''}>نشط</option><option ${u?.status==='موقوف'?'selected':''}>موقوف</option></select></div></div><div class="actions"><button class="success" onclick="savePermissionUser('${u?.id||''}')">حفظ المستخدم</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
  window.editPermissionUser=id=>openPermissionUserForm(id);
- window.savePermissionUser=function(id){const name=byId('pu_name').value.trim(),pin=byId('pu_pin').value.trim();if(!name||pin.length<4)return alert('أدخل الاسم ورقمًا سريًا من 4 أرقام على الأقل');const rows=users(),idx=rows.findIndex(x=>String(x.id)===String(id));const role=byId('pu_role').value;const obj=normalizeUser({id:id||Date.now(),name,phone:byId('pu_phone').value.trim(),role,pin,status:byId('pu_status').value,permissions:idx>-1?rows[idx].permissions:templatePerms(role)});if(idx>-1)rows[idx]=obj;else rows.push(obj);saveUsers(rows);selectedId=obj.id;closeModal();renderPermissionsCenter();applyNav()}
+ window.savePermissionUser=function(id){const name=byId('pu_name').value.trim(),pin=byId('pu_pin').value.trim();if(!name||pin.length<4)return alert('أدخل الاسم ورقمًا سريًا من 4 أرقام على الأقل');const rows=users(),idx=rows.findIndex(x=>String(x.id)===String(id));const role=byId('pu_role').value;const obj=normalizeUser({id:id||Date.now(),name,phone:byId('pu_phone').value.trim(),role,pin,status:byId('pu_status').value,permissions:idx>-1?rows[idx].permissions:templatePerms(role),center_scopes:idx>-1?(rows[idx].center_scopes||{}):{}});if(idx>-1)rows[idx]=obj;else rows.push(obj);saveUsers(rows);selectedId=obj.id;closeModal();renderPermissionsCenter();applyNav()}
  window.removePermissionUser=function(id){const rows=users(),u=rows.find(x=>String(x.id)===String(id));if(!u||u.role==='مالك النظام')return alert('لا يمكن حذف مالك النظام');if(!confirm('حذف المستخدم؟'))return;const next=rows.filter(x=>String(x.id)!==String(id));saveUsers(next);selectedId=next[0]?.id||null;renderPermissionsCenter()}
  const originalRenderModuleSection=window.renderModuleSection;window.renderModuleSection=function(k){if(k==='users')return renderPermissionsCenter();return originalRenderModuleSection(k)};
  const originalSetCurrent=window.setCurrentUserProfile;window.setCurrentUserProfile=function(name,role){originalSetCurrent(name,role);applyNav()}
@@ -5304,7 +5330,7 @@ function installUI(){
  if('serviceWorker'in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(console.warn);
  window.addEventListener('online',()=>initialSync());window.addEventListener('offline',()=>setStatus('err','غير متصل — الحفظ محلي مؤقتًا'));
 }
-function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V2.2 فلاتر التقارير';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.1.1<br>مزامنة Supabase • جوال • آيباد • سطح المكتب'}
+function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V2.3 فلاتر التقارير';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.1.1<br>مزامنة Supabase • جوال • آيباد • سطح المكتب'}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 window.shuraimiCloudSync=initialSync;
 })();
