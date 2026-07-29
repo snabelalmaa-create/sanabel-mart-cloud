@@ -1,12 +1,12 @@
 {
   "name": "نظام مؤسسة حسن محمد الشريمي",
   "short_name": "نظام الشريمي",
-  "start_url": "./?v=117",
+  "start_url": "./?v=200",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f9fd",
   "theme_color": "#071a34",
   "lang": "ar",
   "dir": "rtl",
-  "description": "نظام الشريمي V1.1.7 — تثبيت تنسيق طباعة عقد الإيجار"
+  "description": "نظام الشريمي V2.0 — محرك الطباعة المؤسسي الموحد"
 }
