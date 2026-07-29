@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نظام مؤسسة حسن محمد الشريمي - V2.4 فلاتر التقارير</title>
+<title>نظام مؤسسة حسن محمد الشريمي - V2.3 فلاتر التقارير</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -63,7 +63,7 @@ button,input,select,textarea{font-size:14px}.app{grid-template-columns:282px 1fr
 .unit-edit-note{background:#fff7ed;border:1px solid #fed7aa;color:#92400e;border-radius:14px;padding:10px 12px;font-weight:900;margin:10px 0}.danger-outline{background:#fff1f2!important;color:#be123c!important;border:1px solid #fecdd3!important}
 
 
-/* ===== V2.4.0 Executive Dashboard Redesign ===== */
+/* ===== V2.3.0 Executive Dashboard Redesign ===== */
 .executive-v2{--exec-blue:#2563eb;--exec-green:#16a34a;--exec-orange:#f59e0b;--exec-red:#ef4444;--exec-slate:#0f172a}
 .exec-header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:14px;background:linear-gradient(135deg,#ffffff,#f8fbff);border:1px solid var(--line);border-radius:24px;padding:18px 22px;box-shadow:var(--shadow)}
 .exec-header h1{margin:0;font-size:34px;font-weight:900;color:#081632}.exec-header p{margin:5px 0 0;color:var(--muted);font-weight:800}.exec-tools{display:flex;gap:8px;flex-wrap:wrap}
@@ -324,7 +324,7 @@ function closeModal(){byId('modal').classList.remove('show')}
 function openModuleManager(){byId('modalTitle').textContent='إدارة واجهة المؤسسة';byId('modalBody').innerHTML=`<div class="grid row3">${Object.keys(modules).map(k=>`<div class="report-box"><span>${modules[k].icon} ${modules[k].title}</span><input type="checkbox" checked></div>`).join('')}</div><div class="actions"><button class="success" onclick="closeModal()">حفظ الواجهة</button></div>`;byId('modal').classList.add('show')}
 function renderReportsSection(){if(byId('reports')?.classList.contains('active'))renderUnifiedReports()}
 
-/* ===== Unified Reports Center V2.4 ===== */
+/* ===== Unified Reports Center V2.3 ===== */
 let UR_STATE={type:'financial',from:'',to:'',activity:'all',entity:'',status:'',search:''};
 function urToday(){return new Date().toISOString().slice(0,10)}
 function urMonthStart(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`}
@@ -516,13 +516,14 @@ function statusClass(s){return s==='مؤجر'?'rented':s==='صيانة'?'mainten
 function statusBadge(s){return s==='مؤجر'?'<span class="badge bad">مؤجر</span>':s==='صيانة'?'<span class="badge warn">صيانة</span>':'<span class="badge ok">متاح</span>'}
 function renderProperties(){
   seedProperties();
-  const centers=propLoad(PROP_CENTERS_KEY), units=propLoad(PROP_UNITS_KEY);
-  if(!currentPropertyCenter && centers.length) currentPropertyCenter=centers[0].id;
-  const center=centers.find(c=>c.id===currentPropertyCenter)||centers[0];
+  const centers=allowedPropertyCenters(), allowedIds=new Set(centers.map(c=>String(c.id))), units=propLoad(PROP_UNITS_KEY).filter(u=>allowedIds.has(String(u.center_id)));
+  if((!currentPropertyCenter||!centers.some(c=>String(c.id)===String(currentPropertyCenter)))&&centers.length) currentPropertyCenter=centers[0].id;
+  const center=centers.find(c=>String(c.id)===String(currentPropertyCenter))||centers[0];
   const cUnits=units.filter(u=>!center||u.center_id===center.id);
   const total=cUnits.length, rented=cUnits.filter(u=>u.status==='مؤجر').length, available=cUnits.filter(u=>u.status==='متاح').length, maintenance=cUnits.filter(u=>u.status==='صيانة').length;
   const revenue=cUnits.filter(u=>u.status==='مؤجر').reduce((a,u)=>a+Number(u.rent||0),0), due=cUnits.reduce((a,u)=>a+Number(u.due||0),0), occ=total?Math.round((rented/total)*100):0;
   const wrap=byId('properties');
+  if(!centers.length){wrap.innerHTML=`<div class="panel"><div class="empty" style="padding:50px"><h3>لا توجد فروع عقارية مصرح بها</h3><p>راجع مدير النظام لتحديد الفندق أو الغربي أو أي فرع عقاري لهذا المستخدم.</p></div></div>`;return}
   wrap.innerHTML=`
     <div class="cost-center-card">
       <div class="panel-title"><div><h3>🏘 إدارة العقارات حسب مراكز التكلفة</h3><p style="margin:5px 0 0;color:var(--muted);font-weight:800">اختر مركز تكلفة، وستظهر الشقق أو المحلات التابعة له ككروت مستقلة.</p></div><div><button class="soft-btn" onclick="openCenterForm()">+ مركز تكلفة</button> <button class="soft-btn" onclick="openBulkUnitForm()">+ وحدات جماعية</button> <button class="primary" onclick="openUnitForm()">+ وحدة</button></div></div>
@@ -562,11 +563,11 @@ function unitCard(u){return `<div class="unit-card ${statusClass(u.status)}" dat
 function filterUnits(){const q=(byId('propSearch')?.value||'').trim().toLowerCase(),t=byId('propTypeFilter')?.value||'all',s=byId('propStatusFilter')?.value||'all';document.querySelectorAll('#unitGrid .unit-card').forEach(card=>{const okQ=!q||card.dataset.search.includes(q),okT=t==='all'||card.dataset.type===t,okS=s==='all'||card.dataset.status===s;card.style.display=okQ&&okT&&okS?'block':'none'})}
 function openCenterForm(){byId('modalTitle').textContent='إضافة مركز تكلفة عقاري';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>اسم مركز التكلفة</label><input id="cc_name" placeholder="الفندق / الغربي / المحلات التجارية"></div><div class="field"><label>النوع</label><select id="cc_type"><option>شقق سكنية</option><option>محلات تجارية</option><option>مختلط</option><option>عام</option></select></div><div class="field"><label>الموقع</label><input id="cc_location" placeholder="المدينة / الحي"></div><div class="field"><label>ملاحظة</label><input id="cc_note"></div></div><div class="actions"><button class="success" onclick="saveCenter()">حفظ المركز</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
 function saveCenter(){const name=byId('cc_name').value.trim();if(!name)return alert('أدخل اسم مركز التكلفة');const rows=propLoad(PROP_CENTERS_KEY);const id='cc_'+Date.now();rows.push({id,name,type:byId('cc_type').value,location:byId('cc_location').value,note:byId('cc_note').value});propSave(PROP_CENTERS_KEY,rows);currentPropertyCenter=id;closeModal();renderProperties()}
-function openUnitForm(){seedProperties();const centers=propLoad(PROP_CENTERS_KEY);byId('modalTitle').textContent='إضافة وحدة عقارية';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>مركز التكلفة</label><select id="u_center">${centers.map(c=>`<option value="${c.id}" ${c.id===currentPropertyCenter?'selected':''}>${c.name}</option>`).join('')}</select></div><div class="field"><label>النوع</label><select id="u_type"><option>شقة</option><option>محل</option></select></div><div class="field"><label>رقم الوحدة</label><input id="u_no" placeholder="101 / محل 1"></div><div class="field"><label>الحالة</label><select id="u_status"><option>متاح</option><option>مؤجر</option><option>صيانة</option></select></div><div class="field"><label>المستأجر</label><input id="u_tenant"></div><div class="field"><label>الإيجار الشهري</label><input id="u_rent" type="number" step="0.01"></div><div class="field"><label>المستحق</label><input id="u_due" type="number" step="0.01" value="0"></div><div class="field"><label>حساب الكهرباء</label><input id="u_electric"></div><div class="field"><label>آخر سداد</label><input id="u_last" type="date"></div><div class="field"><label>ملاحظة</label><input id="u_note"></div></div><div class="actions"><button class="success" onclick="saveUnit()">حفظ الوحدة</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
+function openUnitForm(){seedProperties();const centers=allowedPropertyCenters();if(!centers.length)return alert('لا توجد فروع عقارية مصرح بها');byId('modalTitle').textContent='إضافة وحدة عقارية';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>مركز التكلفة</label><select id="u_center">${centers.map(c=>`<option value="${c.id}" ${c.id===currentPropertyCenter?'selected':''}>${c.name}</option>`).join('')}</select></div><div class="field"><label>النوع</label><select id="u_type"><option>شقة</option><option>محل</option></select></div><div class="field"><label>رقم الوحدة</label><input id="u_no" placeholder="101 / محل 1"></div><div class="field"><label>الحالة</label><select id="u_status"><option>متاح</option><option>مؤجر</option><option>صيانة</option></select></div><div class="field"><label>المستأجر</label><input id="u_tenant"></div><div class="field"><label>الإيجار الشهري</label><input id="u_rent" type="number" step="0.01"></div><div class="field"><label>المستحق</label><input id="u_due" type="number" step="0.01" value="0"></div><div class="field"><label>حساب الكهرباء</label><input id="u_electric"></div><div class="field"><label>آخر سداد</label><input id="u_last" type="date"></div><div class="field"><label>ملاحظة</label><input id="u_note"></div></div><div class="actions"><button class="success" onclick="saveUnit()">حفظ الوحدة</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
 
 function openBulkUnitForm(){
   seedProperties();
-  const centers=propLoad(PROP_CENTERS_KEY);
+  const centers=allowedPropertyCenters();
   const activeCenter=centers.find(c=>c.id===currentPropertyCenter)||centers[0]||{};
   const defaultType=(activeCenter.type||'').includes('محلات')?'محل':'شقة';
   byId('modalTitle').textContent='إضافة وحدات جماعية';
@@ -632,7 +633,7 @@ function saveBulkUnits(){
 function saveUnit(){const no=byId('u_no').value.trim();if(!no)return alert('أدخل رقم الوحدة');const rows=propLoad(PROP_UNITS_KEY);rows.unshift({id:Date.now(),center_id:byId('u_center').value,type:byId('u_type').value,unit_no:no,status:byId('u_status').value,tenant:byId('u_tenant').value,rent:byId('u_rent').value,due:byId('u_due').value,last_payment:byId('u_last').value||'-',electric_account:byId('u_electric').value,note:byId('u_note').value});propSave(PROP_UNITS_KEY,rows);currentPropertyCenter=byId('u_center').value;closeModal();renderProperties();renderDashboard()}
 
 function propertyCentersOptions(selected){
-  return propLoad(PROP_CENTERS_KEY).map(c=>`<option value="${c.id}" ${String(c.id)===String(selected)?'selected':''}>${c.name}</option>`).join('');
+  return allowedPropertyCenters().map(c=>`<option value="${c.id}" ${String(c.id)===String(selected)?'selected':''}>${c.name}</option>`).join('');
 }
 function openEditUnitForm(unitId){
   seedProperties();
@@ -701,7 +702,7 @@ function saveCenterEdit(centerId){
 
 
 function getUnit(id){return propLoad(PROP_UNITS_KEY).find(u=>String(u.id)===String(id))}
-function getCenter(id){return propLoad(PROP_CENTERS_KEY).find(c=>c.id===id)}
+function getCenter(id){const c=propLoad(PROP_CENTERS_KEY).find(c=>String(c.id)===String(id));return c&&userCanCenter('properties',c.id,c.name)?c:null}
 function linkedLoad(k){return load(k)}
 function linkedSave(k,v){save(k,v)}
 function pushLinked(k,obj){const rows=linkedLoad(k);rows.unshift({id:Date.now()+Math.floor(Math.random()*999),created:new Date().toISOString(),...obj});linkedSave(k,rows);return rows[0]}
@@ -1845,7 +1846,7 @@ function deleteFinanceVoucher(id){
   if(!confirm('سيتم حذف السند غير المعتمد نهائيًا. هل أنت متأكد؟')) return;
   rows.splice(idx,1); save('finance',rows); renderFinanceSection(); renderDashboard();
 }
-/* Legacy voucher printer removed in V2.4: it caused blank pages and overrode the unified engine. */
+/* Legacy voucher printer removed in V2.3: it caused blank pages and overrode the unified engine. */
 function renderFinanceRow(r){
   const isIn=r['نوع العملية']==='سند قبض';
   const user=r['المستخدم']||r.user||r['أنشأ بواسطة']||'النظام';
@@ -2122,7 +2123,7 @@ function openCommandDetail(key){
 
 
 
-// ===== V2.4.0 Executive Dashboard Redesign =====
+// ===== V2.3.0 Executive Dashboard Redesign =====
 (function(){
   const st=document.createElement('style');
   st.textContent=`
@@ -2197,7 +2198,7 @@ function renderDashboard(){
   const x=v2ExecData();
   const dashboard=byId('dashboard');
   dashboard.innerHTML=`<div class="v2-dashboard">
-    <div class="hero"><div><span class="kicker">الإصدار V2.4.0</span><h1>لوحة القيادة التنفيذية</h1><p>كل رقم قابل للنقر، وكل بطاقة تفتح التقرير أو الملف المرتبط مباشرة.</p></div><div class="health"><span>النظام يعمل بكفاءة</span><b>98%</b><span>صحة النظام</span></div></div>
+    <div class="hero"><div><span class="kicker">الإصدار V2.3.0</span><h1>لوحة القيادة التنفيذية</h1><p>كل رقم قابل للنقر، وكل بطاقة تفتح التقرير أو الملف المرتبط مباشرة.</p></div><div class="health"><span>النظام يعمل بكفاءة</span><b>98%</b><span>صحة النظام</span></div></div>
     <div class="v2-top-kpis">
       ${v2KpiCard('الإيرادات اليوم',money(x.receiptToday),'ريال سعودي','💳','v2-blue',"openCommandDetail('finance_waiting')")}
       ${v2KpiCard('المصروفات اليوم',money(x.payToday),'ريال سعودي','👛','v2-orange',"show('finance')")}
@@ -2229,7 +2230,7 @@ function renderDashboard(){
 
 
 
-// ===== V2.4.0 Executive Dashboard Redesign =====
+// ===== V2.3.0 Executive Dashboard Redesign =====
 function sameDay(a,b){return a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
 function recordDate(r){return dateStart(r.created||r['التاريخ']||r['تاريخ السداد']||r['تاريخ']||new Date())||todayStart()}
 function dayOffsetDate(offset){const d=todayStart();d.setDate(d.getDate()+offset);return d}
@@ -2255,7 +2256,7 @@ function renderLatestOps(){let ops=[];['finance','payments','expenses','contract
 function renderTodayAgenda(d){const items=[];if(d.expiredContracts[0]) items.push(['مراجعة عقد منتهي',d.expiredContracts[0]['الوحدة']||'وحدة عقارية',"openCommandDetail('contracts_expired')"]);if(d.waiting.length) items.push(['اعتماد سندات قبض/صرف',d.waiting.length+' سند',"openCommandDetail('finance_waiting')"]);if(d.unpaidInst.length) items.push(['متابعة دفعات متأخرة',d.unpaidInst.length+' دفعة',"openCommandDetail('installments_due')"]);if(!items.length) items.push(['لا توجد مهام حرجة','النظام مستقر',"show('dashboard')"]);byId('todayAgenda').innerHTML=`<div class="agenda-list">${items.map((i,idx)=>`<div class="agenda-item" onclick="${i[2]}"><span class="circle-check"></span><div><b>${i[0]}</b><br><small>${i[1]}</small></div><span>${idx+1}</span></div>`).join('')}</div>`}
 function renderKpiPanel(d){const o=calcOccupancy();const newContracts=load('contracts').length;const rows=[['متوسط التحصيل الشهري',money(total('payments','المبلغ')+total('finance','المبلغ')),'✅'],['نسبة الإشغال الإجمالية',Math.round(((o.flats.rented+o.shops.rented)/Math.max(1,o.flats.total+o.shops.total))*100)+'%','✅'],['متوسط بقاء الوحدة شاغرة','18 يوم','📅'],['عدد العقود الجديدة هذا الشهر',newContracts,'🧾'],['عدد العقود المجددة','0','🔁'],['أعلى مركز تكلفة دخلًا','الفندق','🏆'],['أعلى مصروف','كهرباء','⚠️']];byId('kpiPanel').innerHTML=`<div class="kpi-list">${rows.map(r=>`<div class="kpi-item"><span>${r[2]}</span><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')}</div>`}
 function renderLast7Chart(){let max=1,days=[];for(let i=-6;i<=0;i++){const t=financeTotalsForDay(i);max=Math.max(max,t.receipts,t.pays,1);days.push({i,t,label:i===0?'اليوم':(i===-1?'أمس':`منذ ${Math.abs(i)} أيام`)})}byId('last7Chart').innerHTML=`<div class="bar-row">${days.map(d=>`<div class="bar-day"><div style="display:flex;gap:5px;align-items:end;height:150px"><div class="bar green" style="height:${Math.max(3,d.t.receipts/max*145)}px"></div><div class="bar red" style="height:${Math.max(3,d.t.pays/max*145)}px"></div></div><div class="bar-label">${d.label}</div></div>`).join('')}</div><div class="legend" style="margin-top:8px"><span>🟢 الإيرادات</span><span>🔴 المصروفات</span></div>`}
-function renderRevenueDistribution(){const units=propLoad(PROP_UNITS_KEY)||[];const centers=propLoad(PROP_CENTERS_KEY)||[];const data=centers.map(c=>{const sum=units.filter(u=>u.center_id===c.id).reduce((a,u)=>a+n(u.rent),0);return {name:c.name,sum}}).filter(x=>x.sum>0);const totalSum=data.reduce((a,x)=>a+x.sum,0)||1;const colors=['#2563eb','#16a34a','#ef4444','#f59e0b','#8b5cf6'];let acc=0;const stops=data.map((x,i)=>{const p=x.sum/totalSum*100;const res=`${colors[i%colors.length]} ${acc}% ${acc+p}%`;acc+=p;return res}).join(',');byId('revenueDistribution').innerHTML=`<div class="donut-v2"><div class="donut" style="background:conic-gradient(${stops||'#e5e7eb 0 100%'})"><div><span>الإجمالي</span><br><b>${money(totalSum).replace('.00','')}</b></div></div><div>${data.map((x,i)=>`<div class="legend-row"><span><i style="display:inline-block;width:10px;height:10px;background:${colors[i%colors.length]};border-radius:2px;margin-left:6px"></i>${x.name}</span><b>${Math.round(x.sum/totalSum*100)}%</b><span>${money(x.sum)}</span></div>`).join('')||'<div class="empty">لا توجد إيرادات موزعة</div>'}</div></div>`}
+function renderRevenueDistribution(){const centers=allowedPropertyCenters();const ids=new Set(centers.map(c=>String(c.id)));const units=(propLoad(PROP_UNITS_KEY)||[]).filter(u=>ids.has(String(u.center_id)));const data=centers.map(c=>{const sum=units.filter(u=>u.center_id===c.id).reduce((a,u)=>a+n(u.rent),0);return {name:c.name,sum}}).filter(x=>x.sum>0);const totalSum=data.reduce((a,x)=>a+x.sum,0)||1;const colors=['#2563eb','#16a34a','#ef4444','#f59e0b','#8b5cf6'];let acc=0;const stops=data.map((x,i)=>{const p=x.sum/totalSum*100;const res=`${colors[i%colors.length]} ${acc}% ${acc+p}%`;acc+=p;return res}).join(',');byId('revenueDistribution').innerHTML=`<div class="donut-v2"><div class="donut" style="background:conic-gradient(${stops||'#e5e7eb 0 100%'})"><div><span>الإجمالي</span><br><b>${money(totalSum).replace('.00','')}</b></div></div><div>${data.map((x,i)=>`<div class="legend-row"><span><i style="display:inline-block;width:10px;height:10px;background:${colors[i%colors.length]};border-radius:2px;margin-left:6px"></i>${x.name}</span><b>${Math.round(x.sum/totalSum*100)}%</b><span>${money(x.sum)}</span></div>`).join('')||'<div class="empty">لا توجد إيرادات موزعة</div>'}</div></div>`}
 function renderImportantAlerts(d){const alerts=[];if(d.expiredContracts.length)alerts.push(['🔴','عقد منتهي يحتاج إجراء',"openCommandDetail('contracts_expired')"]);if(d.unpaidInst.length)alerts.push(['🟠','دفعات إيجار متأخرة',"openCommandDetail('installments_due')"]);if(d.waiting.length)alerts.push(['🔵','سندات تنتظر اعتمادك',"openCommandDetail('finance_waiting')"]);byId('importantAlerts').innerHTML=`<div class="alerts-mini">${alerts.length?alerts.map(a=>`<div class="alert-mini" onclick="${a[2]}"><span>${a[0]}</span><b>${a[1]}</b><span>›</span></div>`).join(''):'<div class="empty">لا توجد تنبيهات مهمة</div>'}</div>`}
 renderDashboard=function(){const d=commandData();const today=financeTotalsForDay(0),yesterday=financeTotalsForDay(-1);renderExecutiveTop(d,today,yesterday);renderFinancialCompare(today,yesterday);renderPriorityCenter(d);renderOccupancy();renderReceivables(d,today);renderLatestOps();renderTodayAgenda(d);renderKpiPanel(d);renderLast7Chart();renderRevenueDistribution();renderImportantAlerts(d);byId('alertCount').textContent=d.expiredContracts.length+d.soonContracts.length+d.unpaidInst.length+d.waiting.length;};
 
@@ -5161,59 +5162,45 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
  const oldPrintPage=window.printPage;window.printPage=function(){const active=document.querySelector('.section.active')?.id||'dashboard';if(!hasPermission(active,'print'))return denied(active,'print');return oldPrintPage()};
  function applyNav(){tabs.forEach(t=>{const b=byId('nav_'+t[0]);if(b)b.style.display=hasPermission(t[0],'view')?'':'none'});const q=document.querySelector('.quickbar');if(q)q.classList.toggle('is-hidden',!SECTIONS.some(s=>hasPermission(s.id,'add')))}
 
- function allCostCentersForPermissions(){
-  const out=[],seen=new Set();
-  const add=(id,name,section='properties')=>{id=String(id||name||'').trim();name=String(name||id||'').trim();if(!id||!name||seen.has(section+'|'+id))return;seen.add(section+'|'+id);out.push({id,name,section})};
-  (load('centers')||[]).forEach(c=>add(c.id,c.name||c['الاسم']||c['مركز التكلفة'],'properties'));
-  (load('cost_centers')||[]).forEach(c=>add(c.id,c.name||c['الاسم']||c['مركز التكلفة'],c.section||c['القسم']||'general'));
-  (load('equipment')||[]).forEach(e=>add(e.center_id||e['مركز التكلفة'],e.center_name||e['مركز التكلفة'],'equipment'));
-  (load('projects')||[]).forEach(x=>add(x.center_id||x['مركز التكلفة'],x.center_name||x['مركز التكلفة'],'projects'));
-  return out;
- }
- function scopeSections(){return [{id:'properties',name:'العقارات'},{id:'equipment',name:'المعدات'},{id:'projects',name:'المشاريع والمقاولات'},{id:'general',name:'الإدارة العامة'}]}
- function centersForScope(sec){const a=allCostCentersForPermissions();return sec==='properties'?a.filter(x=>x.section==='properties'||x.section==='general'):a.filter(x=>x.section===sec||x.section==='general')}
- function renderPropertyCenterPermissions(u){
-  const x=u.center_scopes?.properties||{mode:'selected',centers:[]},selected=(x.centers||[]).map(String),centers=centersForScope('properties');
-  const allSelected=x.mode==='all';
-  return `<div id="property_center_permissions" class="property-centers-inline">
-    <div class="property-centers-title"><div><b>🏢 مراكز تكلفة العقارات المسموح بها</b><small>حدد الفندق أو الغربي أو أي مركز مسؤول عنه الموظف.</small></div><label class="all-centers-check"><input id="property_centers_all" type="checkbox" ${allSelected?'checked':''} onchange="toggleAllPropertyCenters(this.checked)"> جميع مراكز العقارات</label></div>
-    <div class="property-centers-grid">${centers.length?centers.map(c=>`<label class="property-center-option"><input class="property-center-check" type="checkbox" value="${c.id}" ${allSelected||selected.includes(String(c.id))||selected.includes(String(c.name))?'checked':''} ${allSelected?'disabled':''}> <span>${c.name}</span></label>`).join(''):'<div class="empty-centers">لا توجد مراكز تكلفة عقارية مسجلة.</div>'}</div>
+
+ function permissionPropertyCenters(){try{seedProperties();return propLoad(PROP_CENTERS_KEY)||[]}catch(e){return[]}}
+ function propertyScopeOf(u){return u?.center_scopes?.properties||{mode:(u?.role==='مالك النظام'?'all':'selected'),centers:[]}}
+ function propertyPermissionEnabled(u){return !!(u?.permissions?.properties?.view||u?.permissions?.properties?.add||u?.permissions?.properties?.edit||u?.permissions?.properties?.print||u?.permissions?.properties?.export)}
+ function renderPropertyBranchScopes(u){
+  const scope=propertyScopeOf(u), selected=(scope.centers||[]).map(String), centers=permissionPropertyCenters();
+  const groups={}; centers.forEach(c=>{const type=c.type||'عقارات أخرى';(groups[type]||(groups[type]=[])).push(c)});
+  if(!propertyPermissionEnabled(u))return `<div id="propertyBranchPermission" class="property-branch-permission hidden-scope"><div class="property-scope-note">فعّل صلاحية واحدة على الأقل في صف العقارات لتظهر فروع العقارات هنا.</div></div>`;
+  return `<div id="propertyBranchPermission" class="property-branch-permission">
+   <div class="property-scope-title"><div><b>🏘 الفروع العقارية المسموح بها</b><small>اختر الفروع التي ستظهر لهذا الموظف داخل صفحة العقارات.</small></div>
+   <label class="all-property-centers"><input id="property_all_centers" type="checkbox" ${scope.mode==='all'?'checked':''} onchange="toggleAllPropertyCenters(this.checked)"> جميع فروع العقارات</label></div>
+   <div id="property_groups" class="property-groups ${scope.mode==='all'?'scope-disabled':''}">
+    ${Object.entries(groups).map(([type,rows])=>`<section class="property-group"><h4>${type.includes('محلات')?'🏢':'🏠'} ${type}</h4><div class="property-center-checks">${rows.map(c=>`<label><input class="property-center-check" type="checkbox" value="${c.id}" ${selected.includes(String(c.id))?'checked':''} ${scope.mode==='all'?'disabled':''}> <span>${c.name}</span><small>${c.location||''}</small></label>`).join('')}</div></section>`).join('')||'<div class="property-scope-note">لا توجد فروع عقارية مسجلة.</div>'}
+   </div>
   </div>`;
  }
- window.toggleAllPropertyCenters=function(checked){document.querySelectorAll('.property-center-check').forEach(x=>{x.disabled=checked;if(checked)x.checked=true})}
+ function toggleAllPropertyCenters(checked){const box=document.getElementById('property_groups');if(box)box.classList.toggle('scope-disabled',checked);document.querySelectorAll('.property-center-check').forEach(x=>x.disabled=checked)}
+ function refreshPropertyScopeVisibility(){const u=currentPermissionUserForEditor();const host=document.getElementById('propertyBranchPermission');if(!u||!host)return;host.outerHTML=renderPropertyBranchScopes({...u,permissions:readPermissionMatrixPreview(u)})}
+ function readPermissionMatrixPreview(u){const p=JSON.parse(JSON.stringify(u.permissions||{}));document.querySelectorAll('.perm-check').forEach(c=>{if(!p[c.dataset.sec])p[c.dataset.sec]={};p[c.dataset.sec][c.dataset.act]=c.checked});return p}
  function collectCenterScopes(){
-  const currentUserRow=users().find(x=>String(x.id)===String(selectedId)),out={...(currentUserRow?.center_scopes||{})};
-  const all=!!document.getElementById('property_centers_all')?.checked;
-  out.properties={mode:all?'all':'selected',centers:[...document.querySelectorAll('.property-center-check:checked')].map(x=>x.value)};
-  return out;
+  const all=document.getElementById('property_all_centers')?.checked;
+  const selected=[...document.querySelectorAll('.property-center-check:checked')].map(x=>x.value);
+  return {properties:{mode:all?'all':'selected',centers:selected}};
  }
- window.userCanCenter=function(section,centerId,centerName=''){const u=current();if(!u||u.role==='مالك النظام'||u.role==='مدير عام')return true;const x=u.center_scopes?.[section];if(!x||x.mode==='all')return true;if(x.mode==='none')return false;const a=(x.centers||[]).map(String);return [centerId,centerName].filter(Boolean).map(String).some(v=>a.includes(v))}
+ function currentPermissionUserForEditor(){const rows=users();return rows.find(x=>String(x.id)===String(selectedId))||rows[0]}
+ window.userCanCenter=function(section,centerId,centerName=''){
+  const u=current();if(!u||u.role==='مالك النظام'||u.role==='مدير عام')return true;
+  if(section!=='properties')return true;
+  const x=propertyScopeOf(u);if(x.mode==='all')return true;
+  const allowed=(x.centers||[]).map(String);
+  return [centerId,centerName].filter(Boolean).map(String).some(v=>allowed.includes(v));
+ }
  window.filterByCenterPermission=function(rows,section,idKey='center_id',nameKey='مركز التكلفة'){return (rows||[]).filter(r=>userCanCenter(section,r?.[idKey],r?.[nameKey]||r?.center_name||''))}
+ function allowedPropertyCenters(){return permissionPropertyCenters().filter(c=>userCanCenter('properties',c.id,c.name))}
  let selectedId=null;
- window.renderPermissionsCenter=function(){
- if(!hasPermission('users','view'))return denied('users','view');
- const rows=users();
- if(!selectedId&&rows.length)selectedId=String(rows[0].id);
- let u=rows.find(x=>String(x.id)===String(selectedId))||rows[0];
- if(!u)return;
- selectedId=String(u.id);
- const matrixRows=SECTIONS.map(s=>{
-   const row=`<tr><td>${s.icon} ${s.name}</td>${ACTIONS.map(a=>`<td><input class="perm-check" type="checkbox" data-sec="${s.id}" data-act="${a[0]}" ${u.permissions?.[s.id]?.[a[0]]?'checked':''} ${u.role==='مالك النظام'?'disabled':''} ${s.id==='properties'?`onchange="refreshPropertyCenterVisibility()"`:''}></td>`).join('')}</tr>`;
-   return s.id==='properties'?row+`<tr id="property_centers_row"><td colspan="${ACTIONS.length+1}">${renderPropertyCenterPermissions(u)}</td></tr>`:row;
- }).join('');
- const sec=byId('users');
- sec.innerHTML=`<div class="perm-hero"><div><h2>👤 المستخدمون والصلاحيات الشاملة</h2><div>حدد صلاحيات الموظف، ثم اختر مراكز العقارات التي يعمل عليها.</div></div><div class="perm-actions"><button class="success" onclick="openPermissionUserForm()">+ مستخدم جديد</button><button class="soft-btn" onclick="applyRoleTemplate()">تطبيق قالب الدور</button><button class="primary" onclick="savePermissionMatrix()">حفظ الصلاحيات</button></div></div><div class="perm-grid"><div class="panel"><div class="panel-title"><h3>المستخدمون</h3><span class="role-chip">${rows.length} مستخدم</span></div><div class="perm-user-list">${rows.map(x=>`<div class="perm-user-card ${String(x.id)===String(u.id)?'active':''}" onclick="selectPermissionUser('${x.id}')"><b>${x.name}</b><small>${x.role} • ${x.status}</small></div>`).join('')}</div></div><div class="panel"><div class="panel-title"><div><h3>${u.name}</h3><small>${u.phone||'بدون جوال'} — <span class="role-chip">${u.role}</span></small></div><div class="perm-actions"><button class="soft-btn" onclick="editPermissionUser('${u.id}')">✏️ تعديل بيانات المستخدم</button><button class="danger" onclick="removePermissionUser('${u.id}')">حذف</button></div></div><div class="perm-matrix"><table><thead><tr><th>القسم</th>${ACTIONS.map(a=>`<th>${a[1]}</th>`).join('')}</tr></thead><tbody>${matrixRows}</tbody></table></div></div></div>`;
- refreshPropertyCenterVisibility();
-}
-window.refreshPropertyCenterVisibility=function(){
- const checks=[...document.querySelectorAll('.perm-check[data-sec="properties"]')];
- const enabled=checks.some(x=>x.checked);
- const row=document.getElementById('property_centers_row');
- if(row)row.style.display=enabled?'table-row':'none';
-}
-window.selectPermissionUser=function(id){selectedId=String(id);renderPermissionsCenter()}
+ window.renderPermissionsCenter=function(){if(!hasPermission('users','view'))return denied('users','view');const rows=users();if(!selectedId&&rows.length)selectedId=rows[0].id;const u=rows.find(x=>x.id===selectedId)||rows[0];const sec=byId('users');sec.innerHTML=`<div class="perm-hero"><div><h2>👤 المستخدمون والصلاحيات الشاملة</h2><div>تحكم دقيق على مستوى القسم والإجراء: عرض، إضافة، تعديل، حذف، اعتماد، طباعة وتصدير.</div></div><div class="perm-actions"><button class="success" onclick="openPermissionUserForm()">+ مستخدم جديد</button><button class="soft-btn" onclick="applyRoleTemplate()">تطبيق قالب الدور</button><button class="primary" onclick="savePermissionMatrix()">حفظ الصلاحيات</button></div></div><div class="perm-grid"><div class="panel"><div class="panel-title"><h3>المستخدمون</h3><span class="role-chip">${rows.length} مستخدم</span></div><div class="perm-user-list">${rows.map(x=>`<div class="perm-user-card ${x.id===u.id?'active':''}" onclick="selectPermissionUser('${x.id}')"><b>${x.name}</b><small>${x.role} • ${x.status}</small></div>`).join('')}</div></div><div class="panel"><div class="panel-title"><div><h3>${u.name}</h3><small>${u.phone||'بدون جوال'} — <span class="role-chip">${u.role}</span></small></div><div class="perm-actions"><button class="soft-btn" onclick="editPermissionUser('${u.id}')">تعديل البيانات</button><button class="danger" onclick="removePermissionUser('${u.id}')">حذف</button></div></div><div class="perm-matrix"><table><thead><tr><th>القسم</th>${ACTIONS.map(a=>`<th>${a[1]}</th>`).join('')}</tr></thead><tbody>${SECTIONS.map(s=>`<tr><td>${s.icon} ${s.name}</td>${ACTIONS.map(a=>`<td><input class="perm-check" type="checkbox" data-sec="${s.id}" data-act="${a[0]}" ${u.permissions?.[s.id]?.[a[0]]?'checked':''} ${u.role==='مالك النظام'?'disabled':''} onchange="if(this.dataset.sec==='properties')refreshPropertyScopeVisibility()"></td>`).join('')}</tr>`).join('')}</tbody></table></div>${renderPropertyBranchScopes(u)}</div></div>`}
+ window.selectPermissionUser=function(id){selectedId=isNaN(Number(id))?id:Number(id);renderPermissionsCenter()}
  window.applyRoleTemplate=function(){const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;u.permissions=templatePerms(u.role);saveUsers(rows);renderPermissionsCenter()}
- window.savePermissionMatrix=function(){const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;if(u.role!=='مالك النظام')document.querySelectorAll('.perm-check').forEach(c=>u.permissions[c.dataset.sec][c.dataset.act]=c.checked);u.center_scopes=collectCenterScopes();saveUsers(rows);applyNav();alert('تم حفظ الصلاحيات ونطاق مراكز التكلفة بنجاح')}
+ window.savePermissionMatrix=function(){const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;if(u.role!=='مالك النظام')document.querySelectorAll('.perm-check').forEach(c=>u.permissions[c.dataset.sec][c.dataset.act]=c.checked);u.center_scopes={...(u.center_scopes||{}),...collectCenterScopes()};saveUsers(rows);applyNav();alert('تم حفظ الصلاحيات والفروع العقارية بنجاح')}
  window.openPermissionUserForm=function(existingId){const rows=users(),u=rows.find(x=>String(x.id)===String(existingId));byId('modalTitle').textContent=u?'تعديل المستخدم':'إضافة مستخدم';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>اسم المستخدم</label><input id="pu_name" value="${u?.name||''}"></div><div class="field"><label>الجوال</label><input id="pu_phone" value="${u?.phone||''}"></div><div class="field"><label>الدور</label><select id="pu_role">${Object.keys(ROLE_TEMPLATES).map(r=>`<option ${u?.role===r?'selected':''}>${r}</option>`).join('')}</select></div><div class="field"><label>الرقم السري PIN</label><input class="pin-box" id="pu_pin" inputmode="numeric" maxlength="8" value="${u?.pin||''}"></div><div class="field"><label>الحالة</label><select id="pu_status"><option ${u?.status==='نشط'?'selected':''}>نشط</option><option ${u?.status==='موقوف'?'selected':''}>موقوف</option></select></div></div><div class="actions"><button class="success" onclick="savePermissionUser('${u?.id||''}')">حفظ المستخدم</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
  window.editPermissionUser=id=>openPermissionUserForm(id);
  window.savePermissionUser=function(id){const name=byId('pu_name').value.trim(),pin=byId('pu_pin').value.trim();if(!name||pin.length<4)return alert('أدخل الاسم ورقمًا سريًا من 4 أرقام على الأقل');const rows=users(),idx=rows.findIndex(x=>String(x.id)===String(id));const role=byId('pu_role').value;const obj=normalizeUser({id:id||Date.now(),name,phone:byId('pu_phone').value.trim(),role,pin,status:byId('pu_status').value,permissions:idx>-1?rows[idx].permissions:templatePerms(role),center_scopes:idx>-1?(rows[idx].center_scopes||{}):{}});if(idx>-1)rows[idx]=obj;else rows.push(obj);saveUsers(rows);selectedId=obj.id;closeModal();renderPermissionsCenter();applyNav()}
@@ -5233,10 +5220,6 @@ window.selectPermissionUser=function(id){selectedId=String(id);renderPermissions
 #shAuthOverlay.show{display:flex}.sh-auth-card{width:min(460px,100%);background:#fff;border-radius:28px;padding:25px;box-shadow:0 30px 90px rgba(0,0,0,.35);direction:rtl}.sh-auth-logo{width:82px;height:82px;margin:auto;border-radius:24px;background:linear-gradient(135deg,#f2c76a,#d88921);display:grid;place-items:center;font-size:40px}.sh-auth-card h2{text-align:center;margin:14px 0 4px;color:#0b1736}.sh-auth-card p{text-align:center;color:#718096;font-weight:800;margin:0 0 16px}.sh-auth-field{margin-top:12px}.sh-auth-field label{display:block;font-weight:900;margin-bottom:6px;color:#0b1736}.sh-auth-field select,.sh-auth-field input{width:100%;border:1px solid #cdd8e7;border-radius:14px;padding:13px;background:#fff;font-family:inherit;font-size:17px;outline:none}.sh-auth-field input{letter-spacing:4px;text-align:center;font-weight:900}.sh-auth-login{width:100%;margin-top:16px;border:0;border-radius:16px;padding:14px;background:linear-gradient(135deg,#0b284a,#0f5a78);color:#fff;font-family:inherit;font-weight:900;font-size:17px;cursor:pointer}.sh-auth-msg{min-height:24px;text-align:center;margin-top:10px;color:#b91c1c;font-weight:900}.sh-current-user{position:fixed;left:18px;top:145px;z-index:9997;background:#fff;border:1px solid #dbe4f0;border-radius:13px;padding:8px 12px;color:#334155;font:800 13px Tajawal,Arial,sans-serif;box-shadow:0 8px 20px rgba(15,23,42,.08)}
 @media(max-width:700px){#shLogoutBtn{left:10px;top:auto;bottom:78px;padding:10px 13px}.sh-current-user{display:none}}
 @media print{#shLogoutBtn,.sh-current-user,#shAuthOverlay{display:none!important}}
-
-.property-centers-inline{background:#f2f8ff;border:1px solid #bcd4ed;border-radius:16px;padding:14px;margin:5px 0}
-.property-centers-title{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:12px}.property-centers-title small{display:block;color:#64748b;margin-top:4px}.all-centers-check{background:#fff4d9;border:1px solid #e6bd63;border-radius:12px;padding:9px 12px;font-weight:900}
-.property-centers-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px}.property-center-option{display:flex;align-items:center;gap:9px;background:white;border:1px solid #d5e2ef;border-radius:12px;padding:11px 12px;font-weight:900;cursor:pointer}.property-center-option:has(input:checked){border-color:#16827a;background:#eaf9f6}.property-center-option input{width:19px;height:19px}.empty-centers{padding:15px;text-align:center;color:#64748b}
 </style>
 <div id="shAuthOverlay" aria-modal="true" role="dialog">
   <div class="sh-auth-card">
@@ -5367,7 +5350,7 @@ function installUI(){
  if('serviceWorker'in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(console.warn);
  window.addEventListener('online',()=>initialSync());window.addEventListener('offline',()=>setStatus('err','غير متصل — الحفظ محلي مؤقتًا'));
 }
-function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V2.4 فلاتر التقارير';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.1.1<br>مزامنة Supabase • جوال • آيباد • سطح المكتب'}
+function boot(){installUI();deviceId();initialSync();SHC.poll=setInterval(poll,12000);document.title='نظام مؤسسة حسن محمد الشريمي - V2.3 فلاتر التقارير';const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V1.1.1<br>مزامنة Supabase • جوال • آيباد • سطح المكتب'}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 window.shuraimiCloudSync=initialSync;
 })();
@@ -5376,3 +5359,22 @@ window.shuraimiCloudSync=initialSync;
 
 </body>
 </html>
+
+<style id="property-branch-permissions-v250">
+.cc-scope-wrap,.cc-scope-card{display:none!important}
+.property-branch-permission{margin-top:16px;border:2px solid #cfe0f2;border-radius:18px;background:#f8fbff;padding:16px}
+.property-branch-permission.hidden-scope{background:#fffaf0;border-color:#f0d59a}
+.property-scope-title{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:14px}
+.property-scope-title b{font-size:17px;color:#0b4560}.property-scope-title small{display:block;margin-top:5px;color:#64748b;font-weight:700}
+.all-property-centers{display:flex;align-items:center;gap:8px;background:#eaf8f3;border:1px solid #a8d9c8;padding:10px 14px;border-radius:12px;font-weight:900}
+.property-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:13px}
+.property-group{border:1px solid #d7e3ef;border-radius:15px;background:white;padding:13px}
+.property-group h4{margin:0 0 11px;padding-bottom:9px;border-bottom:1px dashed #cbd8e5;font-size:16px}
+.property-center-checks{display:grid;gap:8px}
+.property-center-checks label{display:grid;grid-template-columns:25px 1fr;column-gap:8px;align-items:center;border:1px solid #dce6f0;border-radius:11px;padding:10px;background:#fbfdff;cursor:pointer}
+.property-center-checks label:hover{border-color:#6ca9d4;background:#f1f8fd}
+.property-center-checks input{grid-row:1/3;width:19px;height:19px}
+.property-center-checks span{font-weight:900;font-size:15px}.property-center-checks small{color:#64748b;font-size:12px}
+.property-groups.scope-disabled{opacity:.55;pointer-events:none}
+.property-scope-note{font-weight:800;color:#8a5a13;padding:5px}
+</style>
