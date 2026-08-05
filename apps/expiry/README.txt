@@ -1,2 +1,1 @@
-V4.6 Product Sync Cloud
-استبدل apps/expiry/index.html بهذا الملف.
+استبدل apps/expiry/index.html بهذا الملف. الإصدار V4.7 يضيف التحقق الفعلي من عدد الأصناف في Supabase وأزرار إعادة الرفع والتنزيل.
