@@ -82,7 +82,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
 (()=>{'use strict';
-const VERSION='4.4 Stable Cloud + Worker Home';
+const VERSION='4.5 Safe Merge Cloud';
 const DB_KEY='sanabel_expiry_v4_cloud';
 const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
 const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
@@ -104,12 +104,12 @@ const num=v=>Number(v)||0; const money=v=>num(v).toLocaleString('en-US',{minimum
 const now=()=>new Date().toISOString(); const dateOnly=()=>new Date().toISOString().slice(0,10); const id=p=>p+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
 function loadDB(){try{return Object.assign(structuredClone(defaultDB),JSON.parse(localStorage.getItem(DB_KEY)||'{}'));}catch{return structuredClone(defaultDB)}}
 function invalidateCaches(){stockCache=null;productExactCache=null}
-let cloudTimer=null, cloudBusy=false, cloudDirty=false, suppressCloudPush=false, realtimeChannel=null, realtimePullTimer=null;
+let cloudTimer=null, cloudBusy=false, cloudDirty=false, suppressCloudPush=false, realtimeChannel=null, realtimePullTimer=null, lastLocalMutationAt=0;
 function setCloudStatus(kind,text){const chip=$('#cloudChip'),label=$('#cloudText');if(!chip||!label)return;chip.className='cloud-chip '+kind;label.textContent=text}
 function saveLocal(){invalidateCaches();localStorage.setItem(DB_KEY,JSON.stringify(db))}
-function saveDB(){saveLocal();cloudDirty=true;if(!suppressCloudPush)scheduleCloudPush()}
+function saveDB(){saveLocal();lastLocalMutationAt=Date.now();cloudDirty=true;if(!suppressCloudPush)scheduleCloudPush()}
 function cloudHeaders(extra={}){return Object.assign({'apikey':SUPABASE_KEY,'Content-Type':'application/json'},extra)}
-function scheduleCloudPush(){clearTimeout(cloudTimer);setCloudStatus('busy','بانتظار المزامنة…');cloudTimer=setTimeout(()=>cloudPush(),150)}
+function scheduleCloudPush(){clearTimeout(cloudTimer);setCloudStatus('busy','بانتظار المزامنة…');cloudTimer=setTimeout(()=>{cloudTimer=null;cloudPush()},150)}
 async function rest(path,options={}){const res=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,Object.assign({},options,{headers:cloudHeaders(options.headers||{})}));if(!res.ok)throw new Error((await res.text())||`HTTP ${res.status}`);const txt=await res.text();return txt?JSON.parse(txt):[]}
 async function upsertRows(table,rows){if(!rows.length)return;await rest(`${table}?on_conflict=id`,{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(rows)})}
 function rowBase(x){return {id:String(x.id),payload:x,updated_at:now(),updated_by:currentUser?.name||'النظام'}}
@@ -129,6 +129,12 @@ async function cloudPush(){
   cloudDirty=false;setCloudStatus('ok','متزامن');
  }catch(err){console.error('Cloud push failed',err);setCloudStatus('error','فشل الحفظ السحابي');clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>cloudPush(),4000)}finally{cloudBusy=false}
 }
+function mergeById(localRows,cloudRows){
+ const map=new Map();
+ for(const row of (localRows||[])){if(row&&row.id!=null)map.set(String(row.id),row)}
+ for(const row of (cloudRows||[])){if(row&&row.id!=null)map.set(String(row.id),Object.assign({},map.get(String(row.id))||{},row))}
+ return [...map.values()]
+}
 async function cloudPull({silent=false}={}){
  if(cloudDirty&&!cloudBusy){await cloudPush();if(cloudDirty)return false}
  if(!silent)setCloudStatus('busy','جاري تحميل السحابة…');
@@ -143,25 +149,33 @@ async function cloudPull({silent=false}={}){
    rest(`${CLOUD_TABLES.audit}?select=payload&order=created_at.desc&limit=1000`),
    rest(`${CLOUD_TABLES.settings}?id=eq.main&select=payload`)
   ]);
-  const hasCloud=[products,expiry,replacements,purchases,pItems,users].some(a=>a.length);
-  if(!hasCloud){await cloudPush();setCloudStatus('ok','متزامن');return true}
-  const itemsByPurchase=new Map();for(const r of pItems){if(!itemsByPurchase.has(r.purchase_id))itemsByPurchase.set(r.purchase_id,[]);itemsByPurchase.get(r.purchase_id).push(r.payload)}
+  const cloudProducts=products.map(r=>r.payload).filter(Boolean);
+  const cloudExpiry=expiry.map(r=>r.payload).filter(Boolean);
+  const cloudReplacements=replacements.map(r=>r.payload).filter(Boolean);
+  const cloudUsers=users.map(r=>r.payload).filter(Boolean);
+  const cloudAudit=auditRows.map(r=>r.payload).filter(Boolean);
+  const itemsByPurchase=new Map();
+  for(const r of pItems){if(!itemsByPurchase.has(String(r.purchase_id)))itemsByPurchase.set(String(r.purchase_id),[]);if(r.payload)itemsByPurchase.get(String(r.purchase_id)).push(r.payload)}
+  const cloudPurchases=purchases.map(r=>r.payload).filter(Boolean).map(x=>Object.assign({},x,{items:itemsByPurchase.get(String(x.id))||x.items||[]}));
+
   suppressCloudPush=true;
-  db={
-   settings:Object.assign({},defaultDB.settings,settings[0]?.payload||{}),
-   users:users.map(r=>r.payload),
-   products:products.map(r=>r.payload),
-   expiry:expiry.map(r=>r.payload),
-   replacements:replacements.map(r=>r.payload),
-   purchases:purchases.map(r=>Object.assign({},r.payload,{items:itemsByPurchase.get(String(r.payload.id))||[]})),
-   audit:auditRows.map(r=>r.payload)
-  };
+  // دمج آمن: لا تمسح السحابة الفارغة بيانات الجهاز.
+  db.settings=Object.assign({},defaultDB.settings,db.settings||{},settings[0]?.payload||{});
+  db.users=mergeById(db.users,cloudUsers);
+  db.products=mergeById(db.products,cloudProducts);
+  db.expiry=mergeById(db.expiry,cloudExpiry);
+  db.replacements=mergeById(db.replacements,cloudReplacements);
+  db.purchases=mergeById(db.purchases,cloudPurchases);
+  db.audit=mergeById(db.audit,cloudAudit).sort((a,b)=>String(b.at||b.createdAt||'').localeCompare(String(a.at||a.createdAt||''))).slice(0,1000);
   if(!db.users.length)db.users=structuredClone(defaultDB.users);
   db.products=db.products.map(p=>Object.assign({unit:'حبة',unitCode:db.settings.defaultUnitCode||'u01',taxRate:'15%',salePrice:0,category:''},p));
   saveLocal();suppressCloudPush=false;
+
+  // إذا كان الجهاز يملك أصنافًا أكثر من السحابة، ارفعها ولا تحذفها.
+  if(db.products.length>cloudProducts.length && Date.now()-lastLocalMutationAt<120000){cloudDirty=true;scheduleCloudPush()}
   if(currentUser){const refreshed=db.users.find(u=>u.id===currentUser.id)||db.users.find(u=>u.pin===currentUser.pin);if(refreshed)currentUser=refreshed;render()}
   setCloudStatus('ok','متزامن');return true
- }catch(err){console.error('Cloud pull failed',err);setCloudStatus('error','وضع محلي');return false}
+ }catch(err){suppressCloudPush=false;console.error('Cloud pull failed',err);setCloudStatus('error','وضع محلي');return false}
 }
 async function cloudCheck(){if(document.hidden||cloudBusy||cloudDirty||cloudTimer)return;await cloudPull({silent:true})}
 
