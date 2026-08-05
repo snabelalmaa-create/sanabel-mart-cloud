@@ -1,5 +1,2 @@
-V4.5 Safe Merge Cloud
-- يمنع اختفاء الأصناف بسبب سحب جدول سحابي فارغ.
-- يدمج بيانات الجهاز والسحابة حسب id.
-- يعيد رفع الأصناف المحلية إذا كانت السحابة ناقصة.
-استبدل apps/expiry/index.html بهذا الملف ثم Commit وPush.
+V4.6 Product Sync Cloud
+استبدل apps/expiry/index.html بهذا الملف.
