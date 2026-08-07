@@ -28,6 +28,16 @@
 .import-progress-wrap{position:fixed;inset:0;z-index:500;background:rgba(7,18,27,.64);display:grid;place-items:center;padding:20px}.import-progress-card{width:min(520px,100%);background:#fff;border-radius:22px;padding:24px;box-shadow:var(--shadow);text-align:center}.import-spinner{width:56px;height:56px;border:6px solid #dfe9e8;border-top-color:var(--brand);border-radius:50%;margin:0 auto 16px;animation:importSpin .85s linear infinite}.import-progress-card h3{margin:0 0 8px}.import-progress-card p{margin:0;color:var(--muted)}.import-progress-bar{height:12px;background:#e9eef2;border-radius:999px;overflow:hidden;margin:18px 0 10px}.import-progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--brand),#22a89c);transition:width .2s}.import-progress-stats{display:flex;justify-content:space-between;gap:10px;font-weight:700;color:#43505e}.import-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.import-mode-card{border:1px solid var(--line);border-radius:16px;padding:16px;text-align:right;background:#fff}.import-mode-card strong{display:block;margin-bottom:6px}.import-mode-card small{color:var(--muted);display:block;line-height:1.7}.import-mode-card button{width:100%;margin-top:12px}@keyframes importSpin{to{transform:rotate(360deg)}}@media(max-width:560px){.import-mode-grid{grid-template-columns:1fr}}
 
 .cloud-verify-card{background:linear-gradient(135deg,#f8fbff,#eef7ff);border:1px solid #cfe2f5;border-radius:18px;padding:18px;margin-bottom:16px}.cloud-verify-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}.cloud-verify-head strong{display:block;font-size:18px}.cloud-verify-head small{display:block;color:#64748b;margin-top:4px}.cloud-verify-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}.cloud-verify-grid>div{background:#fff;border:1px solid #dbe8f4;border-radius:13px;padding:12px;min-width:0}.cloud-verify-grid span{display:block;color:#64748b;font-size:12px;margin-bottom:6px}.cloud-verify-grid b{display:block;font-size:16px;overflow-wrap:anywhere}.cloud-error{background:#fff1f2;color:#9f1239;border:1px solid #fecdd3;border-radius:10px;padding:10px}.badge.warning{background:#fff7ed;color:#9a3412}@media(max-width:760px){.cloud-verify-grid{grid-template-columns:1fr 1fr}.cloud-verify-head{align-items:flex-start;flex-direction:column}}
+
+.report-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:16px}
+.report-card{min-height:120px;border:1px solid var(--line);background:#fff;border-radius:18px;padding:16px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;text-align:center}
+.report-card span{font-size:30px}.report-card b{font-size:17px}.report-card small{color:var(--muted)}
+.report-card:hover,.report-card.active{border-color:var(--brand);background:#f1fbfa}
+.report-search-results{display:grid;gap:8px;margin-top:12px}
+.report-search-item{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px;text-align:right;cursor:pointer;display:flex;justify-content:space-between;gap:10px}
+@media(max-width:1000px){.report-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.report-cards{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -59,7 +69,7 @@
         <button type="button" data-route="expiry" class="nav-item"><span>⏳</span>تسجيل الإكسباير</button>
         <button type="button" data-route="replacement" class="nav-item"><span>↻</span>الاستبدال</button>
         <button type="button" data-route="purchases" class="nav-item"><span>▣</span>استلام المشتريات</button>
-        <button type="button" data-route="reports" class="nav-item"><span>▤</span>التقارير</button>
+        <button type="button" data-route="reports" class="nav-item"><span>▤</span>مركز التقارير</button>
         <button type="button" data-route="products" class="nav-item"><span>◫</span>الأصناف</button>
         <button type="button" data-route="users" class="nav-item"><span>♙</span>المستخدمون</button>
         <button type="button" data-route="audit" class="nav-item"><span>✓</span>سجل الرقابة</button>
@@ -87,13 +97,20 @@
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
 (()=>{'use strict';
-const VERSION='4.10 Smart Purchase Compatible';
+const VERSION='4.11 Reports Center';
 const DB_KEY='sanabel_expiry_v4_cloud';
+const DB_BACKUP_KEY='sanabel_expiry_v4_cloud_backup';
+const IDB_NAME='sanabel_expiry_v4_indexeddb';
+const IDB_STORE='state';
+const IDB_VERSION=1;
+let idbWriteChain=Promise.resolve();
+let storageReady=false;
+
 const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
 const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
 const CLOUD_TABLES={products:'expiry_products',expiry:'expiry_expired',replacements:'expiry_replacements',purchases:'expiry_purchase_receipts',purchaseItems:'expiry_purchase_items',users:'expiry_users',audit:'expiry_audit_log',settings:'expiry_settings'};
 const defaultDB={
- settings:{business:'أسواق سنابل المع المركزية',phone:'',smartTax:'15%',defaultSupplier:'مورد عام',defaultUnitCode:'u01',suppliers:['مورد عام']},
+ settings:{business:'أسواق سنابل المع المركزية',phone:'',smartTax:'15%',defaultSupplier:'مورد عام',defaultUnitCode:'u01',costDecimals:3,suppliers:['مورد عام']},
  users:[{id:'u1',name:'أبوقصي',pin:'2580',role:'مدير',active:true}],
  products:[],expiry:[],replacements:[],purchases:[],audit:[]
 };
@@ -108,14 +125,183 @@ let cloudStats={localProducts:db.products.length,cloudProducts:null,lastChecked:
 const PRODUCT_PAGE_SIZE=60;
 const $=s=>document.querySelector(s); const $$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
-const num=v=>Number(v)||0; const money=v=>num(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const num=v=>Number(v)||0;
+const costPrecision=()=>Math.max(2,Math.min(3,Number(db?.settings?.costDecimals)||3));
+const money=v=>num(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:costPrecision()});
+const costText=v=>num(v).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:costPrecision(),useGrouping:false});
 const now=()=>new Date().toISOString(); const dateOnly=()=>new Date().toISOString().slice(0,10); const id=p=>p+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
-function loadDB(){try{return Object.assign(structuredClone(defaultDB),JSON.parse(localStorage.getItem(DB_KEY)||'{}'));}catch{return structuredClone(defaultDB)}}
+function loadDB(){
+ try{
+  const raw=localStorage.getItem(DB_KEY);
+  if(!raw)return structuredClone(defaultDB);
+  const parsed=JSON.parse(raw);
+  return Object.assign(structuredClone(defaultDB),parsed||{});
+ }catch{return structuredClone(defaultDB)}
+}
+function openLocalDB(){
+ return new Promise((resolve,reject)=>{
+  if(!('indexedDB' in window))return reject(new Error('IndexedDB غير مدعوم في هذا المتصفح'));
+  const req=indexedDB.open(IDB_NAME,IDB_VERSION);
+  req.onupgradeneeded=()=>{const d=req.result;if(!d.objectStoreNames.contains(IDB_STORE))d.createObjectStore(IDB_STORE)};
+  req.onsuccess=()=>resolve(req.result);
+  req.onerror=()=>reject(req.error||new Error('تعذر فتح التخزين المحلي'));
+ });
+}
+async function idbGet(key='main'){
+ const d=await openLocalDB();
+ return new Promise((resolve,reject)=>{
+  const tx=d.transaction(IDB_STORE,'readonly');
+  const r=tx.objectStore(IDB_STORE).get(key);
+  r.onsuccess=()=>resolve(r.result||null);
+  r.onerror=()=>reject(r.error||new Error('تعذر قراءة التخزين المحلي'));
+  tx.oncomplete=()=>d.close();
+ });
+}
+async function idbPut(value,key='main'){
+ const d=await openLocalDB();
+ return new Promise((resolve,reject)=>{
+  const tx=d.transaction(IDB_STORE,'readwrite');
+  tx.objectStore(IDB_STORE).put(value,key);
+  tx.oncomplete=()=>{d.close();resolve(true)};
+  tx.onerror=()=>{const e=tx.error;d.close();reject(e||new Error('تعذر حفظ البيانات محليًا'))};
+  tx.onabort=()=>{const e=tx.error;d.close();reject(e||new Error('تم إلغاء الحفظ المحلي'))};
+ });
+}
+function compactLocalSnapshot(){
+ return {
+  __compact:true,
+  settings:db.settings,
+  users:db.users,
+  version:VERSION,
+  lastLocalSave:now()
+ };
+}
+function queueIDBSave(){
+ const snapshot=structuredClone(db);
+ idbWriteChain=idbWriteChain.catch(()=>{}).then(()=>idbPut(snapshot,'main'));
+ return idbWriteChain;
+}
+async function persistFullDB(){
+ invalidateCaches();
+ await queueIDBSave();
+ try{localStorage.setItem(DB_KEY,JSON.stringify(compactLocalSnapshot()))}catch{}
+ return true;
+}
+async function hydrateFromIndexedDB(){
+ try{
+  const stored=await idbGet('main');
+  if(stored && typeof stored==='object'){
+   db=Object.assign(structuredClone(defaultDB),stored);
+   storageReady=true;
+   return {source:'indexeddb',count:(db.products||[]).length};
+  }
+ }catch(e){console.warn('IndexedDB read failed',e)}
+ storageReady=true;
+ return {source:'memory',count:(db.products||[]).length};
+}
+async function migrateLegacyStorageSafely(){
+ let raw=null, legacy=null;
+ try{raw=localStorage.getItem(DB_KEY);legacy=raw?JSON.parse(raw):null}catch{}
+ const looksFull=legacy && !legacy.__compact && (
+  (Array.isArray(legacy.products)&&legacy.products.length) ||
+  (Array.isArray(legacy.expired)&&legacy.expired.length) ||
+  (Array.isArray(legacy.replacements)&&legacy.replacements.length) ||
+  (Array.isArray(legacy.purchases)&&legacy.purchases.length) ||
+  (Array.isArray(legacy.audit)&&legacy.audit.length>10)
+ );
+ if(!looksFull)return false;
+ try{
+  // Keep the original JSON as a backup when possible. Do not remove it automatically.
+  try{if(raw && !localStorage.getItem(DB_BACKUP_KEY))localStorage.setItem(DB_BACKUP_KEY,raw)}catch{}
+  const merged=Object.assign(structuredClone(defaultDB),legacy);
+  await idbPut(merged,'main');
+  const verify=await idbGet('main');
+  if(!verify)throw new Error('تعذر التحقق من نسخة IndexedDB');
+  const expectedProducts=(merged.products||[]).length;
+  const actualProducts=(verify.products||[]).length;
+  if(expectedProducts!==actualProducts)throw new Error(`فشل التحقق من ترحيل الأصناف (${actualProducts}/${expectedProducts})`);
+  db=merged;
+  try{localStorage.setItem(DB_KEY,JSON.stringify(compactLocalSnapshot()))}catch{}
+  storageReady=true;
+  return true;
+ }catch(e){
+  console.error('Safe migration failed',e);
+  db=Object.assign(structuredClone(defaultDB),legacy||{});
+  storageReady=true;
+  return false;
+ }
+}
+
+function recoverProductsFromLegacyStorage(){
+ try{
+  let best=[];
+  for(let i=0;i<localStorage.length;i++){
+   const key=localStorage.key(i);
+   if(!key || key===DB_KEY)continue;
+   if(!/expiry|sanabel/i.test(key))continue;
+   try{
+    const raw=localStorage.getItem(key);
+    if(!raw)continue;
+    const obj=JSON.parse(raw);
+    const rows=Array.isArray(obj?.products)?obj.products:[];
+    if(rows.length>best.length)best=rows;
+   }catch{}
+  }
+  if(best.length){
+   db.products=best.map(p=>Object.assign({unit:'حبة',unitCode:db.settings.defaultUnitCode||'u01',taxRate:'15%',salePrice:0,category:''},p));
+   saveLocal();
+   productsNeedSync=true;
+   cloudDirty=true;
+   return best.length;
+  }
+ }catch(e){console.warn('Legacy recovery failed',e)}
+ return 0;
+}
+async function ensureProductsRecovered(){
+ if(db.products.length)return db.products.length;
+ setCloudStatus('busy','جاري استعادة الأصناف…');
+ try{
+  const cloudCount=await countCloudRows(CLOUD_TABLES.products);
+  cloudStats.cloudProducts=cloudCount;
+  if(cloudCount>0){
+   const rows=await fetchAllRows(CLOUD_TABLES.products,'payload','updated_at.desc');
+   const cloudProducts=rows.map(r=>r.payload).filter(Boolean);
+   if(cloudProducts.length){
+    db.products=cloudProducts.map(p=>Object.assign({unit:'حبة',unitCode:db.settings.defaultUnitCode||'u01',taxRate:'15%',salePrice:0,category:''},p));
+    invalidateCaches(); saveLocal();
+    cloudStats.localProducts=db.products.length;
+    cloudStats.lastChecked=now();
+    cloudStats.status='ok';
+    setCloudStatus('ok',`تم استعادة ${db.products.length.toLocaleString('en-US')} صنف`);
+    return db.products.length;
+   }
+  }
+ }catch(e){console.warn('Cloud recovery failed',e)}
+ const legacy=recoverProductsFromLegacyStorage();
+ if(legacy){
+  setCloudStatus('busy',`تم العثور على ${legacy.toLocaleString('en-US')} صنف محليًا — جاري رفعها`);
+  scheduleCloudPush();
+  return legacy;
+ }
+ setCloudStatus('error','لا توجد أصناف محفوظة');
+ return 0;
+}
+
 function invalidateCaches(){stockCache=null;productExactCache=null}
 let cloudTimer=null, cloudBusy=false, cloudDirty=false, productsNeedSync=false, suppressCloudPush=false, realtimeChannel=null, realtimePullTimer=null, lastLocalMutationAt=0;
 function setCloudStatus(kind,text){const chip=$('#cloudChip'),label=$('#cloudText');if(!chip||!label)return;chip.className='cloud-chip '+kind;label.textContent=text}
-function saveLocal(){invalidateCaches();localStorage.setItem(DB_KEY,JSON.stringify(db))}
-function saveDB(){saveLocal();lastLocalMutationAt=Date.now();cloudDirty=true;if(!suppressCloudPush)scheduleCloudPush()}
+function saveLocal(){
+ invalidateCaches();
+ // Never write the full database to localStorage again.
+ try{localStorage.setItem(DB_KEY,JSON.stringify(compactLocalSnapshot()))}catch{}
+ queueIDBSave().catch(e=>{console.error('IndexedDB save failed',e);toast('تعذر الحفظ المحلي المؤقت')});
+}
+function saveDB(){
+ saveLocal();
+ lastLocalMutationAt=Date.now();
+ cloudDirty=true;
+ if(!suppressCloudPush)scheduleCloudPush();
+}
 function cloudHeaders(extra={}){return Object.assign({'apikey':SUPABASE_KEY,'Content-Type':'application/json'},extra)}
 function scheduleCloudPush(){clearTimeout(cloudTimer);setCloudStatus('busy','بانتظار المزامنة…');cloudTimer=setTimeout(()=>{cloudTimer=null;cloudPush()},900)}
 async function rest(path,options={}){const res=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,Object.assign({},options,{headers:cloudHeaders(options.headers||{})}));if(!res.ok)throw new Error((await res.text())||`HTTP ${res.status}`);const txt=await res.text();return txt?JSON.parse(txt):[]}
@@ -268,22 +454,96 @@ function ensureProductCache(){if(productExactCache)return;productExactCache=new 
 function productByQuery(q){q=String(q||'').trim();if(!q)return null;ensureProductCache();const exact=productExactCache.get(q);if(exact)return exact;const nq=q.toLowerCase();return db.products.find(p=>String(p.barcode||'').endsWith(q)||String(p.smartCode||'').endsWith(q)||String(p.name||'').toLowerCase().includes(nq))||null}
 function ensureStockCache(){if(stockCache)return;stockCache=new Map();for(const x of db.expiry){stockCache.set(x.productId,(stockCache.get(x.productId)||0)+num(x.remaining))}}
 function availableQty(pid){ensureStockCache();return stockCache.get(pid)||0}
-const titles={dashboard:['الرئيسية','نظرة سريعة على المستودع'],expiry:['تسجيل الإكسباير','إضافة كميات منتهية الصلاحية'],replacement:['الاستبدال','صرف البديل من الأقدم أولًا'],purchases:['استلام المشتريات','تجهيز ملف متوافق مع سمارت'],reports:['التقارير','متابعة المخزون والحركة'],products:['الأصناف','استيراد وإدارة أصناف سمارت'],users:['المستخدمون','الصلاحيات وأرقام الدخول'],audit:['سجل الرقابة','جميع العمليات المهمة'],settings:['الإعدادات','بيانات البرنامج والنسخ الاحتياطي']};
+const titles={dashboard:['الرئيسية','نظرة سريعة على المستودع'],expiry:['تسجيل الإكسباير','إضافة كميات منتهية الصلاحية'],replacement:['الاستبدال','صرف البديل من الأقدم أولًا'],purchases:['استلام المشتريات','تجهيز ملف متوافق مع سمارت'],reports:['مركز التقارير','تقارير وتحليلات الإكسباير'],products:['الأصناف','استيراد وإدارة أصناف سمارت'],users:['المستخدمون','الصلاحيات وأرقام الدخول'],audit:['سجل الرقابة','جميع العمليات المهمة'],settings:['الإعدادات','بيانات البرنامج والنسخ الاحتياطي']};
 function navigate(route){if(!titles[route])route='dashboard';currentRoute=route;try{history.replaceState(null,'','#'+route)}catch{};$$('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.route===route));$('#pageTitle').textContent=titles[route][0];$('#pageSubtitle').textContent=titles[route][1];closeSidebar();render();requestAnimationFrame(()=>$('#pageHost').focus())}
-function render(){const f=pages[currentRoute]||pages.dashboard;$('#pageHost').innerHTML=f();bindPage(currentRoute)}
+function render(){const f=pages[currentRoute]||pages.dashboard;try{$('#pageHost').innerHTML=f();bindPage(currentRoute)}catch(err){console.error('Render error',currentRoute,err);$('#pageHost').innerHTML=`<div class="card"><h3>تعذر فتح الصفحة</h3><p class="muted">حدث خطأ أثناء عرض ${esc(titles[currentRoute]?.[0]||'الصفحة')}.</p><div class="note">${esc(err?.message||String(err))}</div></div>`}}
 function closeSidebar(){$('#sidebar').classList.remove('open');$('#sidebarBackdrop').classList.remove('open')}
 function openSidebar(){$('#sidebar').classList.add('open');$('#sidebarBackdrop').classList.add('open')}
 
+
+function renderProductsPage(){
+ const q=String(productQuery||'').trim().toLowerCase();
+ const filtered=db.products.filter(p=>{
+  if(!q)return true;
+  return String(p.name||'').toLowerCase().includes(q)
+   ||String(p.barcode||'').includes(q)
+   ||String(p.smartCode||'').includes(q)
+   ||String(p.category||'').toLowerCase().includes(q);
+ });
+ const pageSize=60;
+ const totalPages=Math.max(1,Math.ceil(filtered.length/pageSize));
+ if(productPage>totalPages)productPage=totalPages;
+ if(productPage<1)productPage=1;
+ const start=(productPage-1)*pageSize;
+ const rows=filtered.slice(start,start+pageSize);
+ const body=rows.length?rows.map(p=>`<tr>
+   <td>${esc(p.smartCode||'—')}</td>
+   <td><span class="barcode-cell">${esc(p.barcode||'—')}</span>${p.barcode?` <button type="button" class="copy-mini" data-copy-product-barcode="${esc(p.barcode)}">نسخ</button>`:''}</td>
+   <td><strong>${esc(p.name||'')}</strong></td>
+   <td>${esc(p.category||'—')}</td>
+   <td>${esc(p.unit||'حبة')}</td>
+   <td>${money(p.cost)}</td>
+   <td><div class="actions">
+     <button type="button" class="btn secondary" data-edit-product="${p.id}">تعديل</button>
+     <button type="button" class="btn danger" data-delete-product="${p.id}">حذف</button>
+   </div></td>
+  </tr>`).join(''):`<tr><td colspan="7" class="empty">${q?'لا توجد أصناف حسب مدخلات البحث':'لا توجد أصناف مسجلة'}</td></tr>`;
+ return `<div class="table-wrap"><table>
+   <thead><tr><th>رقم سمارت</th><th>الباركود</th><th>اسم الصنف</th><th>القسم</th><th>الوحدة</th><th>التكلفة</th><th>الإجراء</th></tr></thead>
+   <tbody>${body}</tbody>
+  </table></div>
+  <div class="pager" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px">
+   <span class="muted">عرض ${filtered.length?start+1:0}–${Math.min(start+pageSize,filtered.length)} من ${filtered.length.toLocaleString('en-US')} صنف</span>
+   <div class="toolbar">
+    <button id="prevProducts" type="button" class="btn secondary" ${productPage<=1?'disabled':''}>السابق</button>
+    <span class="badge">صفحة ${productPage} من ${totalPages}</span>
+    <button id="nextProducts" type="button" class="btn secondary" ${productPage>=totalPages?'disabled':''}>التالي</button>
+   </div>
+  </div>`;
+}
+
 const pages={
 dashboard(){if(currentUser&&currentUser.role!=='مدير'){return `<section class="worker-welcome"><h3>مرحبًا ${esc(currentUser.name)}</h3><p>اختر العملية المطلوبة من الأيقونات التالية.</p></section><section class="worker-home"><button type="button" class="worker-action exp" data-go="expiry"><span class="wa-icon">⏳</span><strong>تسجيل إكسباير</strong><small>إضافة صنف منتهي الصلاحية</small></button><button type="button" class="worker-action rep" data-go="replacement"><span class="wa-icon">↻</span><strong>تسجيل الاستبدال</strong><small>صرف البديل من أقدم دفعة</small></button><button type="button" class="worker-action pur" data-go="purchases"><span class="wa-icon">▣</span><strong>استلام مشتريات</strong><small>إنشاء فاتورة استلام جديدة</small></button></section>`}const totalAvail=db.products.reduce((s,p)=>s+availableQty(p.id),0);const value=db.expiry.reduce((s,x)=>s+num(x.remaining)*num(x.cost),0);return `<section class="grid kpi-grid"><div class="kpi"><span>عدد الأصناف</span><strong>${db.products.length}</strong></div><div class="kpi"><span>كمية الإكسباير الحالية</span><strong>${totalAvail}</strong></div><div class="kpi"><span>قيمة المخزون المنتهي</span><strong>${money(value)} ر.س</strong></div><div class="kpi"><span>الاستبدالات</span><strong>${db.replacements.length}</strong></div></section><section class="grid two-col" style="margin-top:16px"><div class="card"><div class="card-head"><h3>آخر عمليات الإكسباير</h3><button class="btn secondary" data-go="expiry">تسجيل جديد</button></div>${tableExpiry(db.expiry.slice(0,6))}</div><div class="card"><div class="card-head"><h3>تنبيه ذكي</h3></div>${db.products.length?`<div class="note">يوجد <b>${db.products.filter(p=>availableQty(p.id)>0).length}</b> صنفًا له رصيد إكسباير. ركّز على الأصناف الأعلى قيمة وابدأ بطلب استبدالها.</div>`:`<div class="empty">ابدأ باستيراد الأصناف من شاشة الأصناف.</div>`}</div></section>`},
-expiry(){return `<div class="card"><div class="card-head"><h3>تسجيل إكسباير جديد</h3><span class="badge">المورد: مورد عام</span></div><form id="expiryForm" class="form-grid"><div class="field span-2"><label>الباركود أو آخر 5 أرقام أو اسم الصنف</label>${barcodeField('expirySearch','اكتب أو امسح الباركود')}</div><div class="field"><label>الصنف</label><input id="expiryProduct" readonly></div><input type="hidden" id="expiryProductId"><div class="field"><label>الكمية</label><input id="expiryQty" type="number" min="1" required></div><div class="field"><label>تاريخ الانتهاء</label><input id="expiryDate" type="date" value="${dateOnly()}" required></div><div class="field"><label>التكلفة</label><input id="expiryCost" type="number" step="0.01" min="0" required></div><div class="field span-3"><label>ملاحظة</label><input id="expiryNote"></div><div class="span-3"><button class="btn primary" type="submit">حفظ العملية</button></div></form></div><div class="card" style="margin-top:16px"><div class="card-head"><h3>آخر السجلات</h3></div>${tableExpiry(db.expiry.slice(0,20))}</div>`},
+expiry(){return `<div class="card"><div class="card-head"><h3>تسجيل إكسباير جديد</h3><span class="badge">المورد: مورد عام</span></div><form id="expiryForm" class="form-grid"><div class="field span-2"><label>الباركود أو آخر 5 أرقام أو اسم الصنف</label>${barcodeField('expirySearch','اكتب أو امسح الباركود')}</div><div class="field"><label>الصنف</label><input id="expiryProduct" readonly></div><input type="hidden" id="expiryProductId"><div class="field"><label>الكمية</label><input id="expiryQty" type="number" min="1" required></div><div class="field"><label>تاريخ الانتهاء</label><input id="expiryDate" type="date" value="${dateOnly()}" required></div><div class="field"><label>التكلفة</label><input id="expiryCost" type="number" step="0.001" min="0" required></div><div class="field span-3"><label>ملاحظة</label><input id="expiryNote"></div><div class="span-3"><button class="btn primary" type="submit">حفظ العملية</button></div></form></div><div class="card" style="margin-top:16px"><div class="card-head"><h3>آخر السجلات</h3></div>${tableExpiry(db.expiry.slice(0,20))}</div>`},
 replacement(){return `<div class="card"><div class="card-head"><h3>تسجيل استبدال</h3><span class="badge">المورد: مورد عام</span></div><form id="replacementForm" class="form-grid"><div class="field span-2"><label>الباركود أو اسم الصنف</label>${barcodeField('repSearch','اكتب أو امسح الباركود')}</div><div class="field"><label>الصنف</label><input id="repProduct" readonly></div><input type="hidden" id="repProductId"><div class="field"><label>الكمية المستبدلة</label><input id="repQty" type="number" min="1" required></div><div class="field"><label>الرصيد المتاح</label><input id="repAvailable" readonly></div><div class="field"><label>التاريخ</label><input id="repDate" type="date" value="${dateOnly()}" required></div><div class="field span-3"><label>ملاحظة</label><input id="repNote"></div><div class="span-3"><button class="btn primary" type="submit">اعتماد الاستبدال</button></div></form></div><div class="card" style="margin-top:16px"><div class="card-head"><h3>آخر الاستبدالات</h3></div>${tableReplacement(db.replacements.slice(0,20))}</div>`},
-purchases(){return `<div class="card"><div class="card-head"><h3>استلام مشتريات</h3><div class="toolbar"><button id="newPurchase" class="btn primary">فاتورة جديدة</button><button id="exportSmart" class="btn secondary">تصدير آخر فاتورة لسمارت</button></div></div><div class="note">ملف سمارت يخرج مطابقًا للعينة الرسمية بالأعمدة: <b>Product Code, Net Unit Cost, Quantity, Product Variant, Tax Rate Name, Discount, Expiry</b>. المورد الافتراضي «مورد عام» ويُعدل داخل سمارت.</div></div><div class="card" style="margin-top:16px"><div class="card-head"><h3>فواتير الاستلام</h3></div>${tablePurchases()}</div>`},
-reports(){return `<div class="card"><div class="card-head"><h3>تقرير مستودع الإكسباير</h3><button id="printReport" class="btn secondary">طباعة</button></div><div class="toolbar" style="margin-bottom:14px"><input id="reportSearch" class="search-box" value="${esc(reportQuery)}" placeholder="ابحث باسم الصنف أو الباركود"><button id="clearReportSearch" class="btn secondary" type="button">مسح البحث</button></div><div id="reportResults">${renderReportTable()}</div></div><div class="card" style="margin-top:16px"><div class="card-head"><h3>تقرير حسب المورد</h3><button id="printSupplierReport" class="btn secondary">طباعة كشف المورد</button></div><div class="toolbar" style="margin-bottom:14px">${supplierSelectMarkup('supplierReportFilter',supplierReportFilter,'ابحث باسم المورد…',true)}</div><div id="supplierReportResults">${renderSupplierReport()}</div></div>`},
-products(){return `<div id="cloudProductsStatus">${cloudStatusMarkup()}</div><div class="card"><div class="card-head"><h3>الأصناف <small class="muted">(${db.products.length.toLocaleString('en-US')})</small></h3><div class="toolbar"><input id="productSearch" class="search-box" value="${esc(productQuery)}" placeholder="بحث بالاسم أو الباركود"><button id="addProduct" class="btn primary">إضافة صنف</button><button id="importProducts" class="btn secondary">استيراد / تحديث ملف الأصناف</button><input id="productFile" type="file" accept=".xlsx,.xls,.csv" hidden></div></div><div class="note" style="margin-bottom:14px">يمكنك <b>تحديث ودمج</b> ملف جديد مع الأصناف الحالية، أو <b>استبدال القائمة بالكامل</b> بأحدث ملف صادر من سمارت. بعد الاستيراد لا تعتبر العملية ناجحة إلا إذا ظهر أن عدد السحابة مطابق لعدد الجهاز.</div><div id="productsTable">${renderProductsPage()}</div></div>`},
+purchases(){return `<div class="card"><div class="card-head"><h3>استلام مشتريات</h3><div class="toolbar"><button id="newPurchase" class="btn primary">فاتورة جديدة</button><button id="exportSmart" class="btn secondary">تصدير آخر فاتورة لسمارت</button></div></div><div class="note">يتم البحث بالباركود، ويُصدّر ملف سمارت بنفس ترتيب أعمدة العينة الرسمية. المورد الافتراضي: «مورد عام» ويمكن تعديله داخل سمارت.</div></div><div class="card" style="margin-top:16px"><div class="card-head"><h3>فواتير الاستلام</h3></div>${tablePurchases()}</div>`},
+reports(){return `<div class="reports-center">
+<div class="kpi-grid">
+${(()=>{
+ const all=buildReportRows();
+ const exp=all.reduce((s,r)=>s+num(r.expiredQty),0);
+ const rep=all.reduce((s,r)=>s+num(r.replacedQty),0);
+ const remain=Math.max(0,exp-rep);
+ const value=all.filter(r=>r.kind==='expired').reduce((s,r)=>s+num(r.remainingQty)*num(r.cost),0);
+ const suppliers=new Set(all.map(r=>r.supplier||'مورد عام'));
+ const products=new Set(all.map(r=>r.productId).filter(Boolean));
+ return `<div class="kpi"><span>الأصناف المتأثرة</span><b>${products.size}</b></div>
+ <div class="kpi"><span>إجمالي الإكسباير</span><b>${exp}</b></div>
+ <div class="kpi"><span>المستبدل</span><b>${rep}</b></div>
+ <div class="kpi"><span>المتبقي</span><b>${remain}</b></div>
+ <div class="kpi"><span>قيمة المتبقي</span><b>${money(value)} ر.س</b></div>
+ <div class="kpi"><span>الموردون</span><b>${suppliers.size}</b></div>`;
+})()}
+</div>
+<div class="card">
+ <div class="card-head"><h3>مركز التقارير</h3></div>
+ <p class="muted">اختر نوع التقرير. لن يتم تحميل جداول ضخمة تلقائيًا.</p>
+ <div class="report-cards">
+  <button type="button" class="report-card" data-report-type="product"><span>📦</span><b>تقرير صنف</b><small>بحث بالاسم أو الباركود</small></button>
+  <button type="button" class="report-card" data-report-type="supplier"><span>🏢</span><b>تقرير مورد</b><small>كشف المورد والطباعة</small></button>
+  <button type="button" class="report-card" data-report-type="period"><span>📅</span><b>تقرير فترة</b><small>من تاريخ إلى تاريخ</small></button>
+  <button type="button" class="report-card" data-report-type="expired"><span>⚠️</span><b>تقرير الإكسباير</b><small>عمليات المنتهي فقط</small></button>
+  <button type="button" class="report-card" data-report-type="replacement"><span>🔄</span><b>تقرير الاستبدال</b><small>عمليات الاستبدال فقط</small></button>
+  <button type="button" class="report-card" data-report-type="user"><span>👤</span><b>تقرير المستخدم</b><small>حركة موظف محدد</small></button>
+  <button type="button" class="report-card" data-report-type="value"><span>💰</span><b>تقرير القيمة</b><small>الأعلى قيمة</small></button>
+ </div>
+</div>
+<div id="reportWorkspace" class="card" style="margin-top:16px"><div class="empty">اختر تقريرًا من الأعلى.</div></div>
+</div>`},
+products(){return `<div id="cloudProductsStatus">${cloudStatusMarkup()}</div><div class="card"><div class="card-head"><h3>الأصناف <small class="muted">(${db.products.length.toLocaleString('en-US')})</small></h3><div class="toolbar"><input id="productSearch" class="search-box" value="${esc(productQuery)}" placeholder="بحث بالاسم أو الباركود"><button id="addProduct" class="btn primary">إضافة صنف</button><button id="importProducts" class="btn secondary">استيراد / تحديث ملف الأصناف</button><input id="productFile" type="file" accept=".xlsx,.xls,.csv" hidden></div></div><div class="note" style="margin-bottom:14px">يمكنك <b>تحديث ودمج</b> ملف جديد مع الأصناف الحالية، أو <b>استبدال القائمة بالكامل</b> بأحدث ملف صادر من سمارت. بعد الاستيراد لا تعتبر العملية ناجحة إلا إذا ظهر أن عدد السحابة مطابق لعدد الجهاز. يتم الاحتفاظ بسعر التكلفة حتى 3 منازل عشرية مثل <b>0.657</b> بدون تقريب مبكر.</div><div id="productsTable">${renderProductsPage()}</div></div>`},
 users(){return `<div class="card"><div class="card-head"><h3>المستخدمون</h3><button id="addUser" class="btn primary">مستخدم جديد</button></div><div class="table-wrap"><table><thead><tr><th>الاسم</th><th>الدور</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody>${db.users.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.role)}</td><td><span class="badge ${u.active?'ok':'danger'}">${u.active?'نشط':'موقوف'}</span></td><td><div class="actions"><button data-edit-user="${u.id}">تعديل</button>${u.id!=='u1'?`<button data-delete-user="${u.id}">حذف</button>`:''}</div></td></tr>`).join('')}</tbody></table></div></div>`},
 audit(){return `<div class="card"><div class="card-head"><h3>سجل الرقابة</h3><button id="clearAudit" class="btn danger">مسح السجل</button></div><div class="table-wrap"><table><thead><tr><th>التاريخ والوقت</th><th>المستخدم</th><th>العملية</th><th>التفاصيل</th></tr></thead><tbody>${db.audit.length?db.audit.map(a=>`<tr><td>${new Date(a.at).toLocaleString('en-GB')}</td><td>${esc(a.user)}</td><td>${esc(a.action)}</td><td>${esc(a.detail)}</td></tr>`).join(''):`<tr><td colspan="4" class="empty">لا توجد عمليات</td></tr>`}</tbody></table></div></div>`},
-settings(){return `<div class="grid two-col"><div class="card"><div class="card-head"><h3>بيانات المنشأة</h3></div><form id="settingsForm" class="form-grid"><div class="field span-2"><label>اسم المنشأة</label><input id="businessName" value="${esc(db.settings.business)}"></div><div class="field"><label>رقم واتساب المدير</label><input id="businessPhone" value="${esc(db.settings.phone)}"></div><div class="field"><label>المورد الافتراضي</label><input id="defaultSupplier" value="${esc(db.settings.defaultSupplier||'مورد عام')}"></div><div class="field"><label>كود الوحدة الافتراضي لسمارت</label><input id="defaultUnitCode" value="${esc(db.settings.defaultUnitCode||'u01')}"></div><div class="field"><label>اسم الضريبة في سمارت</label><input id="smartTax" value="${esc(db.settings.smartTax||'15%')}"></div><div class="field span-3"><label>قائمة الموردين (اسم في كل سطر)</label><textarea id="supplierList" rows="8" placeholder="مورد عام&#10;المراعي&#10;نادك">${esc((db.settings.suppliers||['مورد عام']).join('\n'))}</textarea><div class="toolbar" style="margin-top:8px"><button type="button" id="importSuppliersBtn" class="btn secondary">استيراد قائمة موردين</button><input id="supplierFile" type="file" accept=".xlsx,.xls,.csv,.txt" hidden></div></div><div class="span-3"><button class="btn primary">حفظ الإعدادات</button></div></form></div><div class="card"><div class="card-head"><h3>النسخ الاحتياطي</h3></div><div class="toolbar"><button id="backupBtn" class="btn secondary">تصدير نسخة احتياطية</button><button id="restoreBtn" class="btn secondary">استعادة نسخة</button><input id="restoreFile" type="file" accept="application/json" hidden></div><p class="muted">الإصدار ${VERSION}</p></div></div><div class="card danger-zone" style="margin-top:16px"><div class="card-head"><h3>إعادة التهيئة</h3></div><p>يمسح جميع الأصناف والعمليات والمستخدمين ويعيد المدير الافتراضي.</p><button id="resetBtn" class="btn danger">مسح جميع البيانات</button></div>`}
+settings(){return `<div class="grid two-col"><div class="card"><div class="card-head"><h3>بيانات المنشأة</h3></div><form id="settingsForm" class="form-grid"><div class="field span-2"><label>اسم المنشأة</label><input id="businessName" value="${esc(db.settings.business)}"></div><div class="field"><label>رقم واتساب المدير</label><input id="businessPhone" value="${esc(db.settings.phone)}"></div><div class="field"><label>المورد الافتراضي</label><input id="defaultSupplier" value="${esc(db.settings.defaultSupplier||'مورد عام')}"></div><div class="field"><label>كود الوحدة الافتراضي لسمارت</label><input id="defaultUnitCode" value="${esc(db.settings.defaultUnitCode||'u01')}"></div><div class="field"><label>اسم الضريبة في سمارت</label><input id="smartTax" value="${esc(db.settings.smartTax||'15%')}"></div><div class="field"><label>دقة سعر التكلفة</label><select id="costDecimals"><option value="2" ${Number(db.settings.costDecimals||3)===2?'selected':''}>منزلتان عشريتان</option><option value="3" ${Number(db.settings.costDecimals||3)!==2?'selected':''}>3 منازل عشرية</option></select><small class="muted">مثال: 0.657 يبقى كما هو بدون تقريب إلى 0.66</small></div><div class="field span-3"><label>قائمة الموردين (اسم في كل سطر)</label><textarea id="supplierList" rows="8" placeholder="مورد عام&#10;المراعي&#10;نادك">${esc((db.settings.suppliers||['مورد عام']).join('\n'))}</textarea><div class="toolbar" style="margin-top:8px"><button type="button" id="importSuppliersBtn" class="btn secondary">استيراد قائمة موردين</button><input id="supplierFile" type="file" accept=".xlsx,.xls,.csv,.txt" hidden></div></div><div class="span-3"><button class="btn primary">حفظ الإعدادات</button></div></form></div><div class="card"><div class="card-head"><h3>النسخ الاحتياطي</h3></div><div class="toolbar"><button id="backupBtn" class="btn secondary">تصدير نسخة احتياطية</button><button id="restoreBtn" class="btn secondary">استعادة نسخة</button><input id="restoreFile" type="file" accept="application/json" hidden></div><p class="muted">الإصدار ${VERSION}</p></div></div><div class="card danger-zone" style="margin-top:16px"><div class="card-head"><h3>إعادة التهيئة</h3></div><p>يمسح جميع الأصناف والعمليات والمستخدمين ويعيد المدير الافتراضي.</p><button id="resetBtn" class="btn danger">مسح جميع البيانات</button></div>`}
 };
 function canManageOperations(){return currentUser&&['مدير','مشرف'].includes(currentUser.role)}
 function supplierNames(){const a=[...(db.settings.suppliers||[])];if(!a.includes('مورد عام'))a.unshift('مورد عام');return [...new Set(a.map(x=>String(x||'').trim()).filter(Boolean))]}
@@ -299,7 +559,7 @@ function deleteReplacementRecord(rec){if(!canManageOperations()||!rec)return;if(
 function recalcProductFIFO(productId){const ex=db.expiry.filter(x=>x.productId===productId).sort((a,b)=>String(a.expiryDate||a.createdAt||'').localeCompare(String(b.expiryDate||b.createdAt||'')));ex.forEach(x=>x.remaining=num(x.qty));const reps=db.replacements.filter(x=>x.productId===productId).sort((a,b)=>String(a.createdAt||a.date||'').localeCompare(String(b.createdAt||b.date||'')));for(const r of reps){let left=num(r.qty);r.allocations=[];for(const x of ex){if(left<=0)break;const take=Math.min(left,num(x.remaining));if(take>0){x.remaining-=take;left-=take;r.allocations.push({expiryId:x.id,qty:take})}}if(left>0)throw new Error('إجمالي الاستبدال أكبر من كمية الإكسباير المسجلة');if(!r.supplier||r.supplier==='مورد عام'){const ss=[...new Set(r.allocations.map(a=>db.expiry.find(e=>e.id===a.expiryId)?.supplier||'مورد عام'))];if(ss.length===1)r.supplier=ss[0]}}
 invalidateCaches()}
 function propagateSupplierFromExpiry(expiryId){for(const r of db.replacements){if((r.allocations||[]).some(a=>a.expiryId===expiryId)){const ss=[...new Set((r.allocations||[]).map(a=>db.expiry.find(e=>e.id===a.expiryId)?.supplier||'مورد عام'))];if(ss.length===1)r.supplier=ss[0]}}}
-function editExpiryModal(rec){if(!canManageOperations())return;const p=db.products.find(x=>x.id===rec.productId);modal('تعديل عملية إكسباير',`<form id="editExpiryForm" class="form-grid"><div class="field span-2"><label>الصنف</label><input value="${esc(rec.productName||p?.name||'')}" readonly></div><div class="field"><label>الكمية</label><input id="editExpQty" type="number" min="1" value="${num(rec.qty)}" required></div><div class="field"><label>تاريخ الانتهاء</label><input id="editExpDate" type="date" value="${esc(rec.expiryDate||dateOnly())}" required></div><div class="field"><label>المورد</label>${supplierSelectMarkup('editExpSupplier',rec.supplier||'مورد عام')}</div><div class="field"><label>التكلفة</label><input id="editExpCost" type="number" step="0.01" min="0" value="${num(rec.cost)}"></div><div class="field span-3"><label>ملاحظة</label><input id="editExpNote" value="${esc(rec.note||'')}"></div><div class="span-3"><button class="btn primary">حفظ التعديل</button></div></form>`,()=>{bindSupplierCombo($('#editExpSupplier'));$('#editExpiryForm').onsubmit=e=>{e.preventDefault();const old={qty:num(rec.qty),supplier:rec.supplier||'مورد عام',date:rec.expiryDate};const consumed=Math.max(0,num(rec.qty)-num(rec.remaining));const q=num($('#editExpQty').value);if(q<consumed)return toast(`لا يمكن جعل الكمية أقل من الكمية المستبدلة (${consumed})`);rec.qty=q;rec.expiryDate=$('#editExpDate').value;rec.supplier=$('#editExpSupplier').value||'مورد عام';rec.cost=num($('#editExpCost').value);rec.note=$('#editExpNote').value;try{recalcProductFIFO(rec.productId);propagateSupplierFromExpiry(rec.id)}catch(err){rec.qty=old.qty;rec.supplier=old.supplier;rec.expiryDate=old.date;recalcProductFIFO(rec.productId);return toast(err.message)}audit('تعديل عملية إكسباير',`${rec.productName||p?.name||''}: الكمية ${old.qty} ← ${rec.qty}، المورد ${old.supplier} ← ${rec.supplier}`);closeModal();render();toast('تم تعديل العملية')}})}
+function editExpiryModal(rec){if(!canManageOperations())return;const p=db.products.find(x=>x.id===rec.productId);modal('تعديل عملية إكسباير',`<form id="editExpiryForm" class="form-grid"><div class="field span-2"><label>الصنف</label><input value="${esc(rec.productName||p?.name||'')}" readonly></div><div class="field"><label>الكمية</label><input id="editExpQty" type="number" min="1" value="${num(rec.qty)}" required></div><div class="field"><label>تاريخ الانتهاء</label><input id="editExpDate" type="date" value="${esc(rec.expiryDate||dateOnly())}" required></div><div class="field"><label>المورد</label>${supplierSelectMarkup('editExpSupplier',rec.supplier||'مورد عام')}</div><div class="field"><label>التكلفة</label><input id="editExpCost" type="number" step="0.001" min="0" value="${costText(rec.cost)}"></div><div class="field span-3"><label>ملاحظة</label><input id="editExpNote" value="${esc(rec.note||'')}"></div><div class="span-3"><button class="btn primary">حفظ التعديل</button></div></form>`,()=>{bindSupplierCombo($('#editExpSupplier'));$('#editExpiryForm').onsubmit=e=>{e.preventDefault();const old={qty:num(rec.qty),supplier:rec.supplier||'مورد عام',date:rec.expiryDate};const consumed=Math.max(0,num(rec.qty)-num(rec.remaining));const q=num($('#editExpQty').value);if(q<consumed)return toast(`لا يمكن جعل الكمية أقل من الكمية المستبدلة (${consumed})`);rec.qty=q;rec.expiryDate=$('#editExpDate').value;rec.supplier=$('#editExpSupplier').value||'مورد عام';rec.cost=num($('#editExpCost').value);rec.note=$('#editExpNote').value;try{recalcProductFIFO(rec.productId);propagateSupplierFromExpiry(rec.id)}catch(err){rec.qty=old.qty;rec.supplier=old.supplier;rec.expiryDate=old.date;recalcProductFIFO(rec.productId);return toast(err.message)}audit('تعديل عملية إكسباير',`${rec.productName||p?.name||''}: الكمية ${old.qty} ← ${rec.qty}، المورد ${old.supplier} ← ${rec.supplier}`);closeModal();render();toast('تم تعديل العملية')}})}
 function editReplacementModal(rec){if(!canManageOperations())return;const p=db.products.find(x=>x.id===rec.productId);modal('تعديل عملية استبدال',`<form id="editRepForm" class="form-grid"><div class="field span-2"><label>الصنف</label><input value="${esc(rec.productName||p?.name||'')}" readonly></div><div class="field"><label>الكمية</label><input id="editRepQty" type="number" min="1" value="${num(rec.qty)}" required></div><div class="field"><label>التاريخ</label><input id="editRepDate" type="date" value="${esc(rec.date||dateOnly())}" required></div><div class="field"><label>المورد</label>${supplierSelectMarkup('editRepSupplier',rec.supplier||'مورد عام')}</div><div class="field span-3"><label>ملاحظة</label><input id="editRepNote" value="${esc(rec.note||'')}"></div><div class="span-3"><button class="btn primary">حفظ التعديل</button></div></form>`,()=>{bindSupplierCombo($('#editRepSupplier'));$('#editRepForm').onsubmit=e=>{e.preventDefault();const old={qty:num(rec.qty),supplier:rec.supplier||'مورد عام',date:rec.date};rec.qty=num($('#editRepQty').value);rec.date=$('#editRepDate').value;rec.supplier=$('#editRepSupplier').value||'مورد عام';rec.note=$('#editRepNote').value;try{recalcProductFIFO(rec.productId)}catch(err){rec.qty=old.qty;rec.supplier=old.supplier;rec.date=old.date;recalcProductFIFO(rec.productId);return toast(err.message)}audit('تعديل عملية استبدال',`${rec.productName||p?.name||''}: الكمية ${old.qty} ← ${rec.qty}، المورد ${old.supplier} ← ${rec.supplier}`);closeModal();render();toast('تم تعديل الاستبدال')}})}
 function supplierReportRows(supplier){const ex=db.expiry.filter(x=>!supplier||(x.supplier||'مورد عام')===supplier);const reps=db.replacements.filter(x=>!supplier||(x.supplier||'مورد عام')===supplier);const ids=new Set([...ex.map(x=>x.productId),...reps.map(x=>x.productId)]);return [...ids].map(pid=>{const p=db.products.find(x=>x.id===pid);const exs=ex.filter(x=>x.productId===pid),rs=reps.filter(x=>x.productId===pid);return {p,name:p?.name||exs[0]?.productName||rs[0]?.productName||'صنف غير معروف',barcode:p?.barcode||exs[0]?.barcode||rs[0]?.barcode||'',expired:exs.reduce((s,x)=>s+num(x.qty),0),replaced:rs.reduce((s,x)=>s+num(x.qty),0),remaining:exs.reduce((s,x)=>s+num(x.remaining),0),value:exs.reduce((s,x)=>s+num(x.remaining)*num(x.cost),0)}}).sort((a,b)=>b.value-a.value)}
 function printSupplierFormal(){
@@ -361,67 +621,113 @@ function printProductFormal(productId){
 }
 function tablePurchases(){return `<div class="table-wrap"><table><thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>المورد</th><th>عدد الأصناف</th><th>الإجمالي</th><th>الإجراء</th></tr></thead><tbody>${db.purchases.length?db.purchases.map(x=>`<tr><td>${esc(x.number)}</td><td>${esc(x.date)}</td><td>${esc(x.supplier)}</td><td>${x.items.length}</td><td>${money(x.items.reduce((s,i)=>s+num(i.qty)*num(i.cost),0))}</td><td><div class="actions"><button data-export-purchase="${x.id}">سمارت</button><button data-whatsapp-purchase="${x.id}">واتساب</button><button data-delete-purchase="${x.id}">حذف</button></div></td></tr>`).join(''):`<tr><td colspan="6" class="empty">لا توجد فواتير</td></tr>`}</tbody></table></div>`}
 
+
+function buildReportRows(){
+ const products=new Map((db.products||[]).map(p=>[p.id,p]));
+ const rows=[];
+ for(const e of (db.expiry||[])){
+  const p=products.get(e.productId)||{};
+  rows.push({kind:'expired',productId:e.productId,productName:e.productName||p.name||'صنف غير معروف',barcode:e.barcode||p.barcode||'',supplier:e.supplier||'مورد عام',user:e.user||'',date:e.expiryDate||String(e.createdAt||'').slice(0,10),createdAt:e.createdAt||e.expiryDate||'',expiredQty:num(e.qty),replacedQty:0,remainingQty:num(e.remaining??e.qty),cost:num(e.cost??p.cost),note:e.note||''});
+ }
+ for(const r of (db.replacements||[])){
+  const p=products.get(r.productId)||{};
+  rows.push({kind:'replacement',productId:r.productId,productName:r.productName||p.name||'صنف غير معروف',barcode:r.barcode||p.barcode||'',supplier:r.supplier||'مورد عام',user:r.user||'',date:r.date||String(r.createdAt||'').slice(0,10),createdAt:r.createdAt||r.date||'',expiredQty:0,replacedQty:num(r.qty),remainingQty:0,cost:num(r.cost??p.cost),note:r.note||''});
+ }
+ return rows;
+}
+function movementTable(rows){
+ return `<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الصنف</th><th>الباركود</th><th>المورد</th><th>العملية</th><th>الكمية</th><th>المستخدم</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr><td>${esc(r.date||'')}</td><td>${esc(r.productName)}</td><td>${esc(r.barcode||'—')}</td><td>${esc(r.supplier||'مورد عام')}</td><td>${r.kind==='expired'?'إكسباير':'استبدال'}</td><td>${r.kind==='expired'?r.expiredQty:r.replacedQty}</td><td>${esc(r.user||'—')}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">لا توجد بيانات</td></tr>'}</tbody></table></div>`;
+}
+function openReportType(type){
+ $$('.report-card').forEach(b=>b.classList.toggle('active',b.dataset.reportType===type));
+ const host=$('#reportWorkspace'); if(!host)return;
+ if(type==='product'){
+  host.innerHTML=`<h3>📦 تقرير صنف</h3><div class="field"><label>ابحث باسم الصنف أو الباركود أو رقم سمارت</label><input id="rcProductSearch" placeholder="ابدأ بالكتابة..."></div><div id="rcProductResults" class="report-search-results"><div class="empty">لن تظهر الأصناف إلا بعد البحث.</div></div><div id="rcProductDetail"></div>`;
+  const inp=$('#rcProductSearch');inp.focus();let t;inp.oninput=()=>{clearTimeout(t);t=setTimeout(()=>renderReportProductSearch(inp.value),160)};
+  return;
+ }
+ if(type==='supplier'){
+  const sups=[...new Set(['مورد عام',...(db.settings.suppliers||[]),...buildReportRows().map(r=>r.supplier||'مورد عام')])];
+  host.innerHTML=`<h3>🏢 تقرير مورد</h3><div class="field"><label>اسم المورد</label><input id="rcSupplier" list="rcSupplierList" placeholder="اكتب جزءًا من اسم المورد"><datalist id="rcSupplierList">${sups.map(s=>`<option value="${esc(s)}"></option>`).join('')}</datalist></div><button id="rcSupplierBtn" class="btn primary" type="button">عرض التقرير</button><div id="rcSupplierDetail"></div>`;
+  $('#rcSupplierBtn').onclick=()=>renderReportSupplier($('#rcSupplier').value.trim());return;
+ }
+ if(type==='period'){
+  host.innerHTML=`<h3>📅 تقرير فترة</h3><div class="form-grid"><div class="field"><label>من</label><input id="rcFrom" type="date"></div><div class="field"><label>إلى</label><input id="rcTo" type="date" value="${dateOnly()}"></div></div><button id="rcPeriodBtn" class="btn primary" type="button">عرض التقرير</button><div id="rcPeriodDetail"></div>`;
+  $('#rcPeriodBtn').onclick=()=>{const f=$('#rcFrom').value,t=$('#rcTo').value;const rows=buildReportRows().filter(r=>(!f||r.date>=f)&&(!t||r.date<=t)).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));$('#rcPeriodDetail').innerHTML=`<div class="card" style="margin-top:14px">${movementTable(rows.slice(0,500))}</div>`};return;
+ }
+ if(type==='expired'){const rows=buildReportRows().filter(r=>r.kind==='expired').sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).slice(0,300);host.innerHTML=`<h3>⚠️ تقرير الإكسباير</h3><p class="muted">آخر 300 عملية.</p>${movementTable(rows)}`;return}
+ if(type==='replacement'){const rows=buildReportRows().filter(r=>r.kind==='replacement').sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt))).slice(0,300);host.innerHTML=`<h3>🔄 تقرير الاستبدال</h3><p class="muted">آخر 300 عملية.</p>${movementTable(rows)}`;return}
+ if(type==='user'){
+  const us=[...new Set((db.users||[]).map(u=>u.name).concat(buildReportRows().map(r=>r.user)).filter(Boolean))];
+  host.innerHTML=`<h3>👤 تقرير المستخدم</h3><div class="field"><label>المستخدم</label><select id="rcUser"><option value="">اختر</option>${us.map(u=>`<option>${esc(u)}</option>`).join('')}</select></div><button id="rcUserBtn" class="btn primary" type="button">عرض التقرير</button><div id="rcUserDetail"></div>`;
+  $('#rcUserBtn').onclick=()=>{const u=$('#rcUser').value;const rows=buildReportRows().filter(r=>r.user===u).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));$('#rcUserDetail').innerHTML=`<div class="card" style="margin-top:14px">${movementTable(rows.slice(0,400))}</div>`};return;
+ }
+ if(type==='value'){
+  const map=new Map();for(const r of buildReportRows().filter(r=>r.kind==='expired')){const k=r.productId||r.productName;const g=map.get(k)||{name:r.productName,barcode:r.barcode,qty:0,value:0};g.qty+=r.expiredQty;g.value+=r.expiredQty*num(r.cost);map.set(k,g)}const top=[...map.values()].sort((a,b)=>b.value-a.value).slice(0,50);
+  host.innerHTML=`<h3>💰 تقرير القيمة</h3><div class="table-wrap"><table><thead><tr><th>الصنف</th><th>الباركود</th><th>الكمية</th><th>القيمة</th></tr></thead><tbody>${top.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.barcode||'—')}</td><td>${x.qty}</td><td>${money(x.value)} ر.س</td></tr>`).join('')}</tbody></table></div>`;return;
+ }
+}
+function renderReportProductSearch(q){
+ const host=$('#rcProductResults');if(!host)return;q=String(q||'').trim().toLowerCase();if(!q){host.innerHTML='<div class="empty">لن تظهر الأصناف إلا بعد البحث.</div>';return}
+ const rows=(db.products||[]).filter(p=>String(p.name||'').toLowerCase().includes(q)||String(p.barcode||'').includes(q)||String(p.smartCode||'').includes(q)).slice(0,30);
+ host.innerHTML=rows.length?rows.map(p=>`<button type="button" class="report-search-item" data-rc-product="${p.id}"><strong>${esc(p.name)}</strong><span class="muted">${esc(p.barcode||p.smartCode||'')}</span></button>`).join(''):'<div class="empty">لا يوجد صنف حسب البحث.</div>';
+ host.onclick=e=>{const b=e.target.closest('[data-rc-product]');if(b)renderReportProductDetail(b.dataset.rcProduct)};
+}
+function renderReportProductDetail(pid){
+ const p=(db.products||[]).find(x=>x.id===pid)||{};const rows=buildReportRows().filter(r=>r.productId===pid).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));const exp=rows.reduce((s,r)=>s+r.expiredQty,0),rep=rows.reduce((s,r)=>s+r.replacedQty,0),rem=Math.max(0,exp-rep),cost=num(p.cost||rows.find(r=>r.cost)?.cost);
+ $('#rcProductDetail').innerHTML=`<div class="card" style="margin-top:14px"><div class="card-head"><div><h3>${esc(p.name||'')}</h3><div class="muted">الباركود: ${esc(p.barcode||'—')} · رقم سمارت: ${esc(p.smartCode||'—')}</div></div><button id="rcPrintProduct" class="btn secondary" type="button">طباعة التقرير</button></div><div class="kpi-grid"><div class="kpi"><span>الإكسباير</span><b>${exp}</b></div><div class="kpi"><span>المستبدل</span><b>${rep}</b></div><div class="kpi"><span>المتبقي</span><b>${rem}</b></div><div class="kpi"><span>القيمة</span><b>${money(rem*cost)} ر.س</b></div></div>${movementTable(rows)}</div>`;
+ $('#rcPrintProduct').onclick=()=>productReportModal(pid);
+}
+function renderReportSupplier(name){
+ const host=$('#rcSupplierDetail');if(!host)return;if(!name){host.innerHTML='<div class="note">اكتب اسم المورد أولًا.</div>';return}
+ supplierReportFilter=name;
+ host.innerHTML=`<div class="card" style="margin-top:14px"><div class="card-head"><h3>${esc(name)}</h3><button id="rcPrintSupplier" class="btn secondary" type="button">طباعة كشف المورد</button></div>${renderSupplierReport()}</div>`;
+ $('#rcPrintSupplier').onclick=()=>printSupplierFormal();
+}
+
 function bindPage(route){
  $$('[data-go]').forEach(b=>b.onclick=()=>navigate(b.dataset.go));
- if(route==='expiry'){const host=$('#pageHost');host.addEventListener('click',e=>{const eb=e.target.closest('[data-edit-expiry]'),del=e.target.closest('[data-delete-expiry]');if(eb)editExpiryModal(db.expiry.find(x=>x.id===eb.dataset.editExpiry));if(del)deleteExpiryRecord(db.expiry.find(x=>x.id===del.dataset.deleteExpiry))});const s=$('#expirySearch');setTimeout(()=>s?.focus(),30);const resolveExpiry=()=>{const p=productByQuery(s.value);$('#expiryProductId').value=p?.id||'';$('#expiryProduct').value=p?.name||'';$('#expiryCost').value=p?.cost??'';if(!p&&s.value.trim())toast('لا يوجد صنف مطابق للباركود أو البحث المدخل');if(p)$('#expiryQty').focus()};bindBarcodeControls(s,resolveExpiry);s.onblur=()=>{if(s.value.trim())resolveExpiry()};$('#expiryForm').onsubmit=e=>{e.preventDefault();const pid=$('#expiryProductId').value;if(!pid)return toast('الصنف غير موجود');const q=num($('#expiryQty').value);const p=db.products.find(p=>p.id===pid);db.expiry.unshift({id:id('e'),productId:pid,productName:p?.name||'',barcode:p?.barcode||'',qty:q,remaining:q,expiryDate:$('#expiryDate').value,cost:num($('#expiryCost').value),supplier:'مورد عام',note:$('#expiryNote').value,user:currentUser.name,createdAt:now()});audit('تسجيل إكسباير',`${p?.name||''} — مورد عام`);toast('تم حفظ العملية');render()}}
+ if(route==='expiry'){const host=$('#pageHost');host.addEventListener('click',e=>{const eb=e.target.closest('[data-edit-expiry]'),del=e.target.closest('[data-delete-expiry]');if(eb)editExpiryModal(db.expiry.find(x=>x.id===eb.dataset.editExpiry));if(del)deleteExpiryRecord(db.expiry.find(x=>x.id===del.dataset.deleteExpiry))});const s=$('#expirySearch');setTimeout(()=>s?.focus(),30);const resolveExpiry=()=>{const p=productByQuery(s.value);$('#expiryProductId').value=p?.id||'';$('#expiryProduct').value=p?.name||'';$('#expiryCost').value=p?costText(p.cost):'';if(!p&&s.value.trim())toast('لا يوجد صنف مطابق للباركود أو البحث المدخل');if(p)$('#expiryQty').focus()};bindBarcodeControls(s,resolveExpiry);s.onblur=()=>{if(s.value.trim())resolveExpiry()};$('#expiryForm').onsubmit=e=>{e.preventDefault();const pid=$('#expiryProductId').value;if(!pid)return toast('الصنف غير موجود');const q=num($('#expiryQty').value);const p=db.products.find(p=>p.id===pid);db.expiry.unshift({id:id('e'),productId:pid,productName:p?.name||'',barcode:p?.barcode||'',qty:q,remaining:q,expiryDate:$('#expiryDate').value,cost:num($('#expiryCost').value),supplier:'مورد عام',note:$('#expiryNote').value,user:currentUser.name,createdAt:now()});audit('تسجيل إكسباير',`${p?.name||''} — مورد عام`);toast('تم حفظ العملية');render()}}
  if(route==='replacement'){const host=$('#pageHost');host.addEventListener('click',e=>{const eb=e.target.closest('[data-edit-replacement]'),del=e.target.closest('[data-delete-replacement]');if(eb)editReplacementModal(db.replacements.find(x=>x.id===eb.dataset.editReplacement));if(del)deleteReplacementRecord(db.replacements.find(x=>x.id===del.dataset.deleteReplacement))});const s=$('#repSearch');setTimeout(()=>s?.focus(),30);const resolveRep=()=>{const p=productByQuery(s.value);$('#repProductId').value=p?.id||'';$('#repProduct').value=p?.name||'';$('#repAvailable').value=p?availableQty(p.id):'';if(!p&&s.value.trim())toast('لا يوجد صنف مطابق للباركود أو البحث المدخل');if(p)$('#repQty').focus()};bindBarcodeControls(s,resolveRep);s.onblur=()=>{if(s.value.trim())resolveRep()};$('#replacementForm').onsubmit=e=>{e.preventDefault();const pid=$('#repProductId').value,q=num($('#repQty').value);if(!pid)return toast('الصنف غير موجود');if(q>availableQty(pid))return toast('الكمية أكبر من الرصيد');const p=db.products.find(p=>p.id===pid);const rec={id:id('r'),productId:pid,productName:p?.name||'',barcode:p?.barcode||'',qty:q,date:$('#repDate').value,supplier:'مورد عام',note:$('#repNote').value,user:currentUser.name,createdAt:now(),allocations:[]};db.replacements.unshift(rec);try{recalcProductFIFO(pid)}catch(err){db.replacements=db.replacements.filter(x=>x.id!==rec.id);recalcProductFIFO(pid);return toast(err.message)}audit('استبدال صنف',`${p?.name||''} — ${rec.supplier||'مورد عام'}`);toast('تم اعتماد الاستبدال');render()}}
- if(route==='products'){refreshCloudStatusPanel();const cloudBox=$('#cloudProductsStatus');if(cloudBox)cloudBox.onclick=e=>{if(e.target.closest('#checkCloudProducts'))verifyCloudProducts();else if(e.target.closest('#uploadAllProducts'))uploadAllProductsWithProgress();else if(e.target.closest('#downloadCloudProducts'))downloadProductsFromCloud()};verifyCloudProducts({showMessage:false}).catch(()=>{});const search=$('#productSearch');let timer;search.oninput=()=>{clearTimeout(timer);timer=setTimeout(()=>{productQuery=search.value;productPage=1;$('#productsTable').innerHTML=renderProductsPage()},180)};$('#addProduct').onclick=()=>productModal();$('#importProducts').onclick=()=>modal('تحديث قائمة الأصناف',`<div class="import-mode-grid"><div class="import-mode-card"><strong>تحديث ودمج</strong><small>يضيف الأصناف الجديدة ويحدّث الموجودة، ولا يحذف الأصناف غير الموجودة في الملف.</small><button type="button" class="btn primary" data-import-mode="merge">اختيار ملف للتحديث</button></div><div class="import-mode-card"><strong>استبدال كامل</strong><small>يجعل الملف الجديد هو القائمة المعتمدة، ويحذف من السحابة الأصناف غير الموجودة فيه. مناسب للملف الأحدث من سمارت.</small><button type="button" class="btn danger" data-import-mode="replace">اختيار ملف للاستبدال</button></div></div>`,()=>{$$('[data-import-mode]').forEach(b=>b.onclick=()=>{productImportMode=b.dataset.importMode;closeModal();$('#productFile').click()})});$('#productFile').onchange=e=>importProducts(e.target.files[0],productImportMode);$('#productsTable').onclick=e=>{if(e.target.closest('#prevProducts')){productPage=Math.max(1,productPage-1);$('#productsTable').innerHTML=renderProductsPage();return}if(e.target.closest('#nextProducts')){productPage++;$('#productsTable').innerHTML=renderProductsPage();return}const eb=e.target.closest('[data-edit-product]'),dbtn=e.target.closest('[data-delete-product]');if(eb)productModal(db.products.find(p=>p.id===eb.dataset.editProduct));if(dbtn){const p=db.products.find(p=>p.id===dbtn.dataset.deleteProduct);if(confirm('حذف الصنف؟')){db.products=db.products.filter(x=>x.id!==p.id);audit('حذف صنف',p.name);render()}}}}
+ if(route==='products'){refreshCloudStatusPanel();const cloudBox=$('#cloudProductsStatus');if(cloudBox)cloudBox.onclick=e=>{if(e.target.closest('#checkCloudProducts'))verifyCloudProducts();else if(e.target.closest('#uploadAllProducts'))uploadAllProductsWithProgress();else if(e.target.closest('#downloadCloudProducts'))downloadProductsFromCloud()};verifyCloudProducts({showMessage:false}).catch(()=>{});const search=$('#productSearch');let timer;search.oninput=()=>{clearTimeout(timer);timer=setTimeout(()=>{productQuery=search.value;productPage=1;$('#productsTable').innerHTML=renderProductsPage()},180)};$('#addProduct').onclick=()=>productModal();$('#importProducts').onclick=()=>modal('تحديث قائمة الأصناف',`<div class="import-mode-grid"><div class="import-mode-card"><strong>تحديث ودمج</strong><small>يضيف الأصناف الجديدة ويحدّث الموجودة، ولا يحذف الأصناف غير الموجودة في الملف.</small><button type="button" class="btn primary" data-import-mode="merge">اختيار ملف للتحديث</button></div><div class="import-mode-card"><strong>استبدال كامل</strong><small>يجعل الملف الجديد هو القائمة المعتمدة، ويحذف من السحابة الأصناف غير الموجودة فيه. مناسب للملف الأحدث من سمارت.</small><button type="button" class="btn danger" data-import-mode="replace">اختيار ملف للاستبدال</button></div></div>`,()=>{$$('[data-import-mode]').forEach(b=>b.onclick=()=>{productImportMode=b.dataset.importMode;closeModal();$('#productFile').click()})});$('#productFile').onchange=e=>importProducts(e.target.files[0],productImportMode);$('#productsTable').onclick=e=>{if(e.target.closest('#prevProducts')){productPage=Math.max(1,productPage-1);$('#productsTable').innerHTML=renderProductsPage();return}if(e.target.closest('#nextProducts')){productPage++;$('#productsTable').innerHTML=renderProductsPage();return}const cp=e.target.closest('[data-copy-product-barcode]');if(cp){copyText(cp.dataset.copyProductBarcode,'تم نسخ الباركود');return}const eb=e.target.closest('[data-edit-product]'),dbtn=e.target.closest('[data-delete-product]');if(eb)productModal(db.products.find(p=>p.id===eb.dataset.editProduct));if(dbtn){const p=db.products.find(p=>p.id===dbtn.dataset.deleteProduct);if(confirm('حذف الصنف؟')){db.products=db.products.filter(x=>x.id!==p.id);audit('حذف صنف',p.name);render()}}}}
  if(route==='users'){ $('#addUser').onclick=()=>userModal();$('#pageHost').onclick=e=>{const eb=e.target.closest('[data-edit-user]'),dbtn=e.target.closest('[data-delete-user]');if(eb)userModal(db.users.find(u=>u.id===eb.dataset.editUser));if(dbtn&&confirm('حذف المستخدم؟')){db.users=db.users.filter(u=>u.id!==dbtn.dataset.deleteUser);saveDB();render()}}}
  if(route==='purchases'){ $('#newPurchase').onclick=purchaseModal;$('#exportSmart').onclick=()=>{if(!db.purchases[0])return toast('لا توجد فاتورة');exportSmart(db.purchases[0])};$('#pageHost').onclick=e=>{const ex=e.target.closest('[data-export-purchase]'),wa=e.target.closest('[data-whatsapp-purchase]'),del=e.target.closest('[data-delete-purchase]');if(ex)exportSmart(db.purchases.find(x=>x.id===ex.dataset.exportPurchase));if(wa)sendWhatsApp(db.purchases.find(x=>x.id===wa.dataset.whatsappPurchase));if(del&&confirm('حذف الفاتورة؟')){db.purchases=db.purchases.filter(x=>x.id!==del.dataset.deletePurchase);saveDB();render()}}}
- if(route==='reports'){const input=$('#reportSearch');let timer;input.oninput=()=>{clearTimeout(timer);timer=setTimeout(()=>{reportQuery=input.value;$('#reportResults').innerHTML=renderReportTable()},160)};$('#clearReportSearch').onclick=()=>{reportQuery='';input.value='';$('#reportResults').innerHTML=renderReportTable();input.focus()};$('#printReport').onclick=()=>window.print();const sf=$('#supplierReportFilter');if(sf){bindSupplierCombo(sf,v=>{supplierReportFilter=v;$('#supplierReportResults').innerHTML=renderSupplierReport()});sf.addEventListener('change',()=>{supplierReportFilter=sf.value;$('#supplierReportResults').innerHTML=renderSupplierReport()})};$('#printSupplierReport').onclick=()=>printSupplierFormal();$('#reportResults').onclick=e=>{const report=e.target.closest('[data-product-report]');if(report){productReportModal(report.dataset.productReport);return}const b=e.target.closest('[data-copy-barcode]');if(b)copyText(b.dataset.copyBarcode,'تم نسخ الباركود')}}
+ if(route==='reports'){$$('.report-card').forEach(b=>b.addEventListener('click',()=>openReportType(b.dataset.reportType)));return}
  if(route==='audit')$('#clearAudit').onclick=()=>{if(confirm('مسح سجل الرقابة؟')){db.audit=[];saveDB();render()}};
- if(route==='settings'){ $('#settingsForm').onsubmit=e=>{e.preventDefault();db.settings.business=$('#businessName').value;db.settings.phone=$('#businessPhone').value;db.settings.defaultSupplier=$('#defaultSupplier').value.trim()||'مورد عام';db.settings.defaultUnitCode=$('#defaultUnitCode').value.trim()||'u01';db.settings.smartTax=$('#smartTax').value.trim()||'15%';db.settings.suppliers=[...new Set($('#supplierList').value.split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean))];if(!db.settings.suppliers.includes('مورد عام'))db.settings.suppliers.unshift('مورد عام');saveDB();toast('تم الحفظ')};$('#importSuppliersBtn').onclick=()=>$('#supplierFile').click();$('#supplierFile').onchange=e=>importSuppliers(e.target.files[0]);$('#backupBtn').onclick=backup;$('#restoreBtn').onclick=()=>$('#restoreFile').click();$('#restoreFile').onchange=e=>restore(e.target.files[0]);$('#resetBtn').onclick=()=>{if(confirm('سيتم مسح جميع البيانات نهائيًا. متابعة؟')){localStorage.removeItem(DB_KEY);db=structuredClone(defaultDB);saveDB();currentUser=db.users[0];audit('إعادة تهيئة البرنامج');navigate('dashboard')}}}
+ if(route==='settings'){ $('#settingsForm').onsubmit=e=>{e.preventDefault();db.settings.business=$('#businessName').value;db.settings.phone=$('#businessPhone').value;db.settings.defaultSupplier=$('#defaultSupplier').value.trim()||'مورد عام';db.settings.defaultUnitCode=$('#defaultUnitCode').value.trim()||'u01';db.settings.smartTax=$('#smartTax').value.trim()||'15%';db.settings.costDecimals=Number($('#costDecimals').value)||3;db.settings.suppliers=[...new Set($('#supplierList').value.split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean))];if(!db.settings.suppliers.includes('مورد عام'))db.settings.suppliers.unshift('مورد عام');saveDB();toast('تم الحفظ')};$('#importSuppliersBtn').onclick=()=>$('#supplierFile').click();$('#supplierFile').onchange=e=>importSuppliers(e.target.files[0]);$('#backupBtn').onclick=backup;$('#restoreBtn').onclick=()=>$('#restoreFile').click();$('#restoreFile').onchange=e=>restore(e.target.files[0]);$('#resetBtn').onclick=async()=>{if(confirm('سيتم مسح جميع البيانات نهائيًا. متابعة؟')){
+ try{localStorage.removeItem(DB_KEY);localStorage.removeItem(DB_BACKUP_KEY)}catch{}
+ try{await idbPut(structuredClone(defaultDB),'main')}catch{}
+ db=structuredClone(defaultDB);saveDB();currentUser=db.users[0];audit('إعادة تهيئة البرنامج');navigate('dashboard')
+}}}
 }
-function productModal(p){modal(p?'تعديل الصنف':'إضافة صنف',`<form id="productForm" class="form-grid"><div class="field"><label>رقم الصنف في سمارت</label><input id="pCode" value="${esc(p?.smartCode||'')}" required></div><div class="field"><label>الباركود</label><div class="barcode-entry"><input id="pBarcode" value="${esc(p?.barcode||'')}" required inputmode="numeric"><button type="button" class="btn primary scan-camera" id="scanProductBarcode">📷</button></div><small class="barcode-help">يدوي، قارئ خارجي، أو كاميرا الجوال.</small></div><div class="field span-2"><label>اسم الصنف</label><input id="pName" value="${esc(p?.name||'')}" required></div><div class="field"><label>سعر التكلفة</label><input id="pCost" type="number" step="0.01" value="${p?.cost||''}" required></div><div class="field"><label>كود الوحدة لسمارت</label><input id="pUnitCode" value="${esc(p?.unitCode||db.settings.defaultUnitCode||'u01')}" required></div><div class="field"><label>الوحدة</label><input id="pUnit" value="${esc(p?.unit||'حبة')}"></div><div class="field"><label>الضريبة</label><input id="pTax" value="${esc(p?.taxRate||'15%')}"></div><div class="span-3"><button class="btn primary">حفظ</button></div></form>`,()=>{$('#scanProductBarcode').onclick=()=>startBarcodeScanner($('#pBarcode'));$('#productForm').onsubmit=e=>{e.preventDefault();const obj=p||{id:id('p')};obj.smartCode=$('#pCode').value.trim();obj.barcode=$('#pBarcode').value.trim();obj.name=$('#pName').value.trim();obj.cost=num($('#pCost').value);obj.unitCode=$('#pUnitCode').value.trim()||'u01';obj.unit=$('#pUnit').value.trim()||'حبة';obj.taxRate=$('#pTax').value.trim()||'15%';if(!p)db.products.unshift(obj);productsNeedSync=true;audit(p?'تعديل صنف':'إضافة صنف',obj.name);closeModal();render()}})}
+function productModal(p){modal(p?'تعديل الصنف':'إضافة صنف',`<form id="productForm" class="form-grid"><div class="field"><label>رقم الصنف في سمارت</label><input id="pCode" value="${esc(p?.smartCode||'')}" required></div><div class="field"><label>الباركود</label><div class="barcode-entry"><input id="pBarcode" value="${esc(p?.barcode||'')}" required inputmode="numeric"><button type="button" class="btn primary scan-camera" id="scanProductBarcode">📷</button></div><small class="barcode-help">يدوي، قارئ خارجي، أو كاميرا الجوال.</small></div><div class="field span-2"><label>اسم الصنف</label><input id="pName" value="${esc(p?.name||'')}" required></div><div class="field"><label>سعر التكلفة</label><input id="pCost" type="number" step="0.001" value="${p?.cost!==undefined?costText(p.cost):''}" required></div><div class="field"><label>كود الوحدة لسمارت</label><input id="pUnitCode" value="${esc(p?.unitCode||db.settings.defaultUnitCode||'u01')}" required></div><div class="field"><label>الوحدة</label><input id="pUnit" value="${esc(p?.unit||'حبة')}"></div><div class="field"><label>الضريبة</label><input id="pTax" value="${esc(p?.taxRate||'15%')}"></div><div class="span-3"><button class="btn primary">حفظ</button></div></form>`,()=>{$('#scanProductBarcode').onclick=()=>startBarcodeScanner($('#pBarcode'));$('#productForm').onsubmit=e=>{e.preventDefault();const obj=p||{id:id('p')};obj.smartCode=$('#pCode').value.trim();obj.barcode=$('#pBarcode').value.trim();obj.name=$('#pName').value.trim();obj.cost=num($('#pCost').value);obj.unitCode=$('#pUnitCode').value.trim()||'u01';obj.unit=$('#pUnit').value.trim()||'حبة';obj.taxRate=$('#pTax').value.trim()||'15%';if(!p)db.products.unshift(obj);productsNeedSync=true;audit(p?'تعديل صنف':'إضافة صنف',obj.name);closeModal();render()}})}
 function userModal(u){modal(u?'تعديل مستخدم':'مستخدم جديد',`<form id="userForm" class="form-grid"><div class="field"><label>الاسم</label><input id="uName" value="${esc(u?.name||'')}" required></div><div class="field"><label>PIN</label><input id="uPin" inputmode="numeric" maxlength="6" value="${esc(u?.pin||'')}" required></div><div class="field"><label>الدور</label><select id="uRole"><option>مدير</option><option>مشرف</option><option>عامل</option></select></div><div class="field"><label>الحالة</label><select id="uActive"><option value="1">نشط</option><option value="0">موقوف</option></select></div><div class="span-3"><button class="btn primary">حفظ</button></div></form>`,()=>{if(u){$('#uRole').value=u.role;$('#uActive').value=u.active?'1':'0'}$('#userForm').onsubmit=e=>{e.preventDefault();const obj=u||{id:id('u')};obj.name=$('#uName').value.trim();obj.pin=$('#uPin').value.trim();obj.role=$('#uRole').value;obj.active=$('#uActive').value==='1';if(!u)db.users.push(obj);audit(u?'تعديل مستخدم':'إضافة مستخدم',obj.name);closeModal();render()}})}
 function purchaseModal(){
  let items=[];
- modal('فاتورة استلام جديدة',`<form id="purchaseHead" class="form-grid" novalidate>
-  <div class="field"><label>المورد</label><input id="supplier" value="${esc(db.settings.defaultSupplier||'مورد عام')}"><small class="muted">لا يدخل المورد في ملف سمارت؛ عدّله داخل سمارت إذا لزم.</small></div>
-  <div class="field"><label>التاريخ</label><input id="purchaseDate" type="date" value="${dateOnly()}"></div>
-  <div class="field"><label>الباركود أو البحث عن صنف</label>${barcodeField('purchaseSearch','اكتب أو امسح الباركود')}</div>
-  <div class="field"><label>الكمية</label><input id="purchaseQty" type="number" min="1" value="1"></div>
-  <div class="field"><label>Net Unit Cost</label><input id="purchaseCost" type="number" step="0.01" min="0"></div>
-  <div class="field"><label>Product Variant (اختياري)</label><input id="purchaseVariant" placeholder="مثال: Red"></div>
-  <div class="field"><label>Tax Rate Name</label><input id="purchaseTax" value="No Tax"></div>
-  <div class="field"><label>Discount</label><input id="purchaseDiscount" value="0%" placeholder="0%"></div>
-  <div class="field"><label>Expiry (اختياري)</label><input id="purchaseExpiry" type="date"></div>
-  <div class="field" style="align-self:end"><button id="addPurchaseItem" class="btn secondary" type="button">إضافة الصنف</button></div>
-  <div class="span-3" id="purchaseNotFound" style="display:none"><div class="note"><b>الصنف غير موجود في قاعدة الأصناف.</b> <button type="button" id="showNewPurchaseProduct" class="btn secondary" style="margin-inline-start:8px">＋ إضافة صنف جديد</button></div></div>
-  <div class="span-3" id="newPurchaseProductBox" style="display:none;border:1px solid var(--line);border-radius:14px;padding:14px;background:#f8fbfc">
-   <div style="font-weight:800;margin-bottom:10px">إضافة صنف جديد إلى قاعدة الأصناف</div>
-   <div class="form-grid">
-    <div class="field"><label>Product Code في سمارت *</label><input id="newPurCode" placeholder="رقم الصنف في سمارت"></div>
-    <div class="field"><label>الباركود *</label><div class="barcode-entry"><input id="newPurBarcode" inputmode="numeric"><button type="button" class="btn primary scan-camera" id="scanNewPurBarcode">📷</button></div></div>
-    <div class="field"><label>اسم الصنف *</label><input id="newPurName"></div>
-    <div class="field"><label>التكلفة *</label><input id="newPurCost" type="number" step="0.01" min="0"></div>
-    <div class="field"><label>الضريبة</label><input id="newPurTax" value="No Tax"></div>
-    <div class="field"><label>الوحدة</label><input id="newPurUnit" value="حبة"></div>
-   </div>
-   <div class="actions" style="margin-top:10px"><button type="button" id="saveNewPurchaseProduct" class="btn primary">حفظ الصنف وإضافته للفاتورة</button><button type="button" id="cancelNewPurchaseProduct" class="btn secondary">إلغاء</button></div>
-   <small style="display:block;margin-top:8px;color:var(--muted)">Product Code مطلوب حتى يقبل سمارت ملف المشتريات. إذا كان الصنف جديدًا في سمارت نفسه، أنشئ له كودًا في سمارت أولًا.</small>
-  </div>
-  <div class="span-3" id="purchaseItems"></div>
-  <div class="span-3"><button id="savePurchaseBtn" class="btn primary" type="button">حفظ الفاتورة</button></div>
- </form>`,()=>{
-  const draw=()=>$('#purchaseItems').innerHTML=`<div class="table-wrap"><table><thead><tr><th>الصنف</th><th>الكمية</th><th>التكلفة</th><th>الضريبة</th><th>الخصم</th><th>الصلاحية</th><th></th></tr></thead><tbody>${items.length?items.map((i,n)=>`<tr><td>${esc(db.products.find(p=>p.id===i.productId)?.name||'صنف غير معروف')}</td><td>${i.qty}</td><td>${money(i.cost)}</td><td>${esc(i.taxRate||'No Tax')}</td><td>${esc(i.discount||'0%')}</td><td>${esc(i.expiry||'—')}</td><td><button type="button" data-remove-item="${n}">حذف</button></td></tr>`).join(''):`<tr><td colspan="7" class="empty">لم تضاف أصناف</td></tr>`}</tbody></table></div>`;
-  const fillCost=()=>{const p=productByQuery($('#purchaseSearch').value);if(p){$('#purchaseCost').value=p.cost;$('#purchaseTax').value=p.purchaseTaxRate||p.taxRateName||'No Tax'}};
-  const addItem=()=>{const p=productByQuery($('#purchaseSearch').value);if(!p)return toast('الصنف غير موجود');const qty=num($('#purchaseQty').value);if(qty<=0)return toast('أدخل كمية صحيحة');const cost=num($('#purchaseCost').value||p.cost);const variant=($('#purchaseVariant').value||'').trim();const taxRate=($('#purchaseTax').value||'').trim()||'No Tax';let discount=($('#purchaseDiscount').value||'').trim()||'0%';if(/^\d+(?:\.\d+)?$/.test(discount))discount+='%';const expiry=($('#purchaseExpiry').value||'').trim();items.push({productId:p.id,qty,cost,variant,taxRate,discount,expiry});$('#purchaseSearch').value='';$('#purchaseQty').value='1';$('#purchaseCost').value='';$('#purchaseVariant').value='';$('#purchaseTax').value='No Tax';$('#purchaseDiscount').value='0%';$('#purchaseExpiry').value='';draw();$('#purchaseSearch').focus()};
-  const savePurchase=()=>{try{if(!items.length)return toast('أضف صنفًا واحدًا على الأقل');const supplier=($('#supplier').value||'').trim()||'مورد عام';const purchaseDate=$('#purchaseDate').value||dateOnly();const stamp=new Date().toISOString().slice(0,10).split('-').join('');const rec={id:id('pur'),number:'PUR-'+stamp+'-'+String(db.purchases.length+1).padStart(4,'0'),supplier,date:purchaseDate,items:items.map(i=>({...i})),user:currentUser?.name||'أبوقصي',createdAt:now()};db.purchases.unshift(rec);db.audit.unshift({id:id('a'),at:now(),user:currentUser?.name||'أبوقصي',action:'استلام مشتريات',detail:rec.number});db.audit=db.audit.slice(0,1000);saveDB();const saved=JSON.parse(localStorage.getItem(DB_KEY)||'{}').purchases||[];if(!saved.some(x=>x.id===rec.id))throw new Error('تعذر تأكيد حفظ الفاتورة');closeModal();render();toast('تم حفظ الفاتورة بنجاح')}catch(err){console.error(err);toast('تعذر حفظ الفاتورة: '+(err?.message||'خطأ غير معروف'))}};
+ modal('فاتورة استلام جديدة',`<form id="purchaseHead" class="form-grid" novalidate><div class="field"><label>المورد</label><input id="supplier" value="${esc(db.settings.defaultSupplier||'مورد عام')}"></div><div class="field"><label>التاريخ</label><input id="purchaseDate" type="date" value="${dateOnly()}"></div><div class="field"><label>الباركود أو البحث عن صنف</label>${barcodeField('purchaseSearch','اكتب أو امسح الباركود')}</div><div class="field"><label>الكمية</label><input id="purchaseQty" type="number" min="1" value="1"></div><div class="field"><label>التكلفة</label><input id="purchaseCost" type="number" step="0.001" min="0"></div><div class="field" style="align-self:end"><button id="addPurchaseItem" class="btn secondary" type="button">إضافة الصنف</button></div><div class="span-3" id="purchaseItems"></div><div class="span-3"><button id="savePurchaseBtn" class="btn primary" type="button">حفظ الفاتورة</button></div></form>`,()=>{
+  const draw=()=>$('#purchaseItems').innerHTML=`<div class="table-wrap"><table><thead><tr><th>الصنف</th><th>الكمية</th><th>التكلفة</th><th></th></tr></thead><tbody>${items.length?items.map((i,n)=>`<tr><td>${esc(db.products.find(p=>p.id===i.productId)?.name||'صنف غير معروف')}</td><td>${i.qty}</td><td>${money(i.cost)}</td><td><button type="button" data-remove-item="${n}">حذف</button></td></tr>`).join(''):`<tr><td colspan="4" class="empty">لم تضاف أصناف</td></tr>`}</tbody></table></div>`;
+  const fillCost=()=>{const p=productByQuery($('#purchaseSearch').value);if(p)$('#purchaseCost').value=costText(p.cost)};
+  const addItem=()=>{const p=productByQuery($('#purchaseSearch').value);if(!p)return toast('الصنف غير موجود');const qty=num($('#purchaseQty').value);if(qty<=0)return toast('أدخل كمية صحيحة');const cost=num($('#purchaseCost').value||p.cost);items.push({productId:p.id,qty,cost});$('#purchaseSearch').value='';$('#purchaseQty').value='1';$('#purchaseCost').value='';draw();$('#purchaseSearch').focus()};
+  const savePurchase=async()=>{try{
+   if(!items.length)return toast('أضف صنفًا واحدًا على الأقل');
+   const supplier=($('#supplier').value||'').trim()||'مورد عام';
+   const purchaseDate=$('#purchaseDate').value||dateOnly();
+   const stamp=new Date().toISOString().slice(0,10).split('-').join('');
+   const rec={id:id('pur'),number:'PUR-'+stamp+'-'+String(db.purchases.length+1).padStart(4,'0'),supplier,date:purchaseDate,items:items.map(i=>({...i})),user:currentUser?.name||'أبوقصي',createdAt:now()};
+   db.purchases.unshift(rec);
+   db.audit.unshift({id:id('a'),at:now(),user:currentUser?.name||'أبوقصي',action:'استلام مشتريات',detail:rec.number});
+   db.audit=db.audit.slice(0,1000);
+   saveDB();
+   await persistFullDB();
+   const saved=await idbGet('main');
+   if(!(saved?.purchases||[]).some(x=>x.id===rec.id))throw new Error('تعذر تأكيد حفظ الفاتورة في التخزين المحلي');
+   closeModal();render();toast('تم حفظ الفاتورة بنجاح');
+  }catch(err){console.error(err);toast('تعذر حفظ الفاتورة: '+(err?.message||'خطأ غير معروف'))}};
   draw();
-  const showMissing=(value)=>{const box=$('#purchaseNotFound'),newBox=$('#newPurchaseProductBox');if(box)box.style.display=value?'block':'none';if(value&&$('#newPurBarcode'))$('#newPurBarcode').value=String(value||'').trim();if(!value&&newBox)newBox.style.display='none'};
-  const resolvePurchase=(value,{autoAdd=false}={})=>{const p=productByQuery(value);if(!p){if(value){showMissing(value);toast('لا يوجد صنف مطابق — يمكنك إضافته كصنف جديد')}return}showMissing('');$('#purchaseCost').value=p.cost;$('#purchaseTax').value=p.purchaseTaxRate||p.taxRateName||p.taxRate||'No Tax';$('#purchaseQty').focus();if(autoAdd)setTimeout(addItem,80)};
-  const openNewProduct=()=>{const box=$('#newPurchaseProductBox');box.style.display='block';$('#newPurBarcode').value=$('#purchaseSearch').value.trim();$('#newPurCost').value=$('#purchaseCost').value||'';$('#newPurTax').value=$('#purchaseTax').value||'No Tax';setTimeout(()=>$('#newPurCode').focus(),30)};
-  const closeNewProduct=()=>{$('#newPurchaseProductBox').style.display='none'};
-  const saveNewProductAndAdd=()=>{const smartCode=$('#newPurCode').value.trim(),barcode=$('#newPurBarcode').value.trim(),name=$('#newPurName').value.trim(),cost=num($('#newPurCost').value),taxRate=$('#newPurTax').value.trim()||'No Tax',unit=$('#newPurUnit').value.trim()||'حبة';if(!smartCode)return toast('أدخل Product Code الخاص بسمارت');if(!barcode)return toast('أدخل الباركود');if(!name)return toast('أدخل اسم الصنف');if(db.products.some(p=>String(p.smartCode||'')===smartCode))return toast('Product Code موجود مسبقًا');if(db.products.some(p=>String(p.barcode||'')===barcode))return toast('الباركود موجود مسبقًا');const p={id:id('p'),smartCode,barcode,name,cost,unit,unitCode:db.settings.defaultUnitCode||'u01',taxRate,purchaseTaxRate:taxRate,category:''};db.products.unshift(p);productsNeedSync=true;saveDB();db.audit.unshift({id:id('a'),at:now(),user:currentUser?.name||'النظام',action:'إضافة صنف من المشتريات',detail:`${name} — ${smartCode}`});db.audit=db.audit.slice(0,500);saveDB();$('#purchaseSearch').value=barcode;$('#purchaseCost').value=cost;$('#purchaseTax').value=taxRate;showMissing('');closeNewProduct();toast('تم حفظ الصنف الجديد وإضافته لقاعدة الأصناف');setTimeout(()=>addItem(),100)};
+  const resolvePurchase=(value,{autoAdd=false}={})=>{const p=productByQuery(value);if(!p){if(value)toast('لا يوجد صنف مطابق للباركود أو البحث المدخل');return}$('#purchaseCost').value=costText(p.cost);$('#purchaseQty').focus();if(autoAdd)setTimeout(addItem,80)};
   bindBarcodeControls($('#purchaseSearch'),resolvePurchase);
-  $('#purchaseSearch').addEventListener('input',()=>{if(!$('#purchaseSearch').value.trim())showMissing('')});
   $('#purchaseSearch').addEventListener('change',fillCost);
   $('#addPurchaseItem').addEventListener('click',addItem);
-  $('#showNewPurchaseProduct').addEventListener('click',openNewProduct);
-  $('#cancelNewPurchaseProduct').addEventListener('click',closeNewProduct);
-  $('#saveNewPurchaseProduct').addEventListener('click',saveNewProductAndAdd);
-  $('#scanNewPurBarcode').addEventListener('click',()=>startBarcodeScanner($('#newPurBarcode')));
   $('#purchaseItems').addEventListener('click',e=>{const b=e.target.closest('[data-remove-item]');if(b){items.splice(num(b.dataset.removeItem),1);draw()}});
   $('#savePurchaseBtn').addEventListener('click',savePurchase);
   $('#purchaseHead').addEventListener('submit',e=>{e.preventDefault();savePurchase()});
@@ -501,8 +807,8 @@ async function importProducts(file,mode='merge'){
  }finally{const f=$('#productFile');if(f)f.value=''}
 }
 function csvEscape(v){v=String(v??'');return /[",\r\n]/.test(v)?'"'+v.replaceAll('"','""')+'"':v}
-function smartExpiryDate(v){if(!v)return'';const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[2]}/${m[3]}/${m[1]}`:String(v)}
-function exportSmart(pur){if(!pur)return;const head=['Product Code','Net Unit Cost','Quantity','Product Variant','Tax Rate Name','Discount','Expiry'];const lines=[head.join(',')];let missing=0;pur.items.forEach(i=>{const p=db.products.find(x=>x.id===i.productId);const code=p?.smartCode||'';if(!code)missing++;const row=[code,num(i.cost).toString(),num(i.qty).toString(),i.variant||'',i.taxRate||p?.purchaseTaxRate||p?.taxRateName||'No Tax',i.discount||'0%',smartExpiryDate(i.expiry||'')];lines.push(row.map(csvEscape).join(','))});if(missing)return toast(`تعذر التصدير: ${missing} صنف بدون Product Code في سمارت`);download(`SMART_PURCHASE_${pur.number}.csv`,'\uFEFF'+lines.join('\r\n')+'\r\n','text/csv;charset=utf-8')}
+function exportSmart(pur){if(!pur)return;const head=['Product Code','Unit Code','Net Unit Cost','Quantity','Product Variant','Tax Rate Name','Discount','Expiry'];const lines=[head.join(',')];pur.items.forEach(i=>{const p=db.products.find(x=>x.id===i.productId);lines.push([p?.smartCode||'',p?.unitCode||db.settings.defaultUnitCode||'u01',costText(i.cost),num(i.qty).toString(),'',
+p?.taxRate||db.settings.smartTax||'15%','0',''].map(csvEscape).join(','))});download(`SMART_PURCHASE_${pur.number}.csv`,lines.join('\r\n')+'\r\n','text/csv;charset=utf-8')}
 function sendWhatsApp(pur){const phone=db.settings.phone.replace(/\D/g,'');const total=pur.items.reduce((s,i)=>s+num(i.qty)*num(i.cost),0);const text=`استلام مشتريات ${pur.number}\nالمورد: ${pur.supplier}\nعدد الأصناف: ${pur.items.length}\nالإجمالي: ${money(total)} ر.س`;window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`,'_blank')}
 function download(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 async function importSuppliers(file){if(!file)return;try{let names=[];const lower=file.name.toLowerCase();if(lower.endsWith('.csv')||lower.endsWith('.txt')){const txt=(await file.text()).replace(/^\uFEFF/,'');names=txt.split(/\r?\n/).flatMap(line=>parseCsvLine(line)).map(x=>String(x||'').trim()).filter(Boolean)}else{await loadXLSX();const buf=await file.arrayBuffer();const wb=XLSX.read(buf,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});for(const row of rows)for(const cell of row){const v=String(cell||'').trim();if(v)names.push(v)}}names=names.filter((x,i)=>i>0||!/اسم|مورد|supplier/i.test(x));db.settings.suppliers=[...new Set(['مورد عام',...db.settings.suppliers,...names])];saveDB();const ta=$('#supplierList');if(ta)ta.value=db.settings.suppliers.join('\n');toast(`تم استيراد ${names.length} اسم مورد`)}catch(err){console.error(err);toast('تعذر استيراد الموردين: '+(err.message||''))}}
@@ -512,14 +818,20 @@ function applyRoleUI(){const isManager=currentUser?.role==='مدير';const isSu
 async function login(){
  const pin=$('#pinInput').value.trim();let u=db.users.find(x=>x.active&&x.pin===pin);
  if(!u){$('#loginBtn').disabled=true;$('#loginBtn').textContent='تحقق…';await pullUsersOnly();$('#loginBtn').disabled=false;$('#loginBtn').textContent='دخول';u=db.users.find(x=>x.active&&x.pin===pin)}
- if(!u)return toast('الرقم السري غير صحيح');currentUser=u;$('#currentUserName').textContent=u.name;applyRoleUI();$('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');db.audit.unshift({id:id('a'),at:now(),user:u.name,action:'تسجيل دخول',detail:''});db.audit=db.audit.slice(0,500);saveLocal();navigate('dashboard');if(!db.products.length)pullProductsIfEmpty().then(()=>{if(currentUser&&currentRoute==='dashboard')render()})
+ if(!u)return toast('الرقم السري غير صحيح');currentUser=u;$('#currentUserName').textContent=u.name;applyRoleUI();$('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');db.audit.unshift({id:id('a'),at:now(),user:u.name,action:'تسجيل دخول',detail:''});db.audit=db.audit.slice(0,500);saveLocal();navigate('dashboard');if(!db.products.length)ensureProductsRecovered().then(()=>{if(currentUser&&currentRoute==='dashboard')render()})
 }
 window.addEventListener('unhandledrejection',e=>{console.error(e.reason);setCloudStatus('error','خطأ سحابي')});
 async function init(){
+ const loginBtnEarly=$('#loginBtn');
+ if(loginBtnEarly){loginBtnEarly.disabled=true;loginBtnEarly.textContent='جاري تجهيز البيانات…'}
+ const migrated=await migrateLegacyStorageSafely();
+ if(!migrated)await hydrateFromIndexedDB();
+ if(loginBtnEarly){loginBtnEarly.disabled=false;loginBtnEarly.textContent='دخول'}
+ if(migrated)toast('تم نقل بياناتك القديمة إلى التخزين الجديد بأمان');
  $('#pinPad').addEventListener('click',e=>{const b=e.target.closest('button[data-key]');if(!b)return;const k=b.dataset.key,i=$('#pinInput');if(k==='clear')i.value='';else if(k==='back')i.value=i.value.slice(0,-1);else if(i.value.length<6)i.value+=k});
  $('#loginBtn').addEventListener('click',login);$('#pinInput').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
  $('#mainNav').addEventListener('click',e=>{const b=e.target.closest('button[data-route]');if(!b)return;navigate(b.dataset.route)});$('#menuBtn').addEventListener('click',openSidebar);$('#sidebarBackdrop').addEventListener('click',closeSidebar);$('#logoutBtn').addEventListener('click',()=>{currentUser=null;$('#pinInput').value='';$('#appView').classList.add('hidden');$('#loginView').classList.remove('hidden')});
- const syncBtn=$('#syncNowBtn');if(syncBtn)syncBtn.addEventListener('click',async()=>{await cloudPush();await cloudPull({silent:false});toast('تمت المزامنة')});window.addEventListener('online',()=>{pullUsersOnly();if(!db.products.length)pullProductsIfEmpty()});pullUsersOnly();if(!db.products.length)pullProductsIfEmpty();setupRealtime();setInterval(()=>{if(!document.hidden)pullUsersOnly()},60000)
+ const syncBtn=$('#syncNowBtn');if(syncBtn)syncBtn.addEventListener('click',async()=>{await cloudPush();await cloudPull({silent:false});if(!db.products.length)await ensureProductsRecovered();toast('تمت المزامنة')});window.addEventListener('online',()=>{pullUsersOnly();if(!db.products.length)ensureProductsRecovered()});pullUsersOnly();if(!db.products.length)ensureProductsRecovered();setupRealtime();setInterval(()=>{if(!document.hidden)pullUsersOnly()},60000)
 }
 document.addEventListener('DOMContentLoaded',init);
 })();
