@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>مستودع الإكسباير | سنابل المع | V4.14.2</title>
+  <title>مستودع الإكسباير | سنابل المع | V4.14.3</title>
   <style>
 :root{--bg:#f4f7fb;--panel:#fff;--ink:#182230;--muted:#748094;--brand:#0f766e;--brand2:#115e59;--line:#e5eaf1;--danger:#c2414a;--warn:#b7791f;--ok:#16835a;--shadow:0 14px 35px rgba(18,35,58,.10);font-family:Tahoma,"Segoe UI",Arial,sans-serif}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
@@ -54,7 +54,7 @@
         <button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button>
         <button type="button" data-key="clear">مسح</button><button type="button" data-key="0">0</button><button type="button" data-key="back">⌫</button>
       </div>
-      <button id="loginBtn" class="btn primary wide" type="button" onclick="if(window.expiryDoLogin)window.expiryDoLogin()">دخول</button>
+      <button id="loginBtn" class="btn primary wide" type="button">دخول</button>
     </section>
   </div>
 
@@ -82,7 +82,7 @@
       <header class="topbar">
         <button id="menuBtn" class="icon-btn" type="button" aria-label="القائمة">☰</button>
         <div><h2 id="pageTitle">الرئيسية</h2><small id="pageSubtitle">نظرة سريعة على المستودع</small></div>
-        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.14.2</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
+        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.14.3</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
       </header>
       <main id="pageHost" class="page-host" tabindex="-1"></main>
     </div>
@@ -97,36 +97,8 @@
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   
 <script>
-window.expiryPinKey=function(k){
-  var i=document.getElementById('pinInput');
-  if(!i)return;
-  if(k==='clear') i.value='';
-  else if(k==='back') i.value=i.value.slice(0,-1);
-  else if(/^\d$/.test(String(k)) && i.value.length<6) i.value+=String(k);
-  i.dispatchEvent(new Event('input',{bubbles:true}));
-  i.focus();
-};
-document.addEventListener('DOMContentLoaded',function(){
-  var pad=document.getElementById('pinPad');
-  if(pad){
-    pad.querySelectorAll('button[data-key]').forEach(function(b){
-      b.addEventListener('pointerup',function(e){
-        e.preventDefault();
-        window.expiryPinKey(b.getAttribute('data-key'));
-      });
-    });
-  }
-  var input=document.getElementById('pinInput');
-  if(input){
-    input.removeAttribute('readonly');
-    input.removeAttribute('disabled');
-  }
-});
-</script>
-
-<script>
 (()=>{'use strict';
-const VERSION='V4.14.2';
+const VERSION='V4.14.3';
 const DB_KEY='sanabel_expiry_v4_cloud';
 const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
 const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
@@ -140,7 +112,7 @@ let db=loadDB();
 db.settings=Object.assign({},defaultDB.settings,db.settings||{});
 if(!Array.isArray(db.settings.suppliers))db.settings.suppliers=['مورد عام'];
 if(!db.settings.suppliers.includes('مورد عام'))db.settings.suppliers.unshift('مورد عام');
-db.products=(db.products||[]).map(p=>Object.assign({unit:'حبة',unitCode,taxRate:'15%',salePrice:0,category:''},p));
+db.products=(db.products||[]).map(p=>Object.assign({unit:'حبة',unitCode:db.settings.defaultUnitCode||'u01',taxRate:'15%',salePrice:0,category:''},p));
 let currentUser=null; let currentRoute='dashboard';
 let stockCache=null, productExactCache=null, productPage=1, productQuery='', reportQuery='', supplierReportFilter='', productImportMode='merge';
 let cloudStats={localProducts:db.products.length,cloudProducts:null,lastChecked:null,lastUploaded:null,status:'unknown',error:''};
@@ -540,7 +512,7 @@ function purchaseModal(){
   const resolvePurchase=(value,{autoAdd=false}={})=>{const p=productByQuery(value);if(!p){if(value){showMissing(value);toast('لا يوجد صنف مطابق — يمكنك إضافته كصنف جديد')}return}showMissing('');$('#purchaseCost').value=p.cost;$('#purchaseTax').value=p.purchaseTaxRate||p.taxRateName||p.taxRate||'No Tax';$('#purchaseQty').focus();if(autoAdd)setTimeout(addItem,80)};
   const openNewProduct=()=>{const box=$('#newPurchaseProductBox');box.style.display='block';$('#newPurBarcode').value=$('#purchaseSearch').value.trim();$('#newPurCost').value=$('#purchaseCost').value||'';$('#newPurTax').value=$('#purchaseTax').value||'No Tax';setTimeout(()=>$('#newPurCode').focus(),30)};
   const closeNewProduct=()=>{$('#newPurchaseProductBox').style.display='none'};
-  const saveNewProductAndAdd=()=>{const smartCode=$('#newPurCode').value.trim(),barcode=$('#newPurBarcode').value.trim(),name=$('#newPurName').value.trim(),cost=num($('#newPurCost').value),taxRate=$('#newPurTax').value.trim()||'No Tax',unitCode=$('#newPurUnitCode').value.trim()||db.settings.defaultUnitCode||'u01',unit=$('#newPurUnit').value.trim()||'حبة';if(!smartCode)return toast('أدخل Product Code الخاص بسمارت');if(!barcode)return toast('أدخل الباركود');if(!name)return toast('أدخل اسم الصنف');if(db.products.some(p=>String(p.smartCode||'')===smartCode))return toast('Product Code موجود مسبقًا');if(db.products.some(p=>String(p.barcode||'')===barcode))return toast('الباركود موجود مسبقًا');const p={id:id('p'),smartCode,barcode,name,cost,unit,unitCode:db.settings.defaultUnitCode||'u01',taxRate,purchaseTaxRate:taxRate,category:''};db.products.unshift(p);productsNeedSync=true;saveDB();db.audit.unshift({id:id('a'),at:now(),user:currentUser?.name||'النظام',action:'إضافة صنف من المشتريات',detail:`${name} — ${smartCode}`});db.audit=db.audit.slice(0,500);saveDB();$('#purchaseSearch').value=barcode;$('#purchaseCost').value=cost;$('#purchaseTax').value=taxRate;showMissing('');closeNewProduct();toast('تم حفظ الصنف الجديد وإضافته لقاعدة الأصناف');setTimeout(()=>addItem(),100)};
+  const saveNewProductAndAdd=()=>{const smartCode=$('#newPurCode').value.trim(),barcode=$('#newPurBarcode').value.trim(),name=$('#newPurName').value.trim(),cost=num($('#newPurCost').value),taxRate=$('#newPurTax').value.trim()||'No Tax',unitCode=$('#newPurUnitCode').value.trim()||db.settings.defaultUnitCode||'u01',unit=$('#newPurUnit').value.trim()||'حبة';if(!smartCode)return toast('أدخل Product Code الخاص بسمارت');if(!barcode)return toast('أدخل الباركود');if(!name)return toast('أدخل اسم الصنف');if(db.products.some(p=>String(p.smartCode||'')===smartCode))return toast('Product Code موجود مسبقًا');if(db.products.some(p=>String(p.barcode||'')===barcode))return toast('الباركود موجود مسبقًا');const p={id:id('p'),smartCode,barcode,name,cost,unit,unitCode:unitCode||db.settings.defaultUnitCode||'u01',taxRate,purchaseTaxRate:taxRate,category:''};db.products.unshift(p);productsNeedSync=true;saveDB();db.audit.unshift({id:id('a'),at:now(),user:currentUser?.name||'النظام',action:'إضافة صنف من المشتريات',detail:`${name} — ${smartCode}`});db.audit=db.audit.slice(0,500);saveDB();$('#purchaseSearch').value=barcode;$('#purchaseCost').value=cost;$('#purchaseTax').value=taxRate;showMissing('');closeNewProduct();toast('تم حفظ الصنف الجديد وإضافته لقاعدة الأصناف');setTimeout(()=>addItem(),100)};
   bindBarcodeControls($('#purchaseSearch'),resolvePurchase);
   $('#purchaseSearch').addEventListener('input',()=>{if(!$('#purchaseSearch').value.trim())showMissing('')});
   $('#purchaseSearch').addEventListener('change',fillCost);
@@ -671,7 +643,7 @@ async function login(){
 window.expiryDoLogin=login;
 window.addEventListener('unhandledrejection',e=>{console.error(e.reason);setCloudStatus('error','خطأ سحابي')});
 async function init(){
- $('#pinPad').addEventListener('click',e=>{if(e.detail!==0)return;const b=e.target.closest('button[data-key]');if(!b)return;window.expiryPinKey(b.dataset.key)});
+ $('#pinPad').addEventListener('click',e=>{const b=e.target.closest('button[data-key]');if(!b)return;const k=b.dataset.key,i=$('#pinInput');if(k==='clear')i.value='';else if(k==='back')i.value=i.value.slice(0,-1);else if(i.value.length<6)i.value+=k});
  $('#loginBtn').addEventListener('click',login);$('#pinInput').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
  $('#mainNav').addEventListener('click',e=>{const b=e.target.closest('button[data-route]');if(!b)return;navigate(b.dataset.route)});$('#menuBtn').addEventListener('click',openSidebar);$('#sidebarBackdrop').addEventListener('click',closeSidebar);$('#logoutBtn').addEventListener('click',()=>{currentUser=null;$('#pinInput').value='';$('#appView').classList.add('hidden');$('#loginView').classList.remove('hidden')});
  const syncBtn=$('#syncNowBtn');if(syncBtn)syncBtn.addEventListener('click',async()=>{await cloudPush();await cloudPull({silent:false});toast('تمت المزامنة')});window.addEventListener('online',()=>{pullUsersOnly();if(!db.products.length)pullProductsIfEmpty()});pullUsersOnly();if(!db.products.length)pullProductsIfEmpty();setupRealtime();setInterval(()=>{if(!document.hidden)pullUsersOnly()},60000)
