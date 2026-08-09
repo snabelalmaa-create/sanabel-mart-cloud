@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>مستودع الإكسباير | سنابل المع | V4.15.2</title>
+  <title>مستودع الإكسباير | سنابل المع | V4.15.3</title>
   <style>
 :root{--bg:#f4f7fb;--panel:#fff;--ink:#182230;--muted:#748094;--brand:#0f766e;--brand2:#115e59;--line:#e5eaf1;--danger:#c2414a;--warn:#b7791f;--ok:#16835a;--shadow:0 14px 35px rgba(18,35,58,.10);font-family:Tahoma,"Segoe UI",Arial,sans-serif}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
@@ -99,7 +99,7 @@
       <header class="topbar">
         <button id="menuBtn" class="icon-btn" type="button" aria-label="القائمة">☰</button>
         <div><h2 id="pageTitle">الرئيسية</h2><small id="pageSubtitle">نظرة سريعة على المستودع</small></div>
-        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.15.2</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
+        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.15.3</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
       </header>
       <main id="pageHost" class="page-host" tabindex="-1"></main>
     </div>
@@ -115,7 +115,7 @@
   
 <script>
 (()=>{'use strict';
-const VERSION='V4.15.2';
+const VERSION='V4.15.3';
 const DB_KEY='sanabel_expiry_v4_cloud';
 const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
 const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
@@ -130,6 +130,18 @@ db.settings=Object.assign({},defaultDB.settings,db.settings||{});
 if(!Array.isArray(db.settings.suppliers))db.settings.suppliers=['مورد عام'];
 if(!db.settings.suppliers.includes('مورد عام'))db.settings.suppliers.unshift('مورد عام');if(!db.settings.unitCodeMap||typeof db.settings.unitCodeMap!=='object')db.settings.unitCodeMap={};
 db.products=(db.products||[]).map(p=>Object.assign({unit:'حبة',unitCode:'',taxRate:'15%',salePrice:0,category:''},p));
+// V4.15.3: تصحيح آمن للسجلات القديمة: u01 في المشتريات يتحول إلى اسم وحدة الصنف فقط.
+for(const pur of (db.purchases||[])){
+  for(const item of (pur.items||[])){
+    if(!item.unitCode || item.unitCode==='u01'){
+      const p=(db.products||[]).find(x=>String(x.id)===String(item.productId));
+      if(p)item.unitCode=p.unit||'حبة';
+    }
+  }
+}
+for(const p of (db.products||[])){if(!p.unitCode||p.unitCode==='u01')p.unitCode=p.unit||'حبة'}
+saveLocal();
+
 let currentUser=null; let currentRoute='dashboard';
 let stockCache=null, productExactCache=null, productPage=1, productQuery='', reportQuery='', supplierReportFilter='', productImportMode='merge';
 let cloudStats={localProducts:db.products.length,cloudProducts:null,lastChecked:null,lastUploaded:null,status:'unknown',error:''};
@@ -277,7 +289,7 @@ async function cloudPull({silent=false}={}){
   db.purchases=cloudPurchases;
   db.audit=mergeById(db.audit,cloudAudit).sort((a,b)=>String(b.at||b.createdAt||'').localeCompare(String(a.at||a.createdAt||''))).slice(0,1000);
   if(!db.users.length)db.users=structuredClone(defaultDB.users);
-  db.products=db.products.map(p=>Object.assign({unit:'حبة',unitCode:db.settings.defaultUnitCode||'u01',taxRate:'15%',salePrice:0,category:''},p));
+  db.products=db.products.map(p=>Object.assign({unit:'حبة',taxRate:'15%',salePrice:0,category:''},p,{unitCode:(p.unitCode&&p.unitCode!=='u01')?p.unitCode:(p.unit||'حبة')}));
   saveLocal();suppressCloudPush=false;
 
   // إذا كان الجهاز يملك أصنافًا أكثر من السحابة، ارفعها ولا تحذفها.
@@ -490,12 +502,12 @@ function purchaseStatus(p){return p?.status||'approved'}
 function purchaseStatusLabel(p){const st=purchaseStatus(p);return st==='pending'?['بانتظار المراجعة','pending']:st==='rejected'?['مرفوضة','rejected']:['معتمدة','approved']}
 function tablePurchases(){return `<div class="table-wrap"><table><thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>المورد</th><th>المستلم</th><th>عدد الأصناف</th><th>الإجمالي</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody>${db.purchases.length?db.purchases.map(x=>{const st=purchaseStatusLabel(x);return `<tr><td>${esc(x.number)}</td><td>${esc(x.date)}</td><td>${esc(x.supplier)}</td><td>${esc(x.user||'—')}</td><td>${(x.items||[]).length}</td><td>${money((x.items||[]).reduce((s,i)=>s+num(i.qty)*num(i.cost),0))}</td><td><span class="purchase-status ${st[1]}">${st[0]}</span>${x.approvedBy?`<small class="muted" style="display:block;margin-top:4px">بواسطة ${esc(x.approvedBy)}</small>`:''}</td><td><div class="actions"><button data-review-purchase="${x.id}">مراجعة</button>${purchaseStatus(x)==='approved'?`<button data-export-purchase="${x.id}">سمارت</button>`:''}<button data-whatsapp-purchase="${x.id}">واتساب</button><button data-delete-purchase="${x.id}">حذف</button></div></td></tr>`}).join(''):`<tr><td colspan="8" class="empty">لا توجد فواتير</td></tr>`}</tbody></table></div>`}
 
-function smartPurchaseRows(pur){return (pur?.items||[]).map(i=>{const p=db.products.find(x=>x.id===i.productId);return {productCode:p?.smartCode||'',unitCode:i.unitCode||p?.unitCode||db.settings.unitCodeMap?.[p?.unit||'']||'',cost:num(i.cost),qty:num(i.qty),variant:i.variant||'',taxRate:i.taxRate||p?.purchaseTaxRate||p?.taxRateName||'No Tax',discount:i.discount||'0%',expiry:smartExpiryDate(i.expiry||'')}})}
+function smartPurchaseRows(pur){return (pur?.items||[]).map(i=>{const p=db.products.find(x=>x.id===i.productId);return {productCode:p?.smartCode||'',unitCode:(i.unitCode&&i.unitCode!=='u01'?i.unitCode:'')||(p?.unitCode&&p.unitCode!=='u01'?p.unitCode:'')||p?.unit||'حبة',cost:num(i.cost),qty:num(i.qty),variant:i.variant||'',taxRate:i.taxRate||p?.purchaseTaxRate||p?.taxRateName||'No Tax',discount:i.discount||'0%',expiry:smartExpiryDate(i.expiry||'')}})}
 function reviewPurchaseModal(pur){
  if(!pur)return;
  const rows=smartPurchaseRows(pur),st=purchaseStatusLabel(pur);
  modal('مراجعة فاتورة مشتريات',`<div class="review-grid"><div><span>رقم الفاتورة</span><b>${esc(pur.number)}</b></div><div><span>المورد</span><b>${esc(pur.supplier||'مورد عام')}</b></div><div><span>المستلم</span><b>${esc(pur.user||'—')}</b></div><div><span>التاريخ</span><b>${esc(pur.date||'')}</b></div><div><span>الحالة</span><b>${st[0]}</b></div><div><span>عدد الأصناف</span><b>${rows.length}</b></div></div>
- <div class="note" style="margin-bottom:12px">هذه المعاينة بنفس ترتيب أعمدة سمارت. إذا ظهر Unit Code فارغًا، أدخله هنا مرة واحدة وسيُحفظ للصنف والوحدة للمستقبل.</div>
+ <div class="note" style="margin-bottom:12px">هذه المعاينة بنفس ترتيب أعمدة سمارت. يؤخذ Unit Code من اسم الوحدة في ملف الأصناف كما هو (مثال: حبة). يمكنك تعديله هنا فقط إذا احتاج سمارت قيمة مختلفة.</div>
  <div class="table-wrap smart-preview"><table><thead><tr><th>Product Code</th><th>Unit Code</th><th>Net Unit Cost</th><th>Quantity</th><th>Product Variant</th><th>Tax Rate Name</th><th>Discount</th><th>Expiry</th></tr></thead><tbody>${rows.map((r,n)=>`<tr><td>${esc(r.productCode)}</td><td><input class="unit-code-input" data-review-unit="${n}" value="${esc(r.unitCode||'')}" placeholder="مطلوب"></td><td>${esc(String(r.cost))}</td><td>${esc(String(r.qty))}</td><td>${esc(r.variant)}</td><td>${esc(r.taxRate)}</td><td>${esc(r.discount)}</td><td>${esc(r.expiry)}</td></tr>`).join('')||'<tr><td colspan="8" class="empty">لا توجد أصناف</td></tr>'}</tbody></table></div>
  <div class="actions" style="margin-top:14px">${purchaseStatus(pur)!=='approved'&&hasPerm('purchases.approve')?`<button id="approvePurchaseBtn" class="btn primary">حفظ الأكواد واعتماد الفاتورة</button>`:''}${purchaseStatus(pur)==='approved'&&hasPerm('purchases.export')?`<button id="reviewExportSmartBtn" class="btn secondary">تصدير ملف سمارت</button>`:''}</div>`,()=>{
    const approve=$('#approvePurchaseBtn');
@@ -526,7 +538,7 @@ function bindPage(route){
  if(route==='audit')$('#clearAudit').onclick=()=>{if(!hasPerm('audit.clear'))return toast('ليس لديك صلاحية مسح سجل الرقابة');if(confirm('مسح سجل الرقابة؟')){db.audit=[];saveDB();render()}};
  if(route==='settings'){ const safeMergeBtn=$('#safeMergeProductsBtn'),safeMergeFile=$('#safeMergeProductsFile');if(safeMergeBtn&&safeMergeFile){safeMergeBtn.onclick=()=>{if(!hasPerm('products.import'))return toast('ليس لديك صلاحية استيراد الأصناف');safeMergeFile.click()};safeMergeFile.onchange=e=>importProducts(e.target.files[0],'merge')} $('#settingsForm').onsubmit=e=>{e.preventDefault();if(!hasPerm('settings.manage'))return toast('ليس لديك صلاحية تعديل الإعدادات');db.settings.business=$('#businessName').value;db.settings.phone=$('#businessPhone').value;db.settings.defaultSupplier=$('#defaultSupplier').value.trim()||'مورد عام';const mapText=$('#unitCodeMap')?.value||'';db.settings.unitCodeMap={};mapText.split(/\r?\n/).forEach(line=>{const m=line.split(/=|:/);if(m.length>=2){const u=m.shift().trim(),c=m.join('=').trim();if(u&&c)db.settings.unitCodeMap[u]=c}});db.settings.defaultUnitCode='';db.settings.smartTax=$('#smartTax').value.trim()||'15%';db.settings.suppliers=[...new Set($('#supplierList').value.split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean))];if(!db.settings.suppliers.includes('مورد عام'))db.settings.suppliers.unshift('مورد عام');saveDB();toast('تم الحفظ')};$('#importSuppliersBtn').onclick=()=>$('#supplierFile').click();$('#supplierFile').onchange=e=>importSuppliers(e.target.files[0]);$('#backupBtn').onclick=backup;$('#restoreBtn').onclick=()=>$('#restoreFile').click();$('#restoreFile').onchange=e=>restore(e.target.files[0]);$('#resetBtn').onclick=()=>{if(confirm('سيتم مسح جميع البيانات نهائيًا. متابعة؟')){localStorage.removeItem(DB_KEY);db=structuredClone(defaultDB);saveDB();currentUser=db.users[0];audit('إعادة تهيئة البرنامج');navigate('dashboard')}}}
 }
-function productModal(p){modal(p?'تعديل الصنف':'إضافة صنف',`<form id="productForm" class="form-grid"><div class="field"><label>رقم الصنف في سمارت</label><input id="pCode" value="${esc(p?.smartCode||'')}" required></div><div class="field"><label>الباركود</label><div class="barcode-entry"><input id="pBarcode" value="${esc(p?.barcode||'')}" required inputmode="numeric"><button type="button" class="btn primary scan-camera" id="scanProductBarcode">📷</button></div><small class="barcode-help">يدوي، قارئ خارجي، أو كاميرا الجوال.</small></div><div class="field span-2"><label>اسم الصنف</label><input id="pName" value="${esc(p?.name||'')}" required></div><div class="field"><label>سعر التكلفة</label><input id="pCost" type="number" step="0.0001" value="${p?.cost||''}" required></div><div class="field"><label>كود الوحدة لسمارت</label><input id="pUnitCode" value="${esc(p?.unitCode||db.settings.unitCodeMap?.[p?.unit||'']||'')}" required></div><div class="field"><label>الوحدة</label><input id="pUnit" value="${esc(p?.unit||'حبة')}"></div><div class="field"><label>الضريبة</label><input id="pTax" value="${esc(p?.taxRate||'15%')}"></div><div class="span-3"><button class="btn primary">حفظ</button></div></form>`,()=>{$('#scanProductBarcode').onclick=()=>startBarcodeScanner($('#pBarcode'));$('#productForm').onsubmit=e=>{e.preventDefault();const obj=p||{id:id('p')};obj.smartCode=$('#pCode').value.trim();obj.barcode=$('#pBarcode').value.trim();obj.name=$('#pName').value.trim();obj.cost=num($('#pCost').value);obj.unitCode=$('#pUnitCode').value.trim();if(obj.unitCode)db.settings.unitCodeMap[obj.unit||'حبة']=obj.unitCode;obj.unit=$('#pUnit').value.trim()||'حبة';obj.taxRate=$('#pTax').value.trim()||'15%';if(!p)db.products.unshift(obj);productsNeedSync=true;audit(p?'تعديل صنف':'إضافة صنف',obj.name);closeModal();render()}})}
+function productModal(p){modal(p?'تعديل الصنف':'إضافة صنف',`<form id="productForm" class="form-grid"><div class="field"><label>رقم الصنف في سمارت</label><input id="pCode" value="${esc(p?.smartCode||'')}" required></div><div class="field"><label>الباركود</label><div class="barcode-entry"><input id="pBarcode" value="${esc(p?.barcode||'')}" required inputmode="numeric"><button type="button" class="btn primary scan-camera" id="scanProductBarcode">📷</button></div><small class="barcode-help">يدوي، قارئ خارجي، أو كاميرا الجوال.</small></div><div class="field span-2"><label>اسم الصنف</label><input id="pName" value="${esc(p?.name||'')}" required></div><div class="field"><label>سعر التكلفة</label><input id="pCost" type="number" step="0.0001" value="${p?.cost||''}" required></div><div class="field"><label>كود الوحدة لسمارت</label><input id="pUnitCode" value="${esc((p?.unitCode&&p.unitCode!=='u01')?p.unitCode:(p?.unit||'حبة'))}" required></div><div class="field"><label>الوحدة</label><input id="pUnit" value="${esc(p?.unit||'حبة')}"></div><div class="field"><label>الضريبة</label><input id="pTax" value="${esc(p?.taxRate||'15%')}"></div><div class="span-3"><button class="btn primary">حفظ</button></div></form>`,()=>{$('#scanProductBarcode').onclick=()=>startBarcodeScanner($('#pBarcode'));$('#productForm').onsubmit=e=>{e.preventDefault();const obj=p||{id:id('p')};obj.smartCode=$('#pCode').value.trim();obj.barcode=$('#pBarcode').value.trim();obj.name=$('#pName').value.trim();obj.cost=num($('#pCost').value);obj.unitCode=$('#pUnitCode').value.trim()||obj.unit||'حبة';obj.unit=$('#pUnit').value.trim()||'حبة';obj.taxRate=$('#pTax').value.trim()||'15%';if(!p)db.products.unshift(obj);productsNeedSync=true;audit(p?'تعديل صنف':'إضافة صنف',obj.name);closeModal();render()}})}
 function userModal(u){
  const role=u?.role||'عامل',perms=Object.assign(defaultPermissionsForRole(role),u?.permissions||{});
  const groups=[...new Set(PERMISSION_DEFS.map(x=>x[1]))];
@@ -607,9 +619,9 @@ function purchaseModal(){
    $('#selProductName').textContent=p.name||'—';
    $('#selProductCode').textContent=p.smartCode||'—';
    $('#selProductUnit').textContent=p.unit||'—';
-   $('#selProductUnitCode').textContent=p.unitCode||db.settings.unitCodeMap?.[p.unit||'']||'غير محدد';
+   $('#selProductUnitCode').textContent=(p.unitCode&&p.unitCode!=='u01'?p.unitCode:(p.unit||'حبة'));
    $('#purchaseCost').value=p.cost??'';
-   $('#purchaseUnitCode').value=p.unitCode||db.settings.unitCodeMap?.[p.unit||'']||'';
+   $('#purchaseUnitCode').value=(p.unitCode&&p.unitCode!=='u01'?p.unitCode:(p.unit||'حبة'));
    $('#purchaseTax').value=p.purchaseTaxRate||p.taxRateName||p.taxRate||db.settings.smartTax||'';
    $('#purchaseQty').focus();
   };
@@ -627,7 +639,7 @@ function purchaseModal(){
    if(cost<0)return toast('أدخل تكلفة صحيحة');
    let discount=($('#purchaseDiscount').value||'0%').trim()||'0%';
    if(/^\d+(?:\.\d+)?$/.test(discount))discount+='%';
-   const unitCode=($('#purchaseUnitCode').value||p.unitCode||db.settings.unitCodeMap?.[p.unit||'']||'').trim();
+   const unitCode=($('#purchaseUnitCode').value||(p.unitCode&&p.unitCode!=='u01'?p.unitCode:(p.unit||'حبة'))).trim();
    items.push({
     productId:p.id,unitCode,qty,cost,
     variant:($('#purchaseVariant').value||'').trim(),
@@ -700,7 +712,7 @@ async function importProducts(file,mode='merge'){
    const category=String(val('الفئات الأساسية','الفئة','Category')).trim();
    if(!name||(!smart&&!barcode)){skipped++;continue}
    const existing=(smart&&bySmart.get(smart))||(barcode&&byBarcode.get(barcode));
-   const unitCode=explicitUnitCode||(existing?.unitCode)||db.settings.unitCodeMap?.[unit]||'';const dataObj={smartCode:smart,barcode,name,cost,salePrice,unit,unitCode,taxRate,category};
+   const unitCode=explicitUnitCode||(existing?.unitCode&&existing.unitCode!=='u01'?existing.unitCode:'')||unit;const dataObj={smartCode:smart,barcode,name,cost,salePrice,unit,unitCode,taxRate,category};
    if(existing){
     const updatedObj=Object.assign({},existing,dataObj);
     const pos=target.findIndex(p=>p.id===existing.id);
