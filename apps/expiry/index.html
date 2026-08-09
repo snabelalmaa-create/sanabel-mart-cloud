@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>مستودع الإكسباير | سنابل المع | V4.15.5</title>
+  <title>مستودع الإكسباير | سنابل المع | V4.15.6</title>
   <style>
 :root{--bg:#f4f7fb;--panel:#fff;--ink:#182230;--muted:#748094;--brand:#0f766e;--brand2:#115e59;--line:#e5eaf1;--danger:#c2414a;--warn:#b7791f;--ok:#16835a;--shadow:0 14px 35px rgba(18,35,58,.10);font-family:Tahoma,"Segoe UI",Arial,sans-serif}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
@@ -99,7 +99,7 @@
       <header class="topbar">
         <button id="menuBtn" class="icon-btn" type="button" aria-label="القائمة">☰</button>
         <div><h2 id="pageTitle">الرئيسية</h2><small id="pageSubtitle">نظرة سريعة على المستودع</small></div>
-        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.15.5</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
+        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.15.6</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
       </header>
       <main id="pageHost" class="page-host" tabindex="-1"></main>
     </div>
@@ -177,7 +177,7 @@
 
 <script>
 (()=>{'use strict';
-const VERSION='V4.15.5';
+const VERSION='V4.15.6';
 const DB_KEY='sanabel_expiry_v4_cloud';
 const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
 const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
@@ -192,17 +192,7 @@ db.settings=Object.assign({},defaultDB.settings,db.settings||{});
 if(!Array.isArray(db.settings.suppliers))db.settings.suppliers=['مورد عام'];
 if(!db.settings.suppliers.includes('مورد عام'))db.settings.suppliers.unshift('مورد عام');if(!db.settings.unitCodeMap||typeof db.settings.unitCodeMap!=='object')db.settings.unitCodeMap={};
 db.products=(db.products||[]).map(p=>Object.assign({unit:'حبة',unitCode:'',taxRate:'15%',salePrice:0,category:''},p));
-// V4.15.5: تصحيح آمن للسجلات القديمة: u01 في المشتريات يتحول إلى اسم وحدة الصنف فقط.
-for(const pur of (db.purchases||[])){
-  for(const item of (pur.items||[])){
-    if(!item.unitCode || item.unitCode==='u01'){
-      const p=(db.products||[]).find(x=>String(x.id)===String(item.productId));
-      if(p)item.unitCode=p.unit||'حبة';
-    }
-  }
-}
-for(const p of (db.products||[])){if(!p.unitCode||p.unitCode==='u01')p.unitCode=p.unit||'حبة'}
-saveLocal();
+
 
 let currentUser=null; let currentRoute='dashboard';
 let stockCache=null, productExactCache=null, productPage=1, productQuery='', reportQuery='', supplierReportFilter='', productImportMode='merge';
@@ -833,7 +823,7 @@ function applyRoleUI(){$$('#mainNav [data-route]').forEach(b=>b.classList.toggle
 async function login(){
  const pin=String($('#pinInput')?.value||'').replace(/\D/g,'').trim();
  if(!pin)return toast('أدخل الرقم السري');
- let findUser=()=>db.users.find(x=>x&&x.active!==false&&String(x.pin??'').trim()===pin);
+ const findUser=()=>db.users.find(x=>x&&x.active!==false&&String(x.pin??'').trim()===pin);
  let u=findUser();
  try{
   if(!u){
@@ -856,6 +846,7 @@ async function login(){
  if(!db.products.length)pullProductsIfEmpty().then(()=>{if(currentUser&&currentRoute==='dashboard')render()});
 }
 window.__expiryMainLogin=login;
+
 setTimeout(()=>{const i=$('#pinInput');if(i?.dataset.pendingLogin==='1'){delete i.dataset.pendingLogin;login()}},0);
 window.expiryDoLogin=login;
 window.addEventListener('unhandledrejection',e=>{console.error(e.reason);setCloudStatus('error','خطأ سحابي')});
