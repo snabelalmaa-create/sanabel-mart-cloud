@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>مستودع الإكسباير | سنابل المع | V4.15.1</title>
+  <title>مستودع الإكسباير | سنابل المع | V4.15.2</title>
   <style>
 :root{--bg:#f4f7fb;--panel:#fff;--ink:#182230;--muted:#748094;--brand:#0f766e;--brand2:#115e59;--line:#e5eaf1;--danger:#c2414a;--warn:#b7791f;--ok:#16835a;--shadow:0 14px 35px rgba(18,35,58,.10);font-family:Tahoma,"Segoe UI",Arial,sans-serif}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
@@ -99,7 +99,7 @@
       <header class="topbar">
         <button id="menuBtn" class="icon-btn" type="button" aria-label="القائمة">☰</button>
         <div><h2 id="pageTitle">الرئيسية</h2><small id="pageSubtitle">نظرة سريعة على المستودع</small></div>
-        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.15.1</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
+        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.15.2</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
       </header>
       <main id="pageHost" class="page-host" tabindex="-1"></main>
     </div>
@@ -115,7 +115,7 @@
   
 <script>
 (()=>{'use strict';
-const VERSION='V4.15.1';
+const VERSION='V4.15.2';
 const DB_KEY='sanabel_expiry_v4_cloud';
 const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
 const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
@@ -129,7 +129,7 @@ let db=loadDB();
 db.settings=Object.assign({},defaultDB.settings,db.settings||{});
 if(!Array.isArray(db.settings.suppliers))db.settings.suppliers=['مورد عام'];
 if(!db.settings.suppliers.includes('مورد عام'))db.settings.suppliers.unshift('مورد عام');if(!db.settings.unitCodeMap||typeof db.settings.unitCodeMap!=='object')db.settings.unitCodeMap={};
-db.products=(db.products||[]).map(p=>Object.assign({unit:'حبة',unitCode:db.settings.defaultUnitCode||'u01',taxRate:'15%',salePrice:0,category:''},p));
+db.products=(db.products||[]).map(p=>Object.assign({unit:'حبة',unitCode:'',taxRate:'15%',salePrice:0,category:''},p));
 let currentUser=null; let currentRoute='dashboard';
 let stockCache=null, productExactCache=null, productPage=1, productQuery='', reportQuery='', supplierReportFilter='', productImportMode='merge';
 let cloudStats={localProducts:db.products.length,cloudProducts:null,lastChecked:null,lastUploaded:null,status:'unknown',error:''};
@@ -147,7 +147,27 @@ function saveDB(){saveLocal();lastLocalMutationAt=Date.now();cloudDirty=true;if(
 function cloudHeaders(extra={}){return Object.assign({'apikey':SUPABASE_KEY,'Content-Type':'application/json'},extra)}
 function scheduleCloudPush(){clearTimeout(cloudTimer);setCloudStatus('busy','بانتظار المزامنة…');cloudTimer=setTimeout(()=>{cloudTimer=null;cloudPush()},900)}
 async function rest(path,options={}){const res=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,Object.assign({},options,{headers:cloudHeaders(options.headers||{})}));if(!res.ok)throw new Error((await res.text())||`HTTP ${res.status}`);const txt=await res.text();return txt?JSON.parse(txt):[]}
-async function upsertRows(table,rows,{batchSize=250,onProgress=null}={}){if(!rows.length)return;for(let i=0;i<rows.length;i+=batchSize){const batch=rows.slice(i,i+batchSize);await rest(`${table}?on_conflict=id`,{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(batch)});onProgress?.(Math.min(i+batch.length,rows.length),rows.length)}}
+async function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+async function upsertRows(table,rows,{batchSize=80,onProgress=null,retries=4}={}){
+ if(!rows.length)return;
+ for(let i=0;i<rows.length;i+=batchSize){
+  const batch=rows.slice(i,i+batchSize);let lastErr=null;
+  for(let attempt=0;attempt<=retries;attempt++){
+   try{
+    await rest(`${table}?on_conflict=id`,{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(batch)});
+    lastErr=null;break;
+   }catch(err){
+    lastErr=err;
+    if(attempt>=retries)break;
+    setCloudStatus('busy',`إعادة محاولة الرفع ${attempt+1}/${retries}…`);
+    await sleep(700*Math.pow(2,attempt));
+   }
+  }
+  if(lastErr)throw new Error(`تعذر رفع الدفعة ${Math.floor(i/batchSize)+1}: ${lastErr.message||lastErr}`);
+  onProgress?.(Math.min(i+batch.length,rows.length),rows.length);
+  if(i+batch.length<rows.length)await sleep(70);
+ }
+}
 async function deleteAllRows(table){await rest(`${table}?id=not.is.null`,{method:'DELETE',headers:{'Prefer':'return=minimal'}})}
 async function deleteCloudRow(table,rowId){
  if(rowId==null)return;
@@ -162,16 +182,26 @@ async function fetchAllRows(table,select='payload',order='updated_at.desc'){cons
 async function countCloudRows(table){const res=await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=id`,{method:'GET',headers:cloudHeaders({'Prefer':'count=exact','Range':'0-0'})});if(!res.ok)throw new Error((await res.text())||`HTTP ${res.status}`);const cr=res.headers.get('content-range')||'';const total=cr.split('/')[1];return total&&total!=='*'?Number(total):0}
 
 function formatSyncTime(v){if(!v)return 'لم يتم التحقق بعد';try{return new Date(v).toLocaleString('en-GB')}catch{return String(v)}}
-function cloudStatusMarkup(){const local=db.products.length;const cloud=cloudStats.cloudProducts;const match=cloud!==null&&cloud===local;const status=cloudStats.status==='checking'?'جاري التحقق…':cloudStats.status==='error'?'تعذر التحقق':match?'السحابة متطابقة':cloud===null?'غير معروف':'يوجد اختلاف';const cls=cloudStats.status==='error'?'danger':match?'ok':'warning';return `<section class="cloud-verify-card"><div class="cloud-verify-head"><div><strong>حالة أصناف السحابة</strong><small>تأكد أن جميع الأجهزة ترى نفس قائمة الأصناف</small></div><span class="badge ${cls}">${status}</span></div><div class="cloud-verify-grid"><div><span>الأصناف على هذا الجهاز</span><b>${local.toLocaleString('en-US')}</b></div><div><span>الأصناف في Supabase</span><b>${cloud===null?'—':cloud.toLocaleString('en-US')}</b></div><div><span>آخر تحقق</span><b>${formatSyncTime(cloudStats.lastChecked)}</b></div><div><span>آخر رفع ناجح</span><b>${formatSyncTime(cloudStats.lastUploaded)}</b></div></div>${cloudStats.error?`<p class="cloud-error">${esc(cloudStats.error)}</p>`:''}<div class="toolbar"><button id="checkCloudProducts" type="button" class="btn secondary">مقارنة السحابة</button><button id="uploadAllProducts" type="button" class="btn primary">إعادة رفع جميع الأصناف</button><button id="downloadCloudProducts" type="button" class="btn secondary">تنزيل أصناف السحابة لهذا الجهاز</button></div></section>`}
+function cloudStatusMarkup(){const local=db.products.length;const cloud=cloudStats.cloudProducts;const match=cloud!==null&&cloud>=local;const status=cloudStats.status==='checking'?'جاري التحقق…':cloudStats.status==='error'?'تعذر التحقق':match?'السحابة متطابقة':cloud===null?'غير معروف':'يوجد اختلاف';const cls=cloudStats.status==='error'?'danger':match?'ok':'warning';return `<section class="cloud-verify-card"><div class="cloud-verify-head"><div><strong>حالة أصناف السحابة</strong><small>تأكد أن جميع الأجهزة ترى نفس قائمة الأصناف</small></div><span class="badge ${cls}">${status}</span></div><div class="cloud-verify-grid"><div><span>الأصناف على هذا الجهاز</span><b>${local.toLocaleString('en-US')}</b></div><div><span>الأصناف في Supabase</span><b>${cloud===null?'—':cloud.toLocaleString('en-US')}</b></div><div><span>آخر تحقق</span><b>${formatSyncTime(cloudStats.lastChecked)}</b></div><div><span>آخر رفع ناجح</span><b>${formatSyncTime(cloudStats.lastUploaded)}</b></div></div>${cloudStats.error?`<p class="cloud-error">${esc(cloudStats.error)}</p>`:''}<div class="toolbar"><button id="checkCloudProducts" type="button" class="btn secondary">مقارنة السحابة</button><button id="uploadAllProducts" type="button" class="btn primary">إعادة رفع جميع الأصناف</button><button id="downloadCloudProducts" type="button" class="btn secondary">تنزيل أصناف السحابة لهذا الجهاز</button></div></section>`}
 function refreshCloudStatusPanel(){const el=$('#cloudProductsStatus');if(el)el.innerHTML=cloudStatusMarkup()}
-async function verifyCloudProducts({showMessage=true}={}){cloudStats.status='checking';cloudStats.error='';refreshCloudStatusPanel();setCloudStatus('busy','جاري التحقق من السحابة…');try{const count=await countCloudRows(CLOUD_TABLES.products);cloudStats.cloudProducts=count;cloudStats.localProducts=db.products.length;cloudStats.lastChecked=now();cloudStats.status=count===db.products.length?'ok':'mismatch';setCloudStatus(count===db.products.length?'ok':'busy',count===db.products.length?`السحابة متطابقة — ${count.toLocaleString('en-US')} صنف`:`اختلاف: الجهاز ${db.products.length.toLocaleString('en-US')} / السحابة ${count.toLocaleString('en-US')}`);if(showMessage)toast(count===db.products.length?`تم التأكد: ${count.toLocaleString('en-US')} صنف موجود في السحابة`:`يوجد اختلاف: الجهاز ${db.products.length.toLocaleString('en-US')} والسحابة ${count.toLocaleString('en-US')}`);refreshCloudStatusPanel();return count}catch(err){cloudStats.status='error';cloudStats.error=err.message||String(err);cloudStats.lastChecked=now();setCloudStatus('error','تعذر التحقق من السحابة');refreshCloudStatusPanel();if(showMessage)toast('تعذر التحقق من السحابة: '+cloudStats.error);throw err}}
-async function uploadAllProductsWithProgress(){if(!db.products.length)return toast('لا توجد أصناف على هذا الجهاز لرفعها');showImportProgress('جاري إعادة رفع جميع الأصناف…');try{const count=await syncProductsToCloud({replace:false});cloudStats.cloudProducts=count;cloudStats.lastUploaded=now();cloudStats.lastChecked=now();cloudStats.status=count===db.products.length?'ok':'mismatch';hideImportProgress();refreshCloudStatusPanel();toast(`تم رفع ${count.toLocaleString('en-US')} صنف إلى السحابة`)}catch(err){hideImportProgress();cloudStats.status='error';cloudStats.error=err.message||String(err);refreshCloudStatusPanel();toast('فشل رفع الأصناف: '+cloudStats.error)}}
-async function downloadProductsFromCloud(){showImportProgress('جاري تنزيل أصناف السحابة…');try{setImportProgressTitle('جاري تنزيل أصناف السحابة لهذا الجهاز…');const rows=await fetchAllRows(CLOUD_TABLES.products,'payload','updated_at.desc');updateImportProgress(rows.length,rows.length||1,'تم استلام الأصناف من السحابة…');const cloudProducts=rows.map(r=>r.payload).filter(Boolean);if(!cloudProducts.length)throw new Error('لا توجد أصناف في السحابة');db.products=cloudProducts.map(p=>Object.assign({unit:'حبة',unitCode:db.settings.defaultUnitCode||'u01',taxRate:'15%',salePrice:0,category:''},p));saveLocal();invalidateCaches();productPage=1;productQuery='';cloudStats.cloudProducts=cloudProducts.length;cloudStats.lastChecked=now();cloudStats.status='ok';hideImportProgress();render();toast(`تم تنزيل ${cloudProducts.length.toLocaleString('en-US')} صنف من السحابة`)}catch(err){hideImportProgress();cloudStats.status='error';cloudStats.error=err.message||String(err);refreshCloudStatusPanel();toast('تعذر تنزيل الأصناف: '+cloudStats.error)}}
+async function verifyCloudProducts({showMessage=true}={}){cloudStats.status='checking';cloudStats.error='';refreshCloudStatusPanel();setCloudStatus('busy','جاري التحقق من السحابة…');try{const count=await countCloudRows(CLOUD_TABLES.products);cloudStats.cloudProducts=count;cloudStats.localProducts=db.products.length;cloudStats.lastChecked=now();cloudStats.status=count>=db.products.length?'ok':'mismatch';setCloudStatus(count>=db.products.length?'ok':'busy',count>=db.products.length?`السحابة متطابقة — ${count.toLocaleString('en-US')} صنف`:`اختلاف: الجهاز ${db.products.length.toLocaleString('en-US')} / السحابة ${count.toLocaleString('en-US')}`);if(showMessage)toast(count>=db.products.length?`تم التأكد: ${count.toLocaleString('en-US')} صنف موجود في السحابة`:`يوجد اختلاف: الجهاز ${db.products.length.toLocaleString('en-US')} والسحابة ${count.toLocaleString('en-US')}`);refreshCloudStatusPanel();return count}catch(err){cloudStats.status='error';cloudStats.error=err.message||String(err);cloudStats.lastChecked=now();setCloudStatus('error','تعذر التحقق من السحابة');refreshCloudStatusPanel();if(showMessage)toast('تعذر التحقق من السحابة: '+cloudStats.error);throw err}}
+async function uploadAllProductsWithProgress(){if(!db.products.length)return toast('لا توجد أصناف على هذا الجهاز لرفعها');showImportProgress('جاري إعادة رفع جميع الأصناف…');try{const count=await syncProductsToCloud({replace:false});cloudStats.cloudProducts=count;cloudStats.lastUploaded=now();cloudStats.lastChecked=now();cloudStats.status=count>=db.products.length?'ok':'mismatch';hideImportProgress();refreshCloudStatusPanel();toast(`تم رفع ${count.toLocaleString('en-US')} صنف إلى السحابة`)}catch(err){hideImportProgress();cloudStats.status='error';cloudStats.error=err.message||String(err);refreshCloudStatusPanel();toast('فشل رفع الأصناف: '+cloudStats.error)}}
+async function downloadProductsFromCloud(){showImportProgress('جاري تنزيل أصناف السحابة…');try{setImportProgressTitle('جاري تنزيل أصناف السحابة لهذا الجهاز…');const rows=await fetchAllRows(CLOUD_TABLES.products,'payload','updated_at.desc');updateImportProgress(rows.length,rows.length||1,'تم استلام الأصناف من السحابة…');const cloudProducts=rows.map(r=>r.payload).filter(Boolean);if(!cloudProducts.length)throw new Error('لا توجد أصناف في السحابة');db.products=cloudProducts.map(p=>Object.assign({unit:'حبة',unitCode:'',taxRate:'15%',salePrice:0,category:''},p));saveLocal();invalidateCaches();productPage=1;productQuery='';cloudStats.cloudProducts=cloudProducts.length;cloudStats.lastChecked=now();cloudStats.status='ok';hideImportProgress();render();toast(`تم تنزيل ${cloudProducts.length.toLocaleString('en-US')} صنف من السحابة`)}catch(err){hideImportProgress();cloudStats.status='error';cloudStats.error=err.message||String(err);refreshCloudStatusPanel();toast('تعذر تنزيل الأصناف: '+cloudStats.error)}}
 function showImportProgress(title='جاري معالجة ملف الأصناف…'){const root=$('#importProgressRoot');root.innerHTML=`<div class="import-progress-wrap"><section class="import-progress-card"><div class="import-spinner"></div><h3 id="importProgressTitle">${esc(title)}</h3><p id="importProgressMessage">يرجى عدم إغلاق الصفحة</p><div class="import-progress-bar"><div id="importProgressFill" class="import-progress-fill"></div></div><div class="import-progress-stats"><span id="importProgressCount">0 / 0</span><span id="importProgressPercent">0%</span></div></section></div>`}
 function updateImportProgress(done,total,message){const pct=total?Math.round(done/total*100):0;const fill=$('#importProgressFill'),count=$('#importProgressCount'),percent=$('#importProgressPercent'),msg=$('#importProgressMessage');if(fill)fill.style.width=pct+'%';if(count)count.textContent=`${done.toLocaleString('en-US')} / ${total.toLocaleString('en-US')}`;if(percent)percent.textContent=pct+'%';if(msg&&message)msg.textContent=message}
 function setImportProgressTitle(title){const el=$('#importProgressTitle');if(el)el.textContent=title}
 function hideImportProgress(){const root=$('#importProgressRoot');if(root)root.innerHTML=''}
-async function syncProductsToCloud({replace=false}={}){setCloudStatus('busy','جاري رفع الأصناف…');setImportProgressTitle(replace?'جاري استبدال ملف الأصناف سحابيًا…':'جاري تحديث الأصناف سحابيًا…');if(replace){updateImportProgress(0,db.products.length,'حذف القائمة القديمة من السحابة…');await deleteAllRows(CLOUD_TABLES.products)}const rows=db.products.map(p=>Object.assign(rowBase(p),{smart_code:p.smartCode||null,barcode:p.barcode||null,name:p.name||'',cost:num(p.cost),category:p.category||null}));await upsertRows(CLOUD_TABLES.products,rows,{batchSize:200,onProgress:(done,total)=>updateImportProgress(done,total,'رفع الأصناف إلى جميع الأجهزة…')});const cloudCount=await countCloudRows(CLOUD_TABLES.products);if(cloudCount<db.products.length)throw new Error(`تم رفع ${cloudCount} من أصل ${db.products.length} صنف فقط`);cloudDirty=false;cloudStats.cloudProducts=cloudCount;cloudStats.localProducts=db.products.length;cloudStats.lastUploaded=now();cloudStats.lastChecked=now();cloudStats.status=cloudCount===db.products.length?'ok':'mismatch';cloudStats.error='';setCloudStatus('ok',`متزامن — ${cloudCount.toLocaleString('en-US')} صنف`);refreshCloudStatusPanel();return cloudCount}
+async function syncProductsToCloud({replace=false}={}){
+ setCloudStatus('busy','جاري رفع الأصناف…');
+ setImportProgressTitle(replace?'جاري استبدال ملف الأصناف سحابيًا…':'جاري تحديث ودمج الأصناف سحابيًا…');
+ if(replace){updateImportProgress(0,db.products.length,'حذف القائمة القديمة من السحابة…');await deleteAllRows(CLOUD_TABLES.products)}
+ const rows=db.products.map(p=>Object.assign(rowBase(p),{smart_code:p.smartCode||null,barcode:p.barcode||null,name:p.name||'',cost:num(p.cost),category:p.category||null}));
+ await upsertRows(CLOUD_TABLES.products,rows,{batchSize:80,retries:5,onProgress:(done,total)=>updateImportProgress(done,total,`رفع الأصناف للسحابة — ${done.toLocaleString('en-US')} من ${total.toLocaleString('en-US')}`)});
+ const cloudCount=await countCloudRows(CLOUD_TABLES.products);
+ cloudDirty=false;cloudStats.cloudProducts=cloudCount;cloudStats.localProducts=db.products.length;cloudStats.lastUploaded=now();cloudStats.lastChecked=now();cloudStats.status=cloudCount>=db.products.length?'ok':'mismatch';cloudStats.error='';
+ setCloudStatus(cloudCount>=db.products.length?'ok':'busy',`السحابة ${cloudCount.toLocaleString('en-US')} / الجهاز ${db.products.length.toLocaleString('en-US')}`);refreshCloudStatusPanel();
+ return cloudCount
+}
 function rowBase(x){return {id:String(x.id),payload:x,updated_at:now(),updated_by:currentUser?.name||'النظام'}}
 async function cloudPush(){
  if(cloudBusy)return scheduleCloudPush(); cloudBusy=true; setCloudStatus('busy','جاري الحفظ…');
@@ -201,7 +231,7 @@ async function pullUsersOnly(){
 }
 async function pullProductsIfEmpty(){
  if(db.products.length)return true;
- try{setCloudStatus('busy','جاري تنزيل الأصناف…');const rows=await fetchAllRows(CLOUD_TABLES.products,'payload','updated_at.desc');const cloudProducts=rows.map(r=>r.payload).filter(Boolean);if(cloudProducts.length){db.products=cloudProducts.map(p=>Object.assign({unit:'حبة',unitCode:db.settings.defaultUnitCode||'u01',taxRate:'15%',salePrice:0,category:''},p));invalidateCaches();saveLocal()}setCloudStatus('ok','متزامن');return true}catch(e){setCloudStatus('error','وضع محلي');return false}
+ try{setCloudStatus('busy','جاري تنزيل الأصناف…');const rows=await fetchAllRows(CLOUD_TABLES.products,'payload','updated_at.desc');const cloudProducts=rows.map(r=>r.payload).filter(Boolean);if(cloudProducts.length){db.products=cloudProducts.map(p=>Object.assign({unit:'حبة',unitCode:'',taxRate:'15%',salePrice:0,category:''},p));invalidateCaches();saveLocal()}setCloudStatus('ok','متزامن');return true}catch(e){setCloudStatus('error','وضع محلي');return false}
 }
 function upsertLocalById(arr,obj){const i=arr.findIndex(x=>String(x.id)===String(obj.id));if(i>=0)arr[i]=Object.assign({},arr[i],obj);else arr.unshift(obj)}
 function applyRealtimeChange(table,payload){
@@ -691,11 +721,11 @@ async function importProducts(file,mode='merge'){
   const cloudCount=await syncProductsToCloud({replace:mode==='replace'});productsNeedSync=false;
   updateImportProgress(cloudCount,db.products.length,'التحقق النهائي من عدد الأصناف في Supabase…');
   const verified=await verifyCloudProducts({showMessage:false});
-  if(verified!==db.products.length)throw new Error(`فشل التحقق: الجهاز يحتوي ${db.products.length} والسحابة تحتوي ${verified}`);
+  if(verified<db.products.length)throw new Error(`فشل التحقق: الجهاز يحتوي ${db.products.length} والسحابة تحتوي ${verified}`);
   hideImportProgress();render();
-  toast(`تم التأكد: ${verified.toLocaleString('en-US')} صنف موجود في السحابة ومتاحة لجميع الأجهزة`);
+  toast(`تمت المزامنة بنجاح: ${verified.toLocaleString('en-US')} صنف في السحابة`);
  }catch(err){
-  console.error(err);hideImportProgress();setCloudStatus('error','تعذر مزامنة الأصناف');toast('تعذر استيراد الأصناف: '+err.message);
+  console.error(err);hideImportProgress();setCloudStatus('error','تعذر مزامنة الأصناف');toast('تعذر رفع الأصناف للسحابة، لكن بيانات هذا الجهاز والإكسباير محفوظة. السبب: '+err.message);
  }finally{const f=$('#productFile');if(f)f.value=''}
 }
 function csvEscape(v){v=String(v??'');return /[",\r\n]/.test(v)?'"'+v.replaceAll('"','""')+'"':v}
