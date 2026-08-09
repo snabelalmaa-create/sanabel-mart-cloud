@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>مستودع الإكسباير | سنابل المع | V4.14.3</title>
+  <title>مستودع الإكسباير | سنابل المع | V4.15.0</title>
   <style>
 :root{--bg:#f4f7fb;--panel:#fff;--ink:#182230;--muted:#748094;--brand:#0f766e;--brand2:#115e59;--line:#e5eaf1;--danger:#c2414a;--warn:#b7791f;--ok:#16835a;--shadow:0 14px 35px rgba(18,35,58,.10);font-family:Tahoma,"Segoe UI",Arial,sans-serif}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
@@ -38,6 +38,23 @@
 
 
 .purchase-status{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800}.purchase-status.pending{background:#fff6dd;color:#9a6700}.purchase-status.approved{background:#e7f7ef;color:#14724e}.purchase-status.rejected{background:#ffecef;color:#b63a47}.review-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}.review-grid>div{background:#f7f9fc;border:1px solid var(--line);border-radius:11px;padding:10px}.review-grid span{display:block;color:var(--muted);font-size:12px}.review-grid b{display:block;margin-top:4px}.smart-preview table{min-width:1050px}@media(max-width:760px){.review-grid{grid-template-columns:1fr 1fr}}
+
+.purchase-modal .modal{width:min(980px,96vw)}
+.purchase-section{border:1px solid var(--line);border-radius:16px;padding:14px;background:#fbfdff;margin-bottom:14px}
+.purchase-section h4{margin:0 0 12px;font-size:16px}
+.purchase-head-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
+.purchase-entry-grid{display:grid;grid-template-columns:2fr .8fr .9fr .9fr;gap:12px;align-items:end}
+.purchase-selected{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-top:10px}
+.purchase-selected>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+.purchase-selected span{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}
+.purchase-selected b{display:block;font-size:14px;overflow-wrap:anywhere}
+.purchase-advanced{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:10px}
+.purchase-total{display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:flex-end;padding:10px 0;font-weight:800}
+.smart-code-missing{color:#b45309;font-weight:800}
+.unit-code-input{width:95px;border:1px solid var(--line);border-radius:8px;padding:6px;text-align:center}
+@media(max-width:850px){.purchase-entry-grid,.purchase-selected,.purchase-advanced,.purchase-head-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.purchase-entry-grid,.purchase-selected,.purchase-advanced,.purchase-head-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -82,7 +99,7 @@
       <header class="topbar">
         <button id="menuBtn" class="icon-btn" type="button" aria-label="القائمة">☰</button>
         <div><h2 id="pageTitle">الرئيسية</h2><small id="pageSubtitle">نظرة سريعة على المستودع</small></div>
-        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.14.3</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
+        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.15.0</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
       </header>
       <main id="pageHost" class="page-host" tabindex="-1"></main>
     </div>
@@ -98,20 +115,20 @@
   
 <script>
 (()=>{'use strict';
-const VERSION='V4.14.3';
+const VERSION='V4.15.0';
 const DB_KEY='sanabel_expiry_v4_cloud';
 const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
 const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
 const CLOUD_TABLES={products:'expiry_products',expiry:'expiry_expired',replacements:'expiry_replacements',purchases:'expiry_purchase_receipts',purchaseItems:'expiry_purchase_items',users:'expiry_users',audit:'expiry_audit_log',settings:'expiry_settings'};
 const defaultDB={
- settings:{business:'أسواق سنابل المع المركزية',phone:'',smartTax:'15%',defaultSupplier:'مورد عام',defaultUnitCode:'u01',suppliers:['مورد عام']},
+ settings:{business:'أسواق سنابل المع المركزية',phone:'',smartTax:'15%',defaultSupplier:'مورد عام',defaultUnitCode:'',unitCodeMap:{},suppliers:['مورد عام']},
  users:[{id:'u1',name:'أبوقصي',pin:'2580',role:'مدير',active:true}],
  products:[],expiry:[],replacements:[],purchases:[],audit:[]
 };
 let db=loadDB();
 db.settings=Object.assign({},defaultDB.settings,db.settings||{});
 if(!Array.isArray(db.settings.suppliers))db.settings.suppliers=['مورد عام'];
-if(!db.settings.suppliers.includes('مورد عام'))db.settings.suppliers.unshift('مورد عام');
+if(!db.settings.suppliers.includes('مورد عام'))db.settings.suppliers.unshift('مورد عام');if(!db.settings.unitCodeMap||typeof db.settings.unitCodeMap!=='object')db.settings.unitCodeMap={};
 db.products=(db.products||[]).map(p=>Object.assign({unit:'حبة',unitCode:db.settings.defaultUnitCode||'u01',taxRate:'15%',salePrice:0,category:''},p));
 let currentUser=null; let currentRoute='dashboard';
 let stockCache=null, productExactCache=null, productPage=1, productQuery='', reportQuery='', supplierReportFilter='', productImportMode='merge';
@@ -319,7 +336,7 @@ reports(){return `<div class="card"><div class="card-head"><h3>تقرير مست
 products(){return `<div id="cloudProductsStatus">${cloudStatusMarkup()}</div><div class="card"><div class="card-head"><h3>الأصناف <small class="muted">(${db.products.length.toLocaleString('en-US')})</small></h3><div class="toolbar"><input id="productSearch" class="search-box" value="${esc(productQuery)}" placeholder="بحث بالاسم أو الباركود"><button id="addProduct" class="btn primary">إضافة صنف</button><button id="importProducts" class="btn secondary">استيراد / تحديث ملف الأصناف</button><input id="productFile" type="file" accept=".xlsx,.xls,.csv" hidden></div></div><div class="note" style="margin-bottom:14px">يمكنك <b>تحديث ودمج</b> ملف جديد مع الأصناف الحالية، أو <b>استبدال القائمة بالكامل</b> بأحدث ملف صادر من سمارت. بعد الاستيراد لا تعتبر العملية ناجحة إلا إذا ظهر أن عدد السحابة مطابق لعدد الجهاز.</div><div id="productsTable">${renderProductsPage()}</div></div>`},
 users(){return `<div class="card"><div class="card-head"><h3>المستخدمون</h3><button id="addUser" class="btn primary">مستخدم جديد</button></div><div class="table-wrap"><table><thead><tr><th>الاسم</th><th>الدور</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody>${db.users.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.role)}</td><td><span class="badge ${u.active?'ok':'danger'}">${u.active?'نشط':'موقوف'}</span></td><td><div class="actions"><button data-edit-user="${u.id}">تعديل</button>${u.id!=='u1'?`<button data-delete-user="${u.id}">حذف</button>`:''}</div></td></tr>`).join('')}</tbody></table></div></div>`},
 audit(){return `<div class="card"><div class="card-head"><h3>سجل الرقابة</h3><button id="clearAudit" class="btn danger">مسح السجل</button></div><div class="table-wrap"><table><thead><tr><th>التاريخ والوقت</th><th>المستخدم</th><th>العملية</th><th>التفاصيل</th></tr></thead><tbody>${db.audit.length?db.audit.map(a=>`<tr><td>${new Date(a.at).toLocaleString('en-GB')}</td><td>${esc(a.user)}</td><td>${esc(a.action)}</td><td>${esc(a.detail)}</td></tr>`).join(''):`<tr><td colspan="4" class="empty">لا توجد عمليات</td></tr>`}</tbody></table></div></div>`},
-settings(){return `<div class="grid two-col"><div class="card"><div class="card-head"><h3>بيانات المنشأة</h3></div><form id="settingsForm" class="form-grid"><div class="field span-2"><label>اسم المنشأة</label><input id="businessName" value="${esc(db.settings.business)}"></div><div class="field"><label>رقم واتساب المدير</label><input id="businessPhone" value="${esc(db.settings.phone)}"></div><div class="field"><label>المورد الافتراضي</label><input id="defaultSupplier" value="${esc(db.settings.defaultSupplier||'مورد عام')}"></div><div class="field"><label>كود الوحدة الافتراضي لسمارت</label><input id="defaultUnitCode" value="${esc(db.settings.defaultUnitCode||'u01')}"></div><div class="field"><label>اسم الضريبة في سمارت</label><input id="smartTax" value="${esc(db.settings.smartTax||'15%')}"></div><div class="field span-3"><label>قائمة الموردين (اسم في كل سطر)</label><textarea id="supplierList" rows="8" placeholder="مورد عام&#10;المراعي&#10;نادك">${esc((db.settings.suppliers||['مورد عام']).join('\n'))}</textarea><div class="toolbar" style="margin-top:8px"><button type="button" id="importSuppliersBtn" class="btn secondary">استيراد قائمة موردين</button><input id="supplierFile" type="file" accept=".xlsx,.xls,.csv,.txt" hidden></div></div><div class="span-3"><button class="btn primary">حفظ الإعدادات</button></div></form></div><div class="card"><div class="card-head"><h3>النسخ الاحتياطي</h3></div><div class="toolbar"><button id="backupBtn" class="btn secondary">تصدير نسخة احتياطية</button><button id="restoreBtn" class="btn secondary">استعادة نسخة</button><input id="restoreFile" type="file" accept="application/json" hidden></div><p class="muted">الإصدار ${VERSION}</p></div></div><div class="card danger-zone" style="margin-top:16px"><div class="card-head"><h3>إعادة التهيئة</h3></div><p>يمسح جميع الأصناف والعمليات والمستخدمين ويعيد المدير الافتراضي.</p><button id="resetBtn" class="btn danger">مسح جميع البيانات</button></div>`}
+settings(){return `<div class="grid two-col"><div class="card"><div class="card-head"><h3>بيانات المنشأة</h3></div><form id="settingsForm" class="form-grid"><div class="field span-2"><label>اسم المنشأة</label><input id="businessName" value="${esc(db.settings.business)}"></div><div class="field"><label>رقم واتساب المدير</label><input id="businessPhone" value="${esc(db.settings.phone)}"></div><div class="field"><label>المورد الافتراضي</label><input id="defaultSupplier" value="${esc(db.settings.defaultSupplier||'مورد عام')}"></div><div class="field span-2"><label>ربط الوحدات بكود سمارت</label><textarea id="unitCodeMap" rows="5" placeholder="علبه = CODE&#10;حبة = CODE">${esc(Object.entries(db.settings.unitCodeMap||{}).map(([u,c])=>`${u} = ${c}`).join('\n'))}</textarea><small class="muted">ملف الأصناف الذي أرسلته يحتوي اسم الوحدة وليس Unit Code؛ لذلك اربط كل وحدة بكودها الحقيقي في سمارت مرة واحدة.</small></div><div class="field"><label>اسم الضريبة في سمارت</label><input id="smartTax" value="${esc(db.settings.smartTax||'15%')}"></div><div class="field span-3"><label>قائمة الموردين (اسم في كل سطر)</label><textarea id="supplierList" rows="8" placeholder="مورد عام&#10;المراعي&#10;نادك">${esc((db.settings.suppliers||['مورد عام']).join('\n'))}</textarea><div class="toolbar" style="margin-top:8px"><button type="button" id="importSuppliersBtn" class="btn secondary">استيراد قائمة موردين</button><input id="supplierFile" type="file" accept=".xlsx,.xls,.csv,.txt" hidden></div></div><div class="span-3"><button class="btn primary">حفظ الإعدادات</button></div></form></div><div class="card"><div class="card-head"><h3>النسخ الاحتياطي</h3></div><div class="toolbar"><button id="backupBtn" class="btn secondary">تصدير نسخة احتياطية</button><button id="restoreBtn" class="btn secondary">استعادة نسخة</button><input id="restoreFile" type="file" accept="application/json" hidden></div><p class="muted">الإصدار ${VERSION}</p></div></div><div class="card danger-zone" style="margin-top:16px"><div class="card-head"><h3>إعادة التهيئة</h3></div><p>يمسح جميع الأصناف والعمليات والمستخدمين ويعيد المدير الافتراضي.</p><button id="resetBtn" class="btn danger">مسح جميع البيانات</button></div>`}
 };
 const PERMISSION_DEFS=[
  ['view.dashboard','الرئيسية','عرض الرئيسية'],
@@ -443,8 +460,28 @@ function purchaseStatus(p){return p?.status||'approved'}
 function purchaseStatusLabel(p){const st=purchaseStatus(p);return st==='pending'?['بانتظار المراجعة','pending']:st==='rejected'?['مرفوضة','rejected']:['معتمدة','approved']}
 function tablePurchases(){return `<div class="table-wrap"><table><thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th>المورد</th><th>المستلم</th><th>عدد الأصناف</th><th>الإجمالي</th><th>الحالة</th><th>الإجراء</th></tr></thead><tbody>${db.purchases.length?db.purchases.map(x=>{const st=purchaseStatusLabel(x);return `<tr><td>${esc(x.number)}</td><td>${esc(x.date)}</td><td>${esc(x.supplier)}</td><td>${esc(x.user||'—')}</td><td>${(x.items||[]).length}</td><td>${money((x.items||[]).reduce((s,i)=>s+num(i.qty)*num(i.cost),0))}</td><td><span class="purchase-status ${st[1]}">${st[0]}</span>${x.approvedBy?`<small class="muted" style="display:block;margin-top:4px">بواسطة ${esc(x.approvedBy)}</small>`:''}</td><td><div class="actions"><button data-review-purchase="${x.id}">مراجعة</button>${purchaseStatus(x)==='approved'?`<button data-export-purchase="${x.id}">سمارت</button>`:''}<button data-whatsapp-purchase="${x.id}">واتساب</button><button data-delete-purchase="${x.id}">حذف</button></div></td></tr>`}).join(''):`<tr><td colspan="8" class="empty">لا توجد فواتير</td></tr>`}</tbody></table></div>`}
 
-function smartPurchaseRows(pur){return (pur?.items||[]).map(i=>{const p=db.products.find(x=>x.id===i.productId);return {productCode:p?.smartCode||'',unitCode:i.unitCode||p?.unitCode||db.settings.defaultUnitCode||'u01',cost:num(i.cost),qty:num(i.qty),variant:i.variant||'',taxRate:i.taxRate||p?.purchaseTaxRate||p?.taxRateName||'No Tax',discount:i.discount||'0%',expiry:smartExpiryDate(i.expiry||'')}})}
-function reviewPurchaseModal(pur){if(!pur)return;const rows=smartPurchaseRows(pur),st=purchaseStatusLabel(pur);modal('مراجعة فاتورة مشتريات',`<div class="review-grid"><div><span>رقم الفاتورة</span><b>${esc(pur.number)}</b></div><div><span>المورد</span><b>${esc(pur.supplier||'مورد عام')}</b></div><div><span>المستلم</span><b>${esc(pur.user||'—')}</b></div><div><span>التاريخ</span><b>${esc(pur.date||'')}</b></div><div><span>الحالة</span><b>${st[0]}</b></div><div><span>عدد الأصناف</span><b>${rows.length}</b></div></div><div class="note" style="margin-bottom:12px">المعاينة أدناه هي نفس ترتيب أعمدة ملف سمارت الرسمي.</div><div class="table-wrap smart-preview"><table><thead><tr><th>Product Code</th><th>Unit Code</th><th>Net Unit Cost</th><th>Quantity</th><th>Product Variant</th><th>Tax Rate Name</th><th>Discount</th><th>Expiry</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.productCode)}</td><td>${esc(r.unitCode)}</td><td>${esc(String(r.cost))}</td><td>${esc(String(r.qty))}</td><td>${esc(r.variant)}</td><td>${esc(r.taxRate)}</td><td>${esc(r.discount)}</td><td>${esc(r.expiry)}</td></tr>`).join('')||'<tr><td colspan="8" class="empty">لا توجد أصناف</td></tr>'}</tbody></table></div><div class="actions" style="margin-top:14px">${purchaseStatus(pur)!=='approved'&&hasPerm('purchases.approve')?`<button id="approvePurchaseBtn" class="btn primary">اعتماد الفاتورة</button>`:''}${purchaseStatus(pur)==='approved'&&hasPerm('purchases.export')?`<button id="reviewExportSmartBtn" class="btn secondary">تصدير ملف سمارت</button>`:''}</div>`,()=>{const approve=$('#approvePurchaseBtn');if(approve)approve.onclick=()=>approvePurchase(pur);const exp=$('#reviewExportSmartBtn');if(exp)exp.onclick=()=>exportSmart(pur)})}
+function smartPurchaseRows(pur){return (pur?.items||[]).map(i=>{const p=db.products.find(x=>x.id===i.productId);return {productCode:p?.smartCode||'',unitCode:i.unitCode||p?.unitCode||db.settings.unitCodeMap?.[p?.unit||'']||'',cost:num(i.cost),qty:num(i.qty),variant:i.variant||'',taxRate:i.taxRate||p?.purchaseTaxRate||p?.taxRateName||'No Tax',discount:i.discount||'0%',expiry:smartExpiryDate(i.expiry||'')}})}
+function reviewPurchaseModal(pur){
+ if(!pur)return;
+ const rows=smartPurchaseRows(pur),st=purchaseStatusLabel(pur);
+ modal('مراجعة فاتورة مشتريات',`<div class="review-grid"><div><span>رقم الفاتورة</span><b>${esc(pur.number)}</b></div><div><span>المورد</span><b>${esc(pur.supplier||'مورد عام')}</b></div><div><span>المستلم</span><b>${esc(pur.user||'—')}</b></div><div><span>التاريخ</span><b>${esc(pur.date||'')}</b></div><div><span>الحالة</span><b>${st[0]}</b></div><div><span>عدد الأصناف</span><b>${rows.length}</b></div></div>
+ <div class="note" style="margin-bottom:12px">هذه المعاينة بنفس ترتيب أعمدة سمارت. إذا ظهر Unit Code فارغًا، أدخله هنا مرة واحدة وسيُحفظ للصنف والوحدة للمستقبل.</div>
+ <div class="table-wrap smart-preview"><table><thead><tr><th>Product Code</th><th>Unit Code</th><th>Net Unit Cost</th><th>Quantity</th><th>Product Variant</th><th>Tax Rate Name</th><th>Discount</th><th>Expiry</th></tr></thead><tbody>${rows.map((r,n)=>`<tr><td>${esc(r.productCode)}</td><td><input class="unit-code-input" data-review-unit="${n}" value="${esc(r.unitCode||'')}" placeholder="مطلوب"></td><td>${esc(String(r.cost))}</td><td>${esc(String(r.qty))}</td><td>${esc(r.variant)}</td><td>${esc(r.taxRate)}</td><td>${esc(r.discount)}</td><td>${esc(r.expiry)}</td></tr>`).join('')||'<tr><td colspan="8" class="empty">لا توجد أصناف</td></tr>'}</tbody></table></div>
+ <div class="actions" style="margin-top:14px">${purchaseStatus(pur)!=='approved'&&hasPerm('purchases.approve')?`<button id="approvePurchaseBtn" class="btn primary">حفظ الأكواد واعتماد الفاتورة</button>`:''}${purchaseStatus(pur)==='approved'&&hasPerm('purchases.export')?`<button id="reviewExportSmartBtn" class="btn secondary">تصدير ملف سمارت</button>`:''}</div>`,()=>{
+   const approve=$('#approvePurchaseBtn');
+   if(approve)approve.onclick=()=>{
+    const inputs=$$('[data-review-unit]');
+    inputs.forEach(inp=>{
+      const n=Number(inp.dataset.reviewUnit),code=inp.value.trim(),item=pur.items[n],p=db.products.find(x=>x.id===item?.productId);
+      if(item)item.unitCode=code;
+      if(p&&code){p.unitCode=code;db.settings.unitCodeMap[p.unit||'حبة']=code;productsNeedSync=true}
+    });
+    saveLocal();
+    approvePurchase(pur);
+   };
+   const exp=$('#reviewExportSmartBtn');if(exp)exp.onclick=()=>exportSmart(pur)
+ })
+}
 function approvePurchase(pur){if(!hasPerm('purchases.approve'))return toast('ليس لديك صلاحية اعتماد الفواتير');const rows=smartPurchaseRows(pur);const missing=rows.filter(r=>!r.productCode||!r.unitCode).length;if(missing)return toast(`لا يمكن الاعتماد: ${missing} صنف ناقص Product Code أو Unit Code`);pur.status='approved';pur.approvedBy=currentUser?.name||'النظام';pur.approvedAt=now();audit('اعتماد فاتورة مشتريات',`${pur.number} — ${pur.approvedBy}`);saveDB();closeModal();render();toast('تم اعتماد الفاتورة وأصبحت جاهزة للتصدير إلى سمارت')}
 
 
@@ -457,9 +494,9 @@ function bindPage(route){
  if(route==='purchases'){ $('#newPurchase').onclick=()=>hasPerm('purchases.add')?purchaseModal():toast('ليس لديك صلاحية إنشاء فاتورة');$('#pageHost').onclick=e=>{const review=e.target.closest('[data-review-purchase]'),ex=e.target.closest('[data-export-purchase]'),wa=e.target.closest('[data-whatsapp-purchase]'),del=e.target.closest('[data-delete-purchase]');if(review){if(!hasPerm('purchases.review')&&!hasPerm('purchases.approve')&&!hasPerm('purchases.export'))return toast('ليس لديك صلاحية مراجعة الفواتير');reviewPurchaseModal(db.purchases.find(x=>x.id===review.dataset.reviewPurchase));return}if(ex){if(!hasPerm('purchases.export'))return toast('ليس لديك صلاحية التصدير');const pur=db.purchases.find(x=>x.id===ex.dataset.exportPurchase);if(purchaseStatus(pur)!=='approved')return toast('يجب اعتماد الفاتورة قبل تصديرها');exportSmart(pur)}if(wa){if(!hasPerm('purchases.whatsapp'))return toast('ليس لديك صلاحية إرسال واتساب');sendWhatsApp(db.purchases.find(x=>x.id===wa.dataset.whatsappPurchase))}if(del&&!hasPerm('purchases.delete'))return toast('ليس لديك صلاحية حذف الفاتورة');if(del&&confirm('حذف الفاتورة؟')){const pid=del.dataset.deletePurchase;Promise.all([deleteCloudWhere(CLOUD_TABLES.purchaseItems,'purchase_id',pid),deleteCloudRow(CLOUD_TABLES.purchases,pid)]).then(()=>{db.purchases=db.purchases.filter(x=>x.id!==pid);saveLocal();audit('حذف فاتورة مشتريات',pid);render();toast('تم حذف الفاتورة من جميع الأجهزة')}).catch(()=>toast('تعذر حذف الفاتورة من السحابة'))}}}
  if(route==='reports'){const input=$('#reportSearch');let timer;input.oninput=()=>{clearTimeout(timer);timer=setTimeout(()=>{reportQuery=input.value;$('#reportResults').innerHTML=renderReportTable()},160)};$('#clearReportSearch').onclick=()=>{reportQuery='';input.value='';$('#reportResults').innerHTML=renderReportTable();input.focus()};$('#printReport').onclick=()=>hasPerm('reports.print')?printWarehouseFormal():toast('ليس لديك صلاحية الطباعة');const sf=$('#supplierReportFilter');if(sf){bindSupplierCombo(sf,v=>{supplierReportFilter=v;$('#supplierReportResults').innerHTML=renderSupplierReport()});sf.addEventListener('change',()=>{supplierReportFilter=sf.value;$('#supplierReportResults').innerHTML=renderSupplierReport()})};$('#printSupplierReport').onclick=()=>hasPerm('reports.print')?printSupplierFormal():toast('ليس لديك صلاحية الطباعة');$('#reportResults').onclick=e=>{const report=e.target.closest('[data-product-report]');if(report){productReportModal(report.dataset.productReport);return}const b=e.target.closest('[data-copy-barcode]');if(b)copyText(b.dataset.copyBarcode,'تم نسخ الباركود')}}
  if(route==='audit')$('#clearAudit').onclick=()=>{if(!hasPerm('audit.clear'))return toast('ليس لديك صلاحية مسح سجل الرقابة');if(confirm('مسح سجل الرقابة؟')){db.audit=[];saveDB();render()}};
- if(route==='settings'){ $('#settingsForm').onsubmit=e=>{e.preventDefault();if(!hasPerm('settings.manage'))return toast('ليس لديك صلاحية تعديل الإعدادات');db.settings.business=$('#businessName').value;db.settings.phone=$('#businessPhone').value;db.settings.defaultSupplier=$('#defaultSupplier').value.trim()||'مورد عام';db.settings.defaultUnitCode=$('#defaultUnitCode').value.trim()||'u01';db.settings.smartTax=$('#smartTax').value.trim()||'15%';db.settings.suppliers=[...new Set($('#supplierList').value.split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean))];if(!db.settings.suppliers.includes('مورد عام'))db.settings.suppliers.unshift('مورد عام');saveDB();toast('تم الحفظ')};$('#importSuppliersBtn').onclick=()=>$('#supplierFile').click();$('#supplierFile').onchange=e=>importSuppliers(e.target.files[0]);$('#backupBtn').onclick=backup;$('#restoreBtn').onclick=()=>$('#restoreFile').click();$('#restoreFile').onchange=e=>restore(e.target.files[0]);$('#resetBtn').onclick=()=>{if(confirm('سيتم مسح جميع البيانات نهائيًا. متابعة؟')){localStorage.removeItem(DB_KEY);db=structuredClone(defaultDB);saveDB();currentUser=db.users[0];audit('إعادة تهيئة البرنامج');navigate('dashboard')}}}
+ if(route==='settings'){ $('#settingsForm').onsubmit=e=>{e.preventDefault();if(!hasPerm('settings.manage'))return toast('ليس لديك صلاحية تعديل الإعدادات');db.settings.business=$('#businessName').value;db.settings.phone=$('#businessPhone').value;db.settings.defaultSupplier=$('#defaultSupplier').value.trim()||'مورد عام';const mapText=$('#unitCodeMap')?.value||'';db.settings.unitCodeMap={};mapText.split(/\r?\n/).forEach(line=>{const m=line.split(/=|:/);if(m.length>=2){const u=m.shift().trim(),c=m.join('=').trim();if(u&&c)db.settings.unitCodeMap[u]=c}});db.settings.defaultUnitCode='';db.settings.smartTax=$('#smartTax').value.trim()||'15%';db.settings.suppliers=[...new Set($('#supplierList').value.split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean))];if(!db.settings.suppliers.includes('مورد عام'))db.settings.suppliers.unshift('مورد عام');saveDB();toast('تم الحفظ')};$('#importSuppliersBtn').onclick=()=>$('#supplierFile').click();$('#supplierFile').onchange=e=>importSuppliers(e.target.files[0]);$('#backupBtn').onclick=backup;$('#restoreBtn').onclick=()=>$('#restoreFile').click();$('#restoreFile').onchange=e=>restore(e.target.files[0]);$('#resetBtn').onclick=()=>{if(confirm('سيتم مسح جميع البيانات نهائيًا. متابعة؟')){localStorage.removeItem(DB_KEY);db=structuredClone(defaultDB);saveDB();currentUser=db.users[0];audit('إعادة تهيئة البرنامج');navigate('dashboard')}}}
 }
-function productModal(p){modal(p?'تعديل الصنف':'إضافة صنف',`<form id="productForm" class="form-grid"><div class="field"><label>رقم الصنف في سمارت</label><input id="pCode" value="${esc(p?.smartCode||'')}" required></div><div class="field"><label>الباركود</label><div class="barcode-entry"><input id="pBarcode" value="${esc(p?.barcode||'')}" required inputmode="numeric"><button type="button" class="btn primary scan-camera" id="scanProductBarcode">📷</button></div><small class="barcode-help">يدوي، قارئ خارجي، أو كاميرا الجوال.</small></div><div class="field span-2"><label>اسم الصنف</label><input id="pName" value="${esc(p?.name||'')}" required></div><div class="field"><label>سعر التكلفة</label><input id="pCost" type="number" step="0.0001" value="${p?.cost||''}" required></div><div class="field"><label>كود الوحدة لسمارت</label><input id="pUnitCode" value="${esc(p?.unitCode||db.settings.defaultUnitCode||'u01')}" required></div><div class="field"><label>الوحدة</label><input id="pUnit" value="${esc(p?.unit||'حبة')}"></div><div class="field"><label>الضريبة</label><input id="pTax" value="${esc(p?.taxRate||'15%')}"></div><div class="span-3"><button class="btn primary">حفظ</button></div></form>`,()=>{$('#scanProductBarcode').onclick=()=>startBarcodeScanner($('#pBarcode'));$('#productForm').onsubmit=e=>{e.preventDefault();const obj=p||{id:id('p')};obj.smartCode=$('#pCode').value.trim();obj.barcode=$('#pBarcode').value.trim();obj.name=$('#pName').value.trim();obj.cost=num($('#pCost').value);obj.unitCode=$('#pUnitCode').value.trim()||'u01';obj.unit=$('#pUnit').value.trim()||'حبة';obj.taxRate=$('#pTax').value.trim()||'15%';if(!p)db.products.unshift(obj);productsNeedSync=true;audit(p?'تعديل صنف':'إضافة صنف',obj.name);closeModal();render()}})}
+function productModal(p){modal(p?'تعديل الصنف':'إضافة صنف',`<form id="productForm" class="form-grid"><div class="field"><label>رقم الصنف في سمارت</label><input id="pCode" value="${esc(p?.smartCode||'')}" required></div><div class="field"><label>الباركود</label><div class="barcode-entry"><input id="pBarcode" value="${esc(p?.barcode||'')}" required inputmode="numeric"><button type="button" class="btn primary scan-camera" id="scanProductBarcode">📷</button></div><small class="barcode-help">يدوي، قارئ خارجي، أو كاميرا الجوال.</small></div><div class="field span-2"><label>اسم الصنف</label><input id="pName" value="${esc(p?.name||'')}" required></div><div class="field"><label>سعر التكلفة</label><input id="pCost" type="number" step="0.0001" value="${p?.cost||''}" required></div><div class="field"><label>كود الوحدة لسمارت</label><input id="pUnitCode" value="${esc(p?.unitCode||db.settings.unitCodeMap?.[p?.unit||'']||'')}" required></div><div class="field"><label>الوحدة</label><input id="pUnit" value="${esc(p?.unit||'حبة')}"></div><div class="field"><label>الضريبة</label><input id="pTax" value="${esc(p?.taxRate||'15%')}"></div><div class="span-3"><button class="btn primary">حفظ</button></div></form>`,()=>{$('#scanProductBarcode').onclick=()=>startBarcodeScanner($('#pBarcode'));$('#productForm').onsubmit=e=>{e.preventDefault();const obj=p||{id:id('p')};obj.smartCode=$('#pCode').value.trim();obj.barcode=$('#pBarcode').value.trim();obj.name=$('#pName').value.trim();obj.cost=num($('#pCost').value);obj.unitCode=$('#pUnitCode').value.trim();if(obj.unitCode)db.settings.unitCodeMap[obj.unit||'حبة']=obj.unitCode;obj.unit=$('#pUnit').value.trim()||'حبة';obj.taxRate=$('#pTax').value.trim()||'15%';if(!p)db.products.unshift(obj);productsNeedSync=true;audit(p?'تعديل صنف':'إضافة صنف',obj.name);closeModal();render()}})}
 function userModal(u){
  const role=u?.role||'عامل',perms=Object.assign(defaultPermissionsForRole(role),u?.permissions||{});
  const groups=[...new Set(PERMISSION_DEFS.map(x=>x[1]))];
@@ -473,57 +510,119 @@ function userModal(u){
  })
 }
 function purchaseModal(){
- let items=[];
- modal('فاتورة استلام جديدة',`<form id="purchaseHead" class="form-grid" novalidate>
-  <div class="field"><label>المورد</label>${supplierSelectMarkup('supplier',db.settings.defaultSupplier||'مورد عام','ابحث باسم المورد…')}<small class="muted">المورد لا يدخل ضمن أعمدة ملف سمارت، لكنه يُحفظ داخل الفاتورة للمتابعة.</small></div>
-  <div class="field"><label>التاريخ</label><input id="purchaseDate" type="date" value="${dateOnly()}"></div>
-  <div class="field"><label>الباركود أو البحث عن صنف</label>${barcodeField('purchaseSearch','اكتب أو امسح الباركود')}</div>
-  <div class="field"><label>الكمية</label><input id="purchaseQty" type="number" min="1" value="1"></div>
-  <div class="field"><label>Net Unit Cost</label><input id="purchaseCost" type="number" step="0.0001" min="0"></div>
-  <div class="field"><label>Product Variant (اختياري)</label><input id="purchaseVariant" placeholder="مثال: Red"></div>
-  <div class="field"><label>Tax Rate Name</label><input id="purchaseTax" value="No Tax"></div>
-  <div class="field"><label>Discount</label><input id="purchaseDiscount" value="0%" placeholder="0%"></div>
-  <div class="field"><label>Expiry (اختياري)</label><input id="purchaseExpiry" type="date"></div>
-  <div class="field" style="align-self:end"><button id="addPurchaseItem" class="btn secondary" type="button">إضافة الصنف</button></div>
-  <div class="span-3" id="purchaseNotFound" style="display:none"><div class="note"><b>الصنف غير موجود في قاعدة الأصناف.</b> <button type="button" id="showNewPurchaseProduct" class="btn secondary" style="margin-inline-start:8px">＋ إضافة صنف جديد</button></div></div>
-  <div class="span-3" id="newPurchaseProductBox" style="display:none;border:1px solid var(--line);border-radius:14px;padding:14px;background:#f8fbfc">
-   <div style="font-weight:800;margin-bottom:10px">إضافة صنف جديد إلى قاعدة الأصناف</div>
-   <div class="form-grid">
-    <div class="field"><label>Product Code في سمارت *</label><input id="newPurCode" placeholder="رقم الصنف في سمارت"></div>
-    <div class="field"><label>الباركود *</label><div class="barcode-entry"><input id="newPurBarcode" inputmode="numeric"><button type="button" class="btn primary scan-camera" id="scanNewPurBarcode">📷</button></div></div>
-    <div class="field"><label>اسم الصنف *</label><input id="newPurName"></div>
-    <div class="field"><label>التكلفة *</label><input id="newPurCost" type="number" step="0.0001" min="0"></div>
-    <div class="field"><label>الضريبة</label><input id="newPurTax" value="No Tax"></div>
-    <div class="field"><label>Unit Code في سمارت</label><input id="newPurUnitCode" value="${esc(db.settings.defaultUnitCode||'u01')}" required></div><div class="field"><label>الوحدة</label><input id="newPurUnit" value="حبة"></div>
+ let items=[],selectedProduct=null;
+ modal('فاتورة استلام جديدة',`<div class="purchase-modal"><form id="purchaseHead" novalidate>
+  <section class="purchase-section">
+   <h4>بيانات الفاتورة</h4>
+   <div class="purchase-head-grid">
+    <div class="field"><label>المورد</label>${supplierSelectMarkup('supplier',db.settings.defaultSupplier||'مورد عام','ابحث بجزء من اسم المورد…')}<small class="muted">المورد محفوظ للمتابعة داخل البرنامج ولا يدخل في ملف سمارت.</small></div>
+    <div class="field"><label>تاريخ الاستلام</label><input id="purchaseDate" type="date" value="${dateOnly()}"></div>
    </div>
-   <div class="actions" style="margin-top:10px"><button type="button" id="saveNewPurchaseProduct" class="btn primary">حفظ الصنف وإضافته للفاتورة</button><button type="button" id="cancelNewPurchaseProduct" class="btn secondary">إلغاء</button></div>
-   <small style="display:block;margin-top:8px;color:var(--muted)">Product Code مطلوب حتى يقبل سمارت ملف المشتريات. إذا كان الصنف جديدًا في سمارت نفسه، أنشئ له كودًا في سمارت أولًا.</small>
+  </section>
+
+  <section class="purchase-section">
+   <h4>إضافة صنف للفاتورة</h4>
+   <div class="purchase-entry-grid">
+    <div class="field"><label>بحث بالصنف / الباركود / آخر الأرقام</label>${barcodeField('purchaseSearch','اكتب اسم الصنف أو الباركود')}</div>
+    <div class="field"><label>الكمية</label><input id="purchaseQty" type="number" min="1" value="1"></div>
+    <div class="field"><label>تكلفة الوحدة</label><input id="purchaseCost" type="number" step="0.0001" min="0"></div>
+    <div class="field"><button id="addPurchaseItem" class="btn primary wide" type="button">إضافة للفاتورة</button></div>
+   </div>
+
+   <div id="purchaseSelected" class="purchase-selected hidden">
+    <div><span>الصنف</span><b id="selProductName">—</b></div>
+    <div><span>Product Code</span><b id="selProductCode">—</b></div>
+    <div><span>الوحدة</span><b id="selProductUnit">—</b></div>
+    <div><span>Unit Code</span><b id="selProductUnitCode">—</b></div>
+   </div>
+
+   <details style="margin-top:10px">
+    <summary style="cursor:pointer;font-weight:700">خيارات سمارت الإضافية</summary>
+    <div class="purchase-advanced">
+     <div class="field"><label>Unit Code</label><input id="purchaseUnitCode" placeholder="يؤخذ من الصنف إن وجد"></div>
+     <div class="field"><label>Product Variant</label><input id="purchaseVariant" placeholder="اختياري"></div>
+     <div class="field"><label>Tax Rate Name</label><input id="purchaseTax" placeholder="مثال 15% أو No Tax"></div>
+     <div class="field"><label>Discount</label><input id="purchaseDiscount" value="0%" placeholder="0%"></div>
+     <div class="field"><label>Expiry</label><input id="purchaseExpiry" type="date"></div>
+    </div>
+   </details>
+
+   <div class="span-3" id="purchaseNotFound" style="display:none;margin-top:10px"><div class="note"><b>الصنف غير موجود في قاعدة الأصناف.</b> استخدم شاشة الأصناف لاستيراد أحدث ملف من سمارت.</div></div>
+  </section>
+
+  <section class="purchase-section">
+   <div class="card-head"><h4 style="margin:0">أصناف الفاتورة</h4><span id="purchaseCountBadge" class="badge">0 صنف</span></div>
+   <div id="purchaseItems"></div>
+   <div class="purchase-total"><span>الإجمالي: <b id="purchaseGrandTotal">0.00</b> ر.س</span></div>
+  </section>
+
+  <div class="toolbar" style="justify-content:flex-end">
+   <button id="savePurchaseBtn" class="btn primary" type="button">حفظ وإرسال للمراجعة</button>
   </div>
-  <div class="span-3" id="purchaseItems"></div>
-  <div class="span-3"><button id="savePurchaseBtn" class="btn primary" type="button">حفظ الفاتورة</button></div>
- </form>`,()=>{
+ </form></div>`,()=>{
   bindSupplierCombo($('#supplier'));
-  const draw=()=>$('#purchaseItems').innerHTML=`<div class="table-wrap"><table><thead><tr><th>الصنف</th><th>الكمية</th><th>التكلفة</th><th>الضريبة</th><th>الخصم</th><th>الصلاحية</th><th></th></tr></thead><tbody>${items.length?items.map((i,n)=>`<tr><td>${esc(db.products.find(p=>p.id===i.productId)?.name||'صنف غير معروف')}</td><td>${i.qty}</td><td>${money(i.cost)}</td><td>${esc(i.taxRate||'No Tax')}</td><td>${esc(i.discount||'0%')}</td><td>${esc(i.expiry||'—')}</td><td><button type="button" data-remove-item="${n}">حذف</button></td></tr>`).join(''):`<tr><td colspan="7" class="empty">لم تضاف أصناف</td></tr>`}</tbody></table></div>`;
-  const fillCost=()=>{const p=productByQuery($('#purchaseSearch').value);if(p){$('#purchaseCost').value=p.cost;$('#purchaseTax').value=p.purchaseTaxRate||p.taxRateName||'No Tax'}};
-  const addItem=()=>{const p=productByQuery($('#purchaseSearch').value);if(!p)return toast('الصنف غير موجود');const qty=num($('#purchaseQty').value);if(qty<=0)return toast('أدخل كمية صحيحة');const cost=num($('#purchaseCost').value||p.cost);const variant=($('#purchaseVariant').value||'').trim();const taxRate=($('#purchaseTax').value||'').trim()||'No Tax';let discount=($('#purchaseDiscount').value||'').trim()||'0%';if(/^\d+(?:\.\d+)?$/.test(discount))discount+='%';const expiry=($('#purchaseExpiry').value||'').trim();items.push({productId:p.id,unitCode:p.unitCode||db.settings.defaultUnitCode||'u01',qty,cost,variant,taxRate,discount,expiry});$('#purchaseSearch').value='';$('#purchaseQty').value='1';$('#purchaseCost').value='';$('#purchaseVariant').value='';$('#purchaseTax').value='No Tax';$('#purchaseDiscount').value='0%';$('#purchaseExpiry').value='';draw();$('#purchaseSearch').focus()};
-  const savePurchase=()=>{try{if(!items.length)return toast('أضف صنفًا واحدًا على الأقل');const supplier=($('#supplier').value||'').trim()||'مورد عام';const purchaseDate=$('#purchaseDate').value||dateOnly();const stamp=new Date().toISOString().slice(0,10).split('-').join('');const rec={id:id('pur'),number:'PUR-'+stamp+'-'+String(db.purchases.length+1).padStart(4,'0'),supplier,date:purchaseDate,items:items.map(i=>({...i})),user:currentUser?.name||'أبوقصي',status:'pending',approvedBy:'',approvedAt:'',createdAt:now()};db.purchases.unshift(rec);db.audit.unshift({id:id('a'),at:now(),user:currentUser?.name||'أبوقصي',action:'استلام مشتريات',detail:rec.number});db.audit=db.audit.slice(0,1000);saveDB();const saved=JSON.parse(localStorage.getItem(DB_KEY)||'{}').purchases||[];if(!saved.some(x=>x.id===rec.id))throw new Error('تعذر تأكيد حفظ الفاتورة');closeModal();render();toast('تم حفظ الفاتورة وبانتظار مراجعة المشرف')}catch(err){console.error(err);toast('تعذر حفظ الفاتورة: '+(err?.message||'خطأ غير معروف'))}};
-  draw();
-  const showMissing=(value)=>{const box=$('#purchaseNotFound'),newBox=$('#newPurchaseProductBox');if(box)box.style.display=value?'block':'none';if(value&&$('#newPurBarcode'))$('#newPurBarcode').value=String(value||'').trim();if(!value&&newBox)newBox.style.display='none'};
-  const resolvePurchase=(value,{autoAdd=false}={})=>{const p=productByQuery(value);if(!p){if(value){showMissing(value);toast('لا يوجد صنف مطابق — يمكنك إضافته كصنف جديد')}return}showMissing('');$('#purchaseCost').value=p.cost;$('#purchaseTax').value=p.purchaseTaxRate||p.taxRateName||p.taxRate||'No Tax';$('#purchaseQty').focus();if(autoAdd)setTimeout(addItem,80)};
-  const openNewProduct=()=>{const box=$('#newPurchaseProductBox');box.style.display='block';$('#newPurBarcode').value=$('#purchaseSearch').value.trim();$('#newPurCost').value=$('#purchaseCost').value||'';$('#newPurTax').value=$('#purchaseTax').value||'No Tax';setTimeout(()=>$('#newPurCode').focus(),30)};
-  const closeNewProduct=()=>{$('#newPurchaseProductBox').style.display='none'};
-  const saveNewProductAndAdd=()=>{const smartCode=$('#newPurCode').value.trim(),barcode=$('#newPurBarcode').value.trim(),name=$('#newPurName').value.trim(),cost=num($('#newPurCost').value),taxRate=$('#newPurTax').value.trim()||'No Tax',unitCode=$('#newPurUnitCode').value.trim()||db.settings.defaultUnitCode||'u01',unit=$('#newPurUnit').value.trim()||'حبة';if(!smartCode)return toast('أدخل Product Code الخاص بسمارت');if(!barcode)return toast('أدخل الباركود');if(!name)return toast('أدخل اسم الصنف');if(db.products.some(p=>String(p.smartCode||'')===smartCode))return toast('Product Code موجود مسبقًا');if(db.products.some(p=>String(p.barcode||'')===barcode))return toast('الباركود موجود مسبقًا');const p={id:id('p'),smartCode,barcode,name,cost,unit,unitCode:unitCode||db.settings.defaultUnitCode||'u01',taxRate,purchaseTaxRate:taxRate,category:''};db.products.unshift(p);productsNeedSync=true;saveDB();db.audit.unshift({id:id('a'),at:now(),user:currentUser?.name||'النظام',action:'إضافة صنف من المشتريات',detail:`${name} — ${smartCode}`});db.audit=db.audit.slice(0,500);saveDB();$('#purchaseSearch').value=barcode;$('#purchaseCost').value=cost;$('#purchaseTax').value=taxRate;showMissing('');closeNewProduct();toast('تم حفظ الصنف الجديد وإضافته لقاعدة الأصناف');setTimeout(()=>addItem(),100)};
-  bindBarcodeControls($('#purchaseSearch'),resolvePurchase);
-  $('#purchaseSearch').addEventListener('input',()=>{if(!$('#purchaseSearch').value.trim())showMissing('')});
-  $('#purchaseSearch').addEventListener('change',fillCost);
-  $('#addPurchaseItem').addEventListener('click',addItem);
-  $('#showNewPurchaseProduct').addEventListener('click',openNewProduct);
-  $('#cancelNewPurchaseProduct').addEventListener('click',closeNewProduct);
-  $('#saveNewPurchaseProduct').addEventListener('click',saveNewProductAndAdd);
-  $('#scanNewPurBarcode').addEventListener('click',()=>startBarcodeScanner($('#newPurBarcode')));
-  $('#purchaseItems').addEventListener('click',e=>{const b=e.target.closest('[data-remove-item]');if(b){items.splice(num(b.dataset.removeItem),1);draw()}});
-  $('#savePurchaseBtn').addEventListener('click',savePurchase);
-  $('#purchaseHead').addEventListener('submit',e=>{e.preventDefault();savePurchase()});
+
+  const draw=()=>{
+   const total=items.reduce((a,i)=>a+num(i.qty)*num(i.cost),0);
+   $('#purchaseCountBadge').textContent=`${items.length} صنف`;
+   $('#purchaseGrandTotal').textContent=money(total);
+   $('#purchaseItems').innerHTML=`<div class="table-wrap"><table><thead><tr><th>الصنف</th><th>Product Code</th><th>Unit Code</th><th>الكمية</th><th>التكلفة</th><th>الضريبة</th><th>الصلاحية</th><th></th></tr></thead><tbody>${items.length?items.map((i,n)=>{const p=db.products.find(p=>p.id===i.productId);return `<tr><td>${esc(p?.name||'صنف غير معروف')}</td><td>${esc(p?.smartCode||'')}</td><td class="${i.unitCode?'':'smart-code-missing'}">${esc(i.unitCode||'غير محدد')}</td><td>${i.qty}</td><td>${money(i.cost)}</td><td>${esc(i.taxRate||'')}</td><td>${esc(i.expiry||'—')}</td><td><button type="button" data-remove-item="${n}">حذف</button></td></tr>`}).join(''):`<tr><td colspan="8" class="empty">لم تضاف أصناف بعد</td></tr>`}</tbody></table></div>`;
+  };
+
+  const showProduct=p=>{
+   selectedProduct=p||null;
+   const box=$('#purchaseSelected'),nf=$('#purchaseNotFound');
+   if(!p){box.classList.add('hidden');nf.style.display=$('#purchaseSearch').value.trim()?'block':'none';return}
+   nf.style.display='none';box.classList.remove('hidden');
+   $('#selProductName').textContent=p.name||'—';
+   $('#selProductCode').textContent=p.smartCode||'—';
+   $('#selProductUnit').textContent=p.unit||'—';
+   $('#selProductUnitCode').textContent=p.unitCode||db.settings.unitCodeMap?.[p.unit||'']||'غير محدد';
+   $('#purchaseCost').value=p.cost??'';
+   $('#purchaseUnitCode').value=p.unitCode||db.settings.unitCodeMap?.[p.unit||'']||'';
+   $('#purchaseTax').value=p.purchaseTaxRate||p.taxRateName||p.taxRate||db.settings.smartTax||'';
+   $('#purchaseQty').focus();
+  };
+
+  const resolve=()=>showProduct(productByQuery($('#purchaseSearch').value));
+  bindBarcodeControls($('#purchaseSearch'),resolve);
+  $('#purchaseSearch').addEventListener('change',resolve);
+  $('#purchaseSearch').addEventListener('blur',()=>{if($('#purchaseSearch').value.trim())resolve()});
+
+  $('#addPurchaseItem').onclick=()=>{
+   const p=selectedProduct||productByQuery($('#purchaseSearch').value);
+   if(!p)return toast('اختر صنفًا صحيحًا أولًا');
+   const qty=num($('#purchaseQty').value),cost=num($('#purchaseCost').value);
+   if(qty<=0)return toast('أدخل كمية صحيحة');
+   if(cost<0)return toast('أدخل تكلفة صحيحة');
+   let discount=($('#purchaseDiscount').value||'0%').trim()||'0%';
+   if(/^\d+(?:\.\d+)?$/.test(discount))discount+='%';
+   const unitCode=($('#purchaseUnitCode').value||p.unitCode||db.settings.unitCodeMap?.[p.unit||'']||'').trim();
+   items.push({
+    productId:p.id,unitCode,qty,cost,
+    variant:($('#purchaseVariant').value||'').trim(),
+    taxRate:($('#purchaseTax').value||p.taxRate||'').trim(),
+    discount,
+    expiry:($('#purchaseExpiry').value||'').trim()
+   });
+   if(unitCode){
+    p.unitCode=unitCode;
+    db.settings.unitCodeMap[p.unit||'حبة']=unitCode;
+    productsNeedSync=true;saveLocal();
+   }
+   $('#purchaseSearch').value='';$('#purchaseQty').value='1';$('#purchaseCost').value='';
+   $('#purchaseUnitCode').value='';$('#purchaseVariant').value='';$('#purchaseDiscount').value='0%';$('#purchaseExpiry').value='';
+   selectedProduct=null;$('#purchaseSelected').classList.add('hidden');draw();$('#purchaseSearch').focus();
+  };
+
+  $('#purchaseItems').onclick=e=>{const b=e.target.closest('[data-remove-item]');if(b){items.splice(Number(b.dataset.removeItem),1);draw()}};
+
+  $('#savePurchaseBtn').onclick=()=>{
+   if(!items.length)return toast('أضف صنفًا واحدًا على الأقل');
+   const pur={id:id('pur'),number:'PUR-'+Date.now(),date:$('#purchaseDate').value||dateOnly(),supplier:($('#supplier').value||'مورد عام').trim()||'مورد عام',items,user:currentUser.name,status:'pending',createdAt:now()};
+   db.purchases.unshift(pur);audit('استلام مشتريات',`${pur.number} — ${pur.supplier} — بانتظار المراجعة`);closeModal();render();toast('تم حفظ الفاتورة وإرسالها للمراجعة');
+  };
+  draw();setTimeout(()=>$('#purchaseSearch')?.focus(),50);
  })
 }
 function normalizeHeader(v){return String(v??'').replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim().toLowerCase()}
@@ -566,12 +665,12 @@ async function importProducts(file,mode='merge'){
    const cost=num(val('التكلفة','سعر التكلفة','Net Unit Cost','Cost'));
    const salePrice=num(val('سعر البيع','Sale Price'));
    const unit=String(val('الوحدة','Unit')).trim()||'حبة';
-   const unitCode=String(val('كود الوحدة','Unit Code')).trim()||db.settings.defaultUnitCode||'u01';
+   const explicitUnitCode=String(val('كود الوحدة','Unit Code')).trim();
    const taxRate=String(val('الضريبة','Tax Rate Name','Tax')).trim()||db.settings.smartTax||'15%';
    const category=String(val('الفئات الأساسية','الفئة','Category')).trim();
    if(!name||(!smart&&!barcode)){skipped++;continue}
    const existing=(smart&&bySmart.get(smart))||(barcode&&byBarcode.get(barcode));
-   const dataObj={smartCode:smart,barcode,name,cost,salePrice,unit,unitCode,taxRate,category};
+   const unitCode=explicitUnitCode||(existing?.unitCode)||db.settings.unitCodeMap?.[unit]||'';const dataObj={smartCode:smart,barcode,name,cost,salePrice,unit,unitCode,taxRate,category};
    if(existing){
     const updatedObj=Object.assign({},existing,dataObj);
     const pos=target.findIndex(p=>p.id===existing.id);
