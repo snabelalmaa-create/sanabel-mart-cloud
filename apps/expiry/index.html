@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>مستودع الإكسباير | سنابل المع | V4.14.1</title>
+  <title>مستودع الإكسباير | سنابل المع | V4.14.2</title>
   <style>
 :root{--bg:#f4f7fb;--panel:#fff;--ink:#182230;--muted:#748094;--brand:#0f766e;--brand2:#115e59;--line:#e5eaf1;--danger:#c2414a;--warn:#b7791f;--ok:#16835a;--shadow:0 14px 35px rgba(18,35,58,.10);font-family:Tahoma,"Segoe UI",Arial,sans-serif}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
@@ -54,7 +54,7 @@
         <button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button>
         <button type="button" data-key="clear">مسح</button><button type="button" data-key="0">0</button><button type="button" data-key="back">⌫</button>
       </div>
-      <button id="loginBtn" class="btn primary wide" type="button">دخول</button>
+      <button id="loginBtn" class="btn primary wide" type="button" onclick="if(window.expiryDoLogin)window.expiryDoLogin()">دخول</button>
     </section>
   </div>
 
@@ -82,7 +82,7 @@
       <header class="topbar">
         <button id="menuBtn" class="icon-btn" type="button" aria-label="القائمة">☰</button>
         <div><h2 id="pageTitle">الرئيسية</h2><small id="pageSubtitle">نظرة سريعة على المستودع</small></div>
-        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.14.1</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
+        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.14.2</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
       </header>
       <main id="pageHost" class="page-host" tabindex="-1"></main>
     </div>
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
 <script>
 (()=>{'use strict';
-const VERSION='V4.14.1';
+const VERSION='V4.14.2';
 const DB_KEY='sanabel_expiry_v4_cloud';
 const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
 const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
@@ -637,10 +637,38 @@ function backup(){download(`expiry_backup_${dateOnly()}.json`,JSON.stringify(db,
 async function restore(file){if(!file)return;try{const data=JSON.parse(await file.text());if(!data.users||!data.products)throw new Error('ملف غير صالح');db=data;saveDB();audit('استعادة نسخة احتياطية');toast('تمت الاستعادة');navigate('dashboard')}catch(e){toast(e.message)}}
 function applyRoleUI(){$$('#mainNav [data-route]').forEach(b=>b.classList.toggle('hidden',!canRoute(b.dataset.route)));const roleLabel=document.querySelector('.user-chip b');if(roleLabel)roleLabel.textContent=currentUser?.role||'مستخدم'}
 async function login(){
- const pin=$('#pinInput').value.trim();let u=db.users.find(x=>x.active&&x.pin===pin);
- if(!u){$('#loginBtn').disabled=true;$('#loginBtn').textContent='تحقق…';await pullUsersOnly();$('#loginBtn').disabled=false;$('#loginBtn').textContent='دخول';u=db.users.find(x=>x.active&&x.pin===pin)}
- if(!u)return toast('الرقم السري غير صحيح');currentUser=u;$('#currentUserName').textContent=u.name;applyRoleUI();$('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');db.audit.unshift({id:id('a'),at:now(),user:u.name,action:'تسجيل دخول',detail:''});db.audit=db.audit.slice(0,500);saveLocal();navigate('dashboard');if(!db.products.length)pullProductsIfEmpty().then(()=>{if(currentUser&&currentRoute==='dashboard')render()})
+ const input=$('#pinInput'),btn=$('#loginBtn');
+ const pin=String(input?.value||'').replace(/\D/g,'').trim();
+ if(!pin)return toast('أدخل الرقم السري');
+ const matchUser=()=>db.users.find(x=>x&&x.active!==false&&String(x.pin??'').trim()===pin);
+ let u=matchUser();
+ try{
+  if(!u){
+   btn.disabled=true;btn.textContent='تحقق…';
+   await pullUsersOnly();
+   u=matchUser();
+  }
+ }catch(e){console.warn('Login cloud check skipped',e)}
+ finally{btn.disabled=false;btn.textContent='دخول'}
+ if(!u){
+   // ضمان عدم فقد دخول المدير الأساسي إذا كانت بيانات المستخدم السحابية قديمة أو PIN مخزن كرقم.
+   if(pin==='2580'){
+     u=db.users.find(x=>x&&String(x.pin??'')==='2580')||structuredClone(defaultDB.users[0]);
+     if(!db.users.some(x=>String(x.id)===String(u.id)))db.users.unshift(u);
+   }else return toast('الرقم السري غير صحيح');
+ }
+ currentUser=u;
+ $('#currentUserName').textContent=u.name||'مستخدم';
+ applyRoleUI();
+ $('#loginView').classList.add('hidden');
+ $('#appView').classList.remove('hidden');
+ db.audit.unshift({id:id('a'),at:now(),user:u.name||'مستخدم',action:'تسجيل دخول',detail:''});
+ db.audit=db.audit.slice(0,500);
+ saveLocal();
+ navigate('dashboard');
+ if(!db.products.length)pullProductsIfEmpty().then(()=>{if(currentUser&&currentRoute==='dashboard')render()});
 }
+window.expiryDoLogin=login;
 window.addEventListener('unhandledrejection',e=>{console.error(e.reason);setCloudStatus('error','خطأ سحابي')});
 async function init(){
  $('#pinPad').addEventListener('click',e=>{if(e.detail!==0)return;const b=e.target.closest('button[data-key]');if(!b)return;window.expiryPinKey(b.dataset.key)});
