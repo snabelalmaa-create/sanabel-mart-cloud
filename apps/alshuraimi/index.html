@@ -514,12 +514,22 @@ function seedProperties(){
 function moneyProp(v){return Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function statusClass(s){return s==='مؤجر'?'rented':s==='صيانة'?'maintenance':''}
 function statusBadge(s){return s==='مؤجر'?'<span class="badge bad">مؤجر</span>':s==='صيانة'?'<span class="badge warn">صيانة</span>':'<span class="badge ok">متاح</span>'}
+function allowedPropertyCenters(){
+  const all=propLoad(PROP_CENTERS_KEY);
+  if(typeof userCanCenter!=='function')return all;
+  return all.filter(c=>userCanCenter('properties',c.id,c.name||c['مركز التكلفة']||''));
+}
 function renderProperties(){
   seedProperties();
-  const centers=propLoad(PROP_CENTERS_KEY), units=propLoad(PROP_UNITS_KEY);
-  if(!currentPropertyCenter && centers.length) currentPropertyCenter=centers[0].id;
-  const center=centers.find(c=>c.id===currentPropertyCenter)||centers[0];
-  const cUnits=units.filter(u=>!center||u.center_id===center.id);
+  const allCenters=propLoad(PROP_CENTERS_KEY), centers=allowedPropertyCenters(), units=propLoad(PROP_UNITS_KEY);
+  if(!centers.length){
+    const wrap=byId('properties');
+    wrap.innerHTML='<div class="panel access-denied"><div class="lock">🔒</div><h3>لا توجد فروع عقارية مسموحة لهذا المستخدم</h3><p>حدد الفروع المسموحة من المستخدمون والصلاحيات ثم احفظ.</p></div>';
+    return;
+  }
+  if(!currentPropertyCenter || !centers.some(c=>String(c.id)===String(currentPropertyCenter))) currentPropertyCenter=centers[0].id;
+  const center=centers.find(c=>String(c.id)===String(currentPropertyCenter))||centers[0];
+  const cUnits=units.filter(u=>!center||String(u.center_id)===String(center.id));
   const total=cUnits.length, rented=cUnits.filter(u=>u.status==='مؤجر').length, available=cUnits.filter(u=>u.status==='متاح').length, maintenance=cUnits.filter(u=>u.status==='صيانة').length;
   const revenue=cUnits.filter(u=>u.status==='مؤجر').reduce((a,u)=>a+Number(u.rent||0),0), due=cUnits.reduce((a,u)=>a+Number(u.due||0),0), occ=total?Math.round((rented/total)*100):0;
   const wrap=byId('properties');
@@ -560,13 +570,14 @@ function unitCard(u){return `<div class="unit-card ${statusClass(u.status)}" dat
   <div class="unit-actions">${u.status==='مؤجر'?`<button class="primary-mini" onclick="unitAction('${u.id}','سداد')">سداد</button><button onclick="unitAction('${u.id}','تجديد')">تجديد</button><button onclick="unitAction('${u.id}','خروج')">خروج</button><button onclick="unitAction('${u.id}','تقرير')">تقرير</button><button onclick="openTenantMessage('${u.id}','عقد')">إرسال عقد</button><button onclick="openTenantMessage('${u.id}','سند')">إرسال سند</button>`:`<button class="primary-mini" onclick="unitAction('${u.id}','عقد')">عقد</button><button onclick="unitAction('${u.id}','مصروف')">مصروف</button><button onclick="unitAction('${u.id}','كهرباء')">كهرباء</button><button onclick="unitAction('${u.id}','تقرير')">تقرير</button>`}</div>
 </div>`}
 function filterUnits(){const q=(byId('propSearch')?.value||'').trim().toLowerCase(),t=byId('propTypeFilter')?.value||'all',s=byId('propStatusFilter')?.value||'all';document.querySelectorAll('#unitGrid .unit-card').forEach(card=>{const okQ=!q||card.dataset.search.includes(q),okT=t==='all'||card.dataset.type===t,okS=s==='all'||card.dataset.status===s;card.style.display=okQ&&okT&&okS?'block':'none'})}
-function openCenterForm(){byId('modalTitle').textContent='إضافة مركز تكلفة عقاري';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>اسم مركز التكلفة</label><input id="cc_name" placeholder="الفندق / الغربي / المحلات التجارية"></div><div class="field"><label>النوع</label><select id="cc_type"><option>شقق سكنية</option><option>محلات تجارية</option><option>مختلط</option><option>عام</option></select></div><div class="field"><label>الموقع</label><input id="cc_location" placeholder="المدينة / الحي"></div><div class="field"><label>ملاحظة</label><input id="cc_note"></div></div><div class="actions"><button class="success" onclick="saveCenter()">حفظ المركز</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
+function openCenterForm(){const cu=(typeof current==='function'?current():null);if(cu&&cu.role!=='مالك النظام'&&cu.role!=='مدير عام')return alert('إضافة فروع جديدة متاحة للمدير فقط');byId('modalTitle').textContent='إضافة مركز تكلفة عقاري';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>اسم مركز التكلفة</label><input id="cc_name" placeholder="الفندق / الغربي / المحلات التجارية"></div><div class="field"><label>النوع</label><select id="cc_type"><option>شقق سكنية</option><option>محلات تجارية</option><option>مختلط</option><option>عام</option></select></div><div class="field"><label>الموقع</label><input id="cc_location" placeholder="المدينة / الحي"></div><div class="field"><label>ملاحظة</label><input id="cc_note"></div></div><div class="actions"><button class="success" onclick="saveCenter()">حفظ المركز</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
 function saveCenter(){const name=byId('cc_name').value.trim();if(!name)return alert('أدخل اسم مركز التكلفة');const rows=propLoad(PROP_CENTERS_KEY);const id='cc_'+Date.now();rows.push({id,name,type:byId('cc_type').value,location:byId('cc_location').value,note:byId('cc_note').value});propSave(PROP_CENTERS_KEY,rows);currentPropertyCenter=id;closeModal();renderProperties()}
-function openUnitForm(){seedProperties();const centers=propLoad(PROP_CENTERS_KEY);byId('modalTitle').textContent='إضافة وحدة عقارية';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>مركز التكلفة</label><select id="u_center">${centers.map(c=>`<option value="${c.id}" ${c.id===currentPropertyCenter?'selected':''}>${c.name}</option>`).join('')}</select></div><div class="field"><label>النوع</label><select id="u_type"><option>شقة</option><option>محل</option></select></div><div class="field"><label>رقم الوحدة</label><input id="u_no" placeholder="101 / محل 1"></div><div class="field"><label>الحالة</label><select id="u_status"><option>متاح</option><option>مؤجر</option><option>صيانة</option></select></div><div class="field"><label>المستأجر</label><input id="u_tenant"></div><div class="field"><label>الإيجار الشهري</label><input id="u_rent" type="number" step="0.01"></div><div class="field"><label>المستحق</label><input id="u_due" type="number" step="0.01" value="0"></div><div class="field"><label>حساب الكهرباء</label><input id="u_electric"></div><div class="field"><label>آخر سداد</label><input id="u_last" type="date"></div><div class="field"><label>ملاحظة</label><input id="u_note"></div></div><div class="actions"><button class="success" onclick="saveUnit()">حفظ الوحدة</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
+function openUnitForm(){seedProperties();const centers=allowedPropertyCenters();if(!centers.length)return alert('لا توجد فروع مسموحة لك');byId('modalTitle').textContent='إضافة وحدة عقارية';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>مركز التكلفة</label><select id="u_center">${centers.map(c=>`<option value="${c.id}" ${c.id===currentPropertyCenter?'selected':''}>${c.name}</option>`).join('')}</select></div><div class="field"><label>النوع</label><select id="u_type"><option>شقة</option><option>محل</option></select></div><div class="field"><label>رقم الوحدة</label><input id="u_no" placeholder="101 / محل 1"></div><div class="field"><label>الحالة</label><select id="u_status"><option>متاح</option><option>مؤجر</option><option>صيانة</option></select></div><div class="field"><label>المستأجر</label><input id="u_tenant"></div><div class="field"><label>الإيجار الشهري</label><input id="u_rent" type="number" step="0.01"></div><div class="field"><label>المستحق</label><input id="u_due" type="number" step="0.01" value="0"></div><div class="field"><label>حساب الكهرباء</label><input id="u_electric"></div><div class="field"><label>آخر سداد</label><input id="u_last" type="date"></div><div class="field"><label>ملاحظة</label><input id="u_note"></div></div><div class="actions"><button class="success" onclick="saveUnit()">حفظ الوحدة</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
 
 function openBulkUnitForm(){
   seedProperties();
-  const centers=propLoad(PROP_CENTERS_KEY);
+  const centers=allowedPropertyCenters();
+  if(!centers.length)return alert('لا توجد فروع مسموحة لك');
   const activeCenter=centers.find(c=>c.id===currentPropertyCenter)||centers[0]||{};
   const defaultType=(activeCenter.type||'').includes('محلات')?'محل':'شقة';
   byId('modalTitle').textContent='إضافة وحدات جماعية';
@@ -612,7 +623,7 @@ function previewBulkUnits(){
   if(byId('bulkCount'))byId('bulkCount').textContent=`${nums.length} وحدة`;
   if(byId('bulkPreview'))byId('bulkPreview').innerHTML=preview||'<div class="empty">أدخل نطاق أرقام صحيح. الحد الأعلى 300 وحدة في العملية الواحدة.</div>';
 }
-function saveBulkUnits(){
+function saveBulkUnits(){const __centerId=byId('bu_center')?.value;const __centerObj=propLoad(PROP_CENTERS_KEY).find(c=>String(c.id)===String(__centerId));if(__centerObj&&typeof userCanCenter==='function'&&!userCanCenter('properties',__centerObj.id,__centerObj.name)){return alert('ليس لديك صلاحية على هذا الفرع');}
   const center=byId('bu_center').value, type=byId('bu_type').value, status=byId('bu_status').value;
   const nums=bulkUnitNumbers(); if(!nums.length)return alert('أدخل نطاق أرقام صحيح');
   const rows=propLoad(PROP_UNITS_KEY);
@@ -629,7 +640,7 @@ function saveBulkUnits(){
   alert(`تم إنشاء ${added} وحدة${skipped.length?`، وتم تخطي ${skipped.length} مكرر: ${skipped.join('، ')}`:''}`);
 }
 
-function saveUnit(){const no=byId('u_no').value.trim();if(!no)return alert('أدخل رقم الوحدة');const rows=propLoad(PROP_UNITS_KEY);rows.unshift({id:Date.now(),center_id:byId('u_center').value,type:byId('u_type').value,unit_no:no,status:byId('u_status').value,tenant:byId('u_tenant').value,rent:byId('u_rent').value,due:byId('u_due').value,last_payment:byId('u_last').value||'-',electric_account:byId('u_electric').value,note:byId('u_note').value});propSave(PROP_UNITS_KEY,rows);currentPropertyCenter=byId('u_center').value;closeModal();renderProperties();renderDashboard()}
+function saveUnit(){const __centerId=byId('u_center')?.value;const __centerObj=propLoad(PROP_CENTERS_KEY).find(c=>String(c.id)===String(__centerId));if(__centerObj&&typeof userCanCenter==='function'&&!userCanCenter('properties',__centerObj.id,__centerObj.name)){return alert('ليس لديك صلاحية على هذا الفرع');}const no=byId('u_no').value.trim();if(!no)return alert('أدخل رقم الوحدة');const rows=propLoad(PROP_UNITS_KEY);rows.unshift({id:Date.now(),center_id:byId('u_center').value,type:byId('u_type').value,unit_no:no,status:byId('u_status').value,tenant:byId('u_tenant').value,rent:byId('u_rent').value,due:byId('u_due').value,last_payment:byId('u_last').value||'-',electric_account:byId('u_electric').value,note:byId('u_note').value});propSave(PROP_UNITS_KEY,rows);currentPropertyCenter=byId('u_center').value;closeModal();renderProperties();renderDashboard()}
 
 function propertyCentersOptions(selected){
   return propLoad(PROP_CENTERS_KEY).map(c=>`<option value="${c.id}" ${String(c.id)===String(selected)?'selected':''}>${c.name}</option>`).join('');
@@ -644,7 +655,7 @@ function openEditUnitForm(unitId){
     <div class="form">
       <div class="field"><label>مركز التكلفة</label><select id="eu_center">${propertyCentersOptions(u.center_id)}</select></div>
       <div class="field"><label>النوع</label><select id="eu_type"><option ${u.type==='شقة'?'selected':''}>شقة</option><option ${u.type==='محل'?'selected':''}>محل</option></select></div>
-      <div class="field"><label>رقم الوحدة / المحل</label><input id="eu_no" value="${u.unit_no||''}" placeholder="101 / محل 1"></div>
+      <div class="field"><label>رقم الوحدة / المحل</label><input id="eu_no" value="${u.unit_no||''}" placeholder="101 / محل 1" ${u.status==='مؤجر'?'readonly title="لتغيير الشقة للمستأجر استخدم زر تعديل العقد / نقل الشقة"':''}></div>
       <div class="field"><label>الحالة</label><select id="eu_status"><option ${u.status==='متاح'?'selected':''}>متاح</option><option ${u.status==='مؤجر'?'selected':''}>مؤجر</option><option ${u.status==='صيانة'?'selected':''}>صيانة</option></select></div>
       <div class="field"><label>المستأجر الحالي</label><input id="eu_tenant" value="${u.tenant||''}"></div>
       <div class="field"><label>رقم الجوال</label><input id="eu_phone" value="${u.phone||''}" placeholder="05xxxxxxxx"></div>
@@ -658,6 +669,7 @@ function openEditUnitForm(unitId){
     </div>
     <div class="actions">
       <button class="success" onclick="saveUnitEdit('${unitId}')">حفظ التعديل</button>
+      ${u.status==='مؤجر'&&u.contract_id?`<button class="primary" onclick="openEditContractForm('${u.contract_id}')">تعديل العقد / نقل الشقة</button>`:''}
       <button class="soft-btn" onclick="openUnitProfile('${unitId}')">رجوع لملف الوحدة</button>
       <button class="danger-outline" onclick="deleteUnitWithCheck('${unitId}')">حذف الوحدة</button>
       <button class="soft-btn" onclick="closeModal()">إلغاء</button>
@@ -2461,21 +2473,46 @@ seedProperties();
   function centerFinancialRows(centerName, filters={}){
     const from=filters.from||'', to=filters.to||'', branch=filters.branch||'', method=filters.method||'', op=filters.op||'';
     const rows=[];
+    const propertyScope=(r)=>{
+      let u=null, pc=null;
+      try{
+        if(r.unit_id) u=getUnit(r.unit_id);
+        if(u&&u.center_id) pc=getCenter(u.center_id);
+        if(!pc&&r.center_id) pc=getCenter(r.center_id);
+      }catch(e){}
+      if(!pc) return null;
+      const t=String(pc.type||'');
+      let parent='';
+      if(t.includes('شقق')) parent='الشقق السكنية';
+      else if(t.includes('محلات')) parent='المحلات التجارية';
+      if(!parent) return null;
+      return {center:parent,branch:String(pc.name||''),unit:u};
+    };
     const push=(source, kind, r, amount, label)=>{
-      if(String(r['مركز التكلفة']||'')!==String(centerName)) return;
-      if(branch && String(r['الفرع / الوحدة']||'')!==String(branch)) return;
+      const ps=propertyScope(r);
+      const effectiveCenter=ps?ps.center:String(r['مركز التكلفة']||'');
+      const effectiveBranch=ps?ps.branch:String(r['الفرع / الوحدة']||'');
+      if(String(effectiveCenter)!==String(centerName)) return;
+      if(branch && String(effectiveBranch)!==String(branch)) return;
       if(method && String(r['طريقة الدفع']||'')!==String(method)) return;
       if(!inRange(r,from,to)) return;
       if(op && kind!==op) return;
-      rows.push({source,kind,date:toDateValue(r),ref:r['رقم السند']||r['رقم الفاتورة']||r['الرقم']||r.id||'-',party:r['المستفيد']||r['المستلم منه']||r['المورد']||r['العميل']||'-',branch:r['الفرع / الوحدة']||'',method:r['طريقة الدفع']||'',statement:r['البيان']||r['البند']||label||'',amount:Number(amount||0),raw:r});
+      rows.push({source,kind,date:toDateValue(r),ref:r['رقم السند']||r['رقم الفاتورة']||r['الرقم']||r.id||'-',party:r['المستفيد']||r['المستلم منه']||r['المورد']||r['العميل']||r['المستأجر']||'-',branch:effectiveBranch||r['الوحدة']||'',method:r['طريقة الدفع']||'',statement:r['البيان']||r['البند']||label||'',amount:Number(amount||0),raw:r});
     };
-    (load('finance')||[]).forEach(r=>{
+    const financeRows=(load('finance')||[]);
+    financeRows.forEach(r=>{
       const type=String(r['نوع العملية']||'');
       const amt=Number(r['المبلغ']||0);
       if(type.includes('قبض')||type.includes('إيراد')) push('finance','إيراد',r,amt,'سند قبض / إيراد');
       else if(type.includes('صرف')) push('finance','مصروف',r,amt,'سند صرف');
     });
-    const financeExpenseIds=new Set((load('finance')||[]).filter(r=>String(r['نوع العملية']||'').includes('صرف')).map(r=>String(r.id)));
+    // الحركات العقارية القديمة التي لم يكن لها قيد مالي مقابل تُحتسب من سند السداد نفسه، بدون تكرار السندات المرتبطة بالمالية.
+    const representedPayments=new Set(financeRows.map(r=>String(r.payment_id||'')).filter(Boolean));
+    (load('payments')||[]).forEach(r=>{
+      if(representedPayments.has(String(r.id))) return;
+      push('payments','إيراد',r,Number(r['المبلغ']||0),'سداد إيجار');
+    });
+    const financeExpenseIds=new Set(financeRows.filter(r=>String(r['نوع العملية']||'').includes('صرف')).map(r=>String(r.id)));
     (load('expenses')||[]).forEach(r=>{ if(!financeExpenseIds.has(String(r.id))) push('expenses','مصروف',r,Number(r['المبلغ']||0)+Number(r['الضريبة']||0),'مصروف'); });
     (load('purchases')||[]).forEach(r=> push('purchases','مصروف',r,Number(r['المبلغ قبل الضريبة']||r['الإجمالي']||r['المبلغ']||0)+Number(r['الضريبة']||0),'مشتريات'));
     (load('tax')||[]).forEach(r=>{ if(String(r['نوع الفاتورة']||'').includes('مخرجات')) push('tax','إيراد',r,Number(r['المبلغ الخاضع']||0)+Number(r['الضريبة']||0),'فاتورة ضريبية مخرجات'); });
@@ -5127,7 +5164,7 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
 </script>
 
 <style>
-.perm-hero{background:linear-gradient(135deg,#08233f,#0f5f74);color:#fff;border-radius:22px;padding:22px;margin-bottom:16px;display:flex;justify-content:space-between;gap:18px;align-items:center}.perm-hero h2{margin:0 0 6px}.perm-grid{display:grid;grid-template-columns:280px 1fr;gap:16px}.perm-user-list{display:grid;gap:9px}.perm-user-card{border:1px solid var(--border);border-radius:16px;padding:12px;cursor:pointer;background:var(--card)}.perm-user-card.active{outline:3px solid rgba(15,118,110,.18);border-color:#0f766e}.perm-user-card b{display:block}.perm-user-card small{color:var(--muted)}.perm-matrix{overflow:auto;max-height:62vh}.perm-matrix table{min-width:980px}.perm-matrix th:first-child,.perm-matrix td:first-child{position:sticky;right:0;background:var(--card);z-index:2}.perm-check{width:20px;height:20px;accent-color:#0f766e}.role-chip{display:inline-flex;padding:4px 10px;border-radius:999px;background:#e7f7f4;color:#0f766e;font-weight:900;font-size:12px}.pin-box{letter-spacing:5px;text-align:center;font-weight:900}.access-denied{padding:40px;text-align:center}.access-denied .lock{font-size:54px}.perm-actions{display:flex;gap:8px;flex-wrap:wrap}.quickbar.is-hidden{display:none!important}@media(max-width:900px){.perm-grid{grid-template-columns:1fr}.perm-user-list{grid-template-columns:repeat(2,minmax(0,1fr))}.perm-hero{align-items:flex-start;flex-direction:column}}
+.perm-hero{background:linear-gradient(135deg,#08233f,#0f5f74);color:#fff;border-radius:22px;padding:22px;margin-bottom:16px;display:flex;justify-content:space-between;gap:18px;align-items:center}.perm-hero h2{margin:0 0 6px}.perm-grid{display:grid;grid-template-columns:280px 1fr;gap:16px}.perm-user-list{display:grid;gap:9px}.perm-user-card{border:1px solid var(--border);border-radius:16px;padding:12px;cursor:pointer;background:var(--card)}.perm-user-card.active{outline:3px solid rgba(15,118,110,.18);border-color:#0f766e}.perm-user-card b{display:block}.perm-user-card small{color:var(--muted)}.perm-matrix{overflow:auto;max-height:62vh}.perm-matrix table{min-width:980px}.perm-matrix th:first-child,.perm-matrix td:first-child{position:sticky;right:0;background:var(--card);z-index:2}.perm-check{width:20px;height:20px;accent-color:#0f766e}.perm-centers-subrow td{background:#f8fbff!important;padding:14px 18px!important}.perm-centers-box{border:1px solid #d7e4f2;border-radius:16px;padding:14px;background:#fff}.perm-centers-title{font-weight:900;color:#0b284a;margin-bottom:10px}.perm-centers-list{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:9px}.perm-center-item{display:flex;align-items:center;gap:8px;border:1px solid #e0e9f3;border-radius:12px;padding:9px 11px;font-weight:900;background:#fbfdff}.perm-center-item input{width:19px;height:19px;accent-color:#0f766e}.role-chip{display:inline-flex;padding:4px 10px;border-radius:999px;background:#e7f7f4;color:#0f766e;font-weight:900;font-size:12px}.pin-box{letter-spacing:5px;text-align:center;font-weight:900}.access-denied{padding:40px;text-align:center}.access-denied .lock{font-size:54px}.perm-actions{display:flex;gap:8px;flex-wrap:wrap}.quickbar.is-hidden{display:none!important}@media(max-width:900px){.perm-centers-list{grid-template-columns:repeat(2,minmax(120px,1fr))}.perm-grid{grid-template-columns:1fr}.perm-user-list{grid-template-columns:repeat(2,minmax(0,1fr))}.perm-hero{align-items:flex-start;flex-direction:column}}
 </style>
 <script>
 (function(){
@@ -5146,9 +5183,9 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
  function allPerms(){return Object.fromEntries(SECTIONS.map(s=>[s.id,Object.fromEntries(ACTIONS.map(a=>[a[0],true]))]))}
  function blankPerms(){return Object.fromEntries(SECTIONS.map(s=>[s.id,Object.fromEntries(ACTIONS.map(a=>[a[0],false]))]))}
  function templatePerms(role){let p=blankPerms(),t=ROLE_TEMPLATES[role];if(t==='all')return allPerms();if(t==='all_except_users_delete'){p=allPerms();p.users.delete=false;return p}if(t)Object.entries(t).forEach(([sec,acts])=>acts.forEach(a=>{if(p[sec])p[sec][a]=true}));return p}
- function normalizeUser(u){return {id:u.id||Date.now(),name:u.name||u['اسم المستخدم']||'مستخدم',phone:u.phone||u['الجوال']||'',role:u.role||u['الدور']||'مشاهد فقط',pin:String(u.pin||u['الرقم السري']||'1234'),status:u.status||u['الحالة']||'نشط',permissions:u.permissions||templatePerms(u.role||u['الدور']||'مشاهد فقط'),center_scopes:(u.center_scopes&&typeof u.center_scopes==='object')?u.center_scopes:{},created:u.created||new Date().toISOString()}}
+ function normalizeUser(u){return {id:u.id||Date.now(),name:u.name||u['اسم المستخدم']||'مستخدم',phone:u.phone||u['الجوال']||'',role:u.role||u['الدور']||'مشاهد فقط',pin:String(u.pin||u['الرقم السري']||'1234'),status:u.status||u['الحالة']||'نشط',permissions:u.permissions||templatePerms(u.role||u['الدور']||'مشاهد فقط'),center_scopes:(u.center_scopes&&typeof u.center_scopes==='object')?u.center_scopes:{},allowed_centers:Array.isArray(u.allowed_centers)?u.allowed_centers:null,created:u.created||new Date().toISOString()}}
  function users(){let rows=[];try{rows=JSON.parse(localStorage.getItem(PERM_KEY)||'[]')}catch(e){}if(!rows.length){const old=load('users').map(normalizeUser);rows=old.length?old:[normalizeUser({id:1,name:'أبو قصي',role:'مالك النظام',pin:'1234',status:'نشط'})];localStorage.setItem(PERM_KEY,JSON.stringify(rows))}return rows.map(normalizeUser)}
- function saveUsers(rows){localStorage.setItem(PERM_KEY,JSON.stringify(rows));save('users',rows.map(u=>({id:u.id,'اسم المستخدم':u.name,'الجوال':u.phone,'الدور':u.role,'الصلاحية':'مخصصة','الحالة':u.status,center_scopes:u.center_scopes||{},created:u.created}))) }
+ function saveUsers(rows){localStorage.setItem(PERM_KEY,JSON.stringify(rows));save('users',rows.map(u=>({id:u.id,'اسم المستخدم':u.name,'الجوال':u.phone,'الدور':u.role,'الصلاحية':'مخصصة','الحالة':u.status,center_scopes:u.center_scopes||{},allowed_centers:u.allowed_centers,created:u.created}))) }
  function current(){const base=getCurrentUser();return users().find(u=>u.name===base.name)||users()[0]}
  window.hasPermission=function(section,action='view'){const u=current();if(!u||u.status!=='نشط')return false;if(u.role==='مالك النظام')return true;return !!(u.permissions&&u.permissions[section]&&u.permissions[section][action])}
  function denied(section,action){const sec=SECTIONS.find(s=>s.id===section);alert(`ليست لديك صلاحية ${ACTIONS.find(a=>a[0]===action)?.[1]||action} في قسم ${sec?.name||section}`);return false}
@@ -5165,6 +5202,11 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
  function allCostCentersForPermissions(){
   const out=[],seen=new Set();
   const add=(id,name,section='properties')=>{id=String(id||name||'').trim();name=String(name||id||'').trim();if(!id||!name||seen.has(section+'|'+id))return;seen.add(section+'|'+id);out.push({id,name,section})};
+  // المصدر الفعلي لفروع العقارات (الفندق، الغربي، وأي مركز يضاف مستقبلاً)
+  try{(propLoad(PROP_CENTERS_KEY)||[]).forEach(c=>add(c.id,c.name||c['الاسم']||c['مركز التكلفة'],'properties'));}catch(e){}
+  // مراكز التكلفة الرئيسية المسجلة من شاشة مراكز التكلفة
+  try{(load(typeof COST_KEY!=='undefined'?COST_KEY:'costCenters')||[]).forEach(c=>{add(c.id,c.name||c['الاسم']||c['مركز التكلفة'],c.section||c['القسم']||'general');(c.branches||[]).forEach(b=>add('branch:'+String(c.id||c.name)+':'+String(b),b,c.id==='properties'?'properties':(c.section||'general')))});}catch(e){}
+  // توافق مع مفاتيح قديمة إن وجدت
   (load('centers')||[]).forEach(c=>add(c.id,c.name||c['الاسم']||c['مركز التكلفة'],'properties'));
   (load('cost_centers')||[]).forEach(c=>add(c.id,c.name||c['الاسم']||c['مركز التكلفة'],c.section||c['القسم']||'general'));
   (load('equipment')||[]).forEach(e=>add(e.center_id||e['مركز التكلفة'],e.center_name||e['مركز التكلفة'],'equipment'));
@@ -5173,18 +5215,30 @@ seed();renderNav();renderModuleCards();renderDashboard();show('dashboard');
  }
  function scopeSections(){return [{id:'properties',name:'العقارات'},{id:'equipment',name:'المعدات'},{id:'projects',name:'المشاريع والمقاولات'},{id:'general',name:'الإدارة العامة'}]}
  function centersForScope(sec){const a=allCostCentersForPermissions();return sec==='properties'?a.filter(x=>x.section==='properties'||x.section==='general'):a.filter(x=>x.section===sec||x.section==='general')}
- function renderCenterScopes(u){return `<div class="cc-scope-wrap">${scopeSections().map(sec=>{const x=u.center_scopes?.[sec.id]||{mode:'all',centers:[]},mode=x.mode||'all',sel=x.centers||[],key='cc_'+u.id+'_'+sec.id,cs=centersForScope(sec.id);return `<div class="cc-scope-card" data-section="${sec.id}"><div class="cc-scope-head"><b>نطاق مراكز التكلفة — ${sec.name}</b><select id="${key}_mode" onchange="document.getElementById('${key}_list').style.display=this.value==='selected'?'grid':'none'"><option value="all" ${mode==='all'?'selected':''}>جميع مراكز التكلفة</option><option value="selected" ${mode==='selected'?'selected':''}>مراكز محددة</option><option value="none" ${mode==='none'?'selected':''}>بدون صلاحية</option></select></div><div id="${key}_list" class="cc-scope-list" style="${mode==='selected'?'':'display:none'}">${cs.length?cs.map(c=>`<label><input type="checkbox" value="${c.id}" ${sel.map(String).includes(String(c.id))||sel.map(String).includes(String(c.name))?'checked':''}> ${c.name}</label>`).join(''):'<span>لا توجد مراكز تكلفة مسجلة.</span>'}</div></div>`}).join('')}</div>`}
+ function allRegisteredCenters(){
+  const out=[],seen=new Set();
+  const add=(id,name)=>{id=String(id||name||'').trim();name=String(name||id||'').trim();if(!id||!name||seen.has(id))return;seen.add(id);out.push({id,name})};
+  allCostCentersForPermissions().forEach(c=>add(c.id,c.name));
+  return out;
+ }
+ function renderGlobalCenterPermissions(u){
+  const cs=allRegisteredCenters(), selected=Array.isArray(u.allowed_centers)?u.allowed_centers.map(String):null;
+  const allOn=selected===null;
+  return `<tr class="perm-centers-subrow"><td colspan="${ACTIONS.length+1}"><div class="perm-centers-box"><div class="perm-centers-title">المراكز التي تظهر لهذا المستخدم <span style="color:var(--muted);font-size:12px">— ضع علامة صح على المراكز المسموحة فقط</span></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button type="button" class="soft-btn" onclick="document.querySelectorAll('.perm-center-check').forEach(x=>x.checked=true)">تحديد الكل</button><button type="button" class="soft-btn" onclick="document.querySelectorAll('.perm-center-check').forEach(x=>x.checked=false)">إلغاء الكل</button></div><div class="perm-centers-list">${cs.length?cs.map(c=>`<label class="perm-center-item"><input class="perm-center-check" type="checkbox" value="${c.id}" ${u.role==='مالك النظام'||allOn||selected.includes(String(c.id))?'checked':''} ${u.role==='مالك النظام'?'disabled':''}> ${c.name}</label>`).join(''):'<span style="color:var(--muted);font-weight:800">لا توجد مراكز تكلفة مسجلة.</span>'}</div></div></td></tr>`;
+ }
+ function collectGlobalCenters(u){if(u.role==='مالك النظام')return null;return [...document.querySelectorAll('.perm-center-check:checked')].map(x=>x.value)}
+ function renderCenterScopes(u){return `<div class="cc-scope-wrap">${scopeSections().map(sec=>{const x=u.center_scopes?.[sec.id]||{mode:'all',centers:[]},mode=x.mode||'all',sel=x.centers||[],key='cc_'+u.id+'_'+sec.id,cs=centersForScope(sec.id);return `<div class="cc-scope-card" data-section="${sec.id}"><div class="cc-scope-head"><b>${sec.id==='properties'?'الفروع العقارية المسموحة':'نطاق مراكز التكلفة — '+sec.name}</b><select id="${key}_mode" onchange="document.getElementById('${key}_list').style.display=this.value==='selected'?'grid':'none'"><option value="all" ${mode==='all'?'selected':''}>${sec.id==='properties'?'جميع الفروع':'جميع مراكز التكلفة'}</option><option value="selected" ${mode==='selected'?'selected':''}>${sec.id==='properties'?'فروع محددة':'مراكز محددة'}</option><option value="none" ${mode==='none'?'selected':''}>بدون صلاحية</option></select></div><div id="${key}_list" class="cc-scope-list" style="${mode==='selected'?'':'display:none'}">${cs.length?cs.map(c=>`<label><input type="checkbox" value="${c.id}" ${sel.map(String).includes(String(c.id))||sel.map(String).includes(String(c.name))?'checked':''}> ${c.name}</label>`).join(''):'<span>لا توجد مراكز تكلفة مسجلة.</span>'}</div></div>`}).join('')}</div>`}
  function collectCenterScopes(){const out={};document.querySelectorAll('.cc-scope-card').forEach(card=>{out[card.dataset.section]={mode:card.querySelector('select').value,centers:[...card.querySelectorAll('input:checked')].map(x=>x.value)}});return out}
- window.userCanCenter=function(section,centerId,centerName=''){const u=current();if(!u||u.role==='مالك النظام'||u.role==='مدير عام')return true;const x=u.center_scopes?.[section];if(!x||x.mode==='all')return true;if(x.mode==='none')return false;const a=(x.centers||[]).map(String);return [centerId,centerName].filter(Boolean).map(String).some(v=>a.includes(v))}
+ window.userCanCenter=function(section,centerId,centerName=''){const u=current();if(!u||u.role==='مالك النظام'||u.role==='مدير عام')return true;const globalAllowed=Array.isArray(u.allowed_centers)?u.allowed_centers.map(String):null;if(globalAllowed){const vals=[centerId,centerName].filter(Boolean).map(String);if(!vals.some(v=>globalAllowed.includes(v)))return false;}const x=u.center_scopes?.[section];if(!x||x.mode==='all')return true;if(x.mode==='none')return false;const a=(x.centers||[]).map(String);return [centerId,centerName].filter(Boolean).map(String).some(v=>a.includes(v))}
  window.filterByCenterPermission=function(rows,section,idKey='center_id',nameKey='مركز التكلفة'){return (rows||[]).filter(r=>userCanCenter(section,r?.[idKey],r?.[nameKey]||r?.center_name||''))}
  let selectedId=null;
- window.renderPermissionsCenter=function(){if(!hasPermission('users','view'))return denied('users','view');const rows=users();if(!selectedId&&rows.length)selectedId=rows[0].id;const u=rows.find(x=>x.id===selectedId)||rows[0];const sec=byId('users');sec.innerHTML=`<div class="perm-hero"><div><h2>👤 المستخدمون والصلاحيات الشاملة</h2><div>تحكم دقيق على مستوى القسم والإجراء: عرض، إضافة، تعديل، حذف، اعتماد، طباعة وتصدير.</div></div><div class="perm-actions"><button class="success" onclick="openPermissionUserForm()">+ مستخدم جديد</button><button class="soft-btn" onclick="applyRoleTemplate()">تطبيق قالب الدور</button><button class="primary" onclick="savePermissionMatrix()">حفظ الصلاحيات</button></div></div><div class="perm-grid"><div class="panel"><div class="panel-title"><h3>المستخدمون</h3><span class="role-chip">${rows.length} مستخدم</span></div><div class="perm-user-list">${rows.map(x=>`<div class="perm-user-card ${x.id===u.id?'active':''}" onclick="selectPermissionUser('${x.id}')"><b>${x.name}</b><small>${x.role} • ${x.status}</small></div>`).join('')}</div></div><div class="panel"><div class="panel-title"><div><h3>${u.name}</h3><small>${u.phone||'بدون جوال'} — <span class="role-chip">${u.role}</span></small></div><div class="perm-actions"><button class="soft-btn" onclick="editPermissionUser('${u.id}')">تعديل البيانات</button><button class="danger" onclick="removePermissionUser('${u.id}')">حذف</button></div></div><div class="perm-matrix"><table><thead><tr><th>القسم</th>${ACTIONS.map(a=>`<th>${a[1]}</th>`).join('')}</tr></thead><tbody>${SECTIONS.map(s=>`<tr><td>${s.icon} ${s.name}</td>${ACTIONS.map(a=>`<td><input class="perm-check" type="checkbox" data-sec="${s.id}" data-act="${a[0]}" ${u.permissions?.[s.id]?.[a[0]]?'checked':''} ${u.role==='مالك النظام'?'disabled':''}></td>`).join('')}</tr>`).join('')}</tbody></table></div>${renderCenterScopes(u)}</div></div>`}
+ window.renderPermissionsCenter=function(){if(!hasPermission('users','view'))return denied('users','view');const rows=users();if(!selectedId&&rows.length)selectedId=rows[0].id;const u=rows.find(x=>x.id===selectedId)||rows[0];const sec=byId('users');sec.innerHTML=`<div class="perm-hero"><div><h2>👤 المستخدمون والصلاحيات الشاملة</h2><div>تحكم دقيق على مستوى القسم والإجراء: عرض، إضافة، تعديل، حذف، اعتماد، طباعة وتصدير.</div></div><div class="perm-actions"><button class="success" onclick="openPermissionUserForm()">+ مستخدم جديد</button><button class="soft-btn" onclick="applyRoleTemplate()">تطبيق قالب الدور</button><button class="primary" onclick="savePermissionMatrix()">حفظ الصلاحيات</button></div></div><div class="perm-grid"><div class="panel"><div class="panel-title"><h3>المستخدمون</h3><span class="role-chip">${rows.length} مستخدم</span></div><div class="perm-user-list">${rows.map(x=>`<div class="perm-user-card ${x.id===u.id?'active':''}" onclick="selectPermissionUser('${x.id}')"><b>${x.name}</b><small>${x.role} • ${x.status}</small></div>`).join('')}</div></div><div class="panel"><div class="panel-title"><div><h3>${u.name}</h3><small>${u.phone||'بدون جوال'} — <span class="role-chip">${u.role}</span></small></div><div class="perm-actions"><button class="soft-btn" onclick="editPermissionUser('${u.id}')">تعديل البيانات</button><button class="danger" onclick="removePermissionUser('${u.id}')">حذف</button></div></div><div class="perm-matrix"><table><thead><tr><th>القسم</th>${ACTIONS.map(a=>`<th>${a[1]}</th>`).join('')}</tr></thead><tbody>${SECTIONS.map(s=>`<tr><td>${s.icon} ${s.name}</td>${ACTIONS.map(a=>`<td><input class="perm-check" type="checkbox" data-sec="${s.id}" data-act="${a[0]}" ${u.permissions?.[s.id]?.[a[0]]?'checked':''} ${u.role==='مالك النظام'?'disabled':''}></td>`).join('')}</tr>${s.id==='costCenters'?renderGlobalCenterPermissions(u):''}`).join('')}</tbody></table></div></div></div>`}
  window.selectPermissionUser=function(id){selectedId=isNaN(Number(id))?id:Number(id);renderPermissionsCenter()}
  window.applyRoleTemplate=function(){const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;u.permissions=templatePerms(u.role);saveUsers(rows);renderPermissionsCenter()}
- window.savePermissionMatrix=function(){const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;if(u.role!=='مالك النظام')document.querySelectorAll('.perm-check').forEach(c=>u.permissions[c.dataset.sec][c.dataset.act]=c.checked);u.center_scopes=collectCenterScopes();saveUsers(rows);applyNav();alert('تم حفظ الصلاحيات ونطاق مراكز التكلفة بنجاح')}
+ window.savePermissionMatrix=function(){const rows=users(),u=rows.find(x=>String(x.id)===String(selectedId));if(!u)return;if(u.role!=='مالك النظام')document.querySelectorAll('.perm-check').forEach(c=>u.permissions[c.dataset.sec][c.dataset.act]=c.checked);u.allowed_centers=collectGlobalCenters(u);const chosen=u.allowed_centers||[];u.center_scopes={properties:{mode:u.allowed_centers===null?'all':'selected',centers:chosen},equipment:{mode:u.allowed_centers===null?'all':'selected',centers:chosen},projects:{mode:u.allowed_centers===null?'all':'selected',centers:chosen},general:{mode:u.allowed_centers===null?'all':'selected',centers:chosen}};saveUsers(rows);applyNav();alert('تم حفظ الصلاحيات ومراكز التكلفة المسموحة بنجاح')}
  window.openPermissionUserForm=function(existingId){const rows=users(),u=rows.find(x=>String(x.id)===String(existingId));byId('modalTitle').textContent=u?'تعديل المستخدم':'إضافة مستخدم';byId('modalBody').innerHTML=`<div class="form"><div class="field"><label>اسم المستخدم</label><input id="pu_name" value="${u?.name||''}"></div><div class="field"><label>الجوال</label><input id="pu_phone" value="${u?.phone||''}"></div><div class="field"><label>الدور</label><select id="pu_role">${Object.keys(ROLE_TEMPLATES).map(r=>`<option ${u?.role===r?'selected':''}>${r}</option>`).join('')}</select></div><div class="field"><label>الرقم السري PIN</label><input class="pin-box" id="pu_pin" inputmode="numeric" maxlength="8" value="${u?.pin||''}"></div><div class="field"><label>الحالة</label><select id="pu_status"><option ${u?.status==='نشط'?'selected':''}>نشط</option><option ${u?.status==='موقوف'?'selected':''}>موقوف</option></select></div></div><div class="actions"><button class="success" onclick="savePermissionUser('${u?.id||''}')">حفظ المستخدم</button><button class="soft-btn" onclick="closeModal()">إلغاء</button></div>`;byId('modal').classList.add('show')}
  window.editPermissionUser=id=>openPermissionUserForm(id);
- window.savePermissionUser=function(id){const name=byId('pu_name').value.trim(),pin=byId('pu_pin').value.trim();if(!name||pin.length<4)return alert('أدخل الاسم ورقمًا سريًا من 4 أرقام على الأقل');const rows=users(),idx=rows.findIndex(x=>String(x.id)===String(id));const role=byId('pu_role').value;const obj=normalizeUser({id:id||Date.now(),name,phone:byId('pu_phone').value.trim(),role,pin,status:byId('pu_status').value,permissions:idx>-1?rows[idx].permissions:templatePerms(role),center_scopes:idx>-1?(rows[idx].center_scopes||{}):{}});if(idx>-1)rows[idx]=obj;else rows.push(obj);saveUsers(rows);selectedId=obj.id;closeModal();renderPermissionsCenter();applyNav()}
+ window.savePermissionUser=function(id){const name=byId('pu_name').value.trim(),pin=byId('pu_pin').value.trim();if(!name||pin.length<4)return alert('أدخل الاسم ورقمًا سريًا من 4 أرقام على الأقل');const rows=users(),idx=rows.findIndex(x=>String(x.id)===String(id));const role=byId('pu_role').value;const obj=normalizeUser({id:id||Date.now(),name,phone:byId('pu_phone').value.trim(),role,pin,status:byId('pu_status').value,permissions:idx>-1?rows[idx].permissions:templatePerms(role),center_scopes:idx>-1?(rows[idx].center_scopes||{}):{},allowed_centers:idx>-1?rows[idx].allowed_centers:null});if(idx>-1)rows[idx]=obj;else rows.push(obj);saveUsers(rows);selectedId=obj.id;closeModal();renderPermissionsCenter();applyNav()}
  window.removePermissionUser=function(id){const rows=users(),u=rows.find(x=>String(x.id)===String(id));if(!u||u.role==='مالك النظام')return alert('لا يمكن حذف مالك النظام');if(!confirm('حذف المستخدم؟'))return;const next=rows.filter(x=>String(x.id)!==String(id));saveUsers(next);selectedId=next[0]?.id||null;renderPermissionsCenter()}
  const originalRenderModuleSection=window.renderModuleSection;window.renderModuleSection=function(k){if(k==='users')return renderPermissionsCenter();return originalRenderModuleSection(k)};
  const originalSetCurrent=window.setCurrentUserProfile;window.setCurrentUserProfile=function(name,role){originalSetCurrent(name,role);applyNav()}
@@ -5338,9 +5392,49 @@ window.shuraimiCloudSync=initialSync;
  const LOGO_KEY='hasan_erp_v2_brand_logo_v1';
  window.shortTenantName=function(name){const a=String(name||'').trim().split(/\s+/).filter(Boolean);return a.length<=1?(a[0]||'-'):(a[0]+' '+a[a.length-1]);};
  window.brandLogo=function(){return localStorage.getItem(LOGO_KEY)||''};
- window.saveBrandLogo=function(input){const f=input.files&&input.files[0];if(!f)return;if(f.size>2500000)return alert('حجم الشعار كبير. اختر صورة أقل من 2.5MB');const r=new FileReader();r.onload=()=>{localStorage.setItem(LOGO_KEY,r.result);applyBrandLogo();renderSystemSettings();setTimeout(applyBrandLogo,20)};r.readAsDataURL(f)};
+ window.saveBrandLogo=function(input){
+  const f=input.files&&input.files[0];
+  if(!f)return;
+  if(!/^image\/(png|jpeg|jpg|webp)$/i.test(f.type||'')){alert('اختر صورة PNG أو JPG أو WEBP');input.value='';return;}
+  const r=new FileReader();
+  r.onerror=()=>{alert('تعذر قراءة ملف الشعار. جرّب صورة أخرى.');input.value='';};
+  r.onload=()=>{
+    const img=new Image();
+    img.onerror=()=>{alert('تعذر فتح صورة الشعار.');input.value='';};
+    img.onload=()=>{
+      try{
+        const maxW=900,maxH=500;
+        let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
+        const scale=Math.min(1,maxW/w,maxH/h);
+        w=Math.max(1,Math.round(w*scale));h=Math.max(1,Math.round(h*scale));
+        const c=document.createElement('canvas');c.width=w;c.height=h;
+        const ctx=c.getContext('2d');
+        ctx.clearRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);
+        let data=c.toDataURL('image/webp',0.82);
+        if(!data||data==='data:,') data=c.toDataURL('image/jpeg',0.82);
+        try{localStorage.setItem(LOGO_KEY,data);}
+        catch(e){
+          try{
+            data=c.toDataURL('image/jpeg',0.65);
+            localStorage.setItem(LOGO_KEY,data);
+          }catch(e2){
+            alert('مساحة التخزين في المتصفح ممتلئة. احذف بيانات غير ضرورية أو استخدم صورة أصغر.');
+            input.value='';return;
+          }
+        }
+        applyBrandLogo();
+        if(typeof renderSystemSettings==='function') renderSystemSettings();
+        setTimeout(applyBrandLogo,30);
+        alert('تم حفظ الشعار بنجاح');
+        input.value='';
+      }catch(e){console.error(e);alert('حدث خطأ أثناء تجهيز الشعار.');input.value='';}
+    };
+    img.src=r.result;
+  };
+  r.readAsDataURL(f);
+};
  window.removeBrandLogo=function(){if(confirm('إزالة الشعار المخصص؟')){localStorage.removeItem(LOGO_KEY);applyBrandLogo();renderSystemSettings();}};
- window.applyBrandLogo=function(){const src=brandLogo();document.querySelectorAll('.brand .logo').forEach(el=>{if(src)el.innerHTML='<img src="'+src+'" style="width:100%;height:100%;object-fit:contain;border-radius:18px;background:#fff;padding:4px">'});const pv=document.getElementById('brandLogoPreview');if(pv)pv.innerHTML=src?'<img src="'+src+'" style="max-width:220px;max-height:80px;object-fit:contain">':'<span style="color:#94a3b8;font-weight:900">لا يوجد شعار مخصص</span>'};
+ window.applyBrandLogo=function(){const src=brandLogo();document.querySelectorAll('.brand .logo').forEach(el=>{if(src)el.innerHTML='<img src="'+src+'" style="width:100%;height:100%;object-fit:contain;border-radius:18px;background:#fff;padding:4px">'});const pv=document.getElementById('brandLogoPreview');if(pv)pv.innerHTML=src?'<img src="'+src+'" style="max-width:260px;max-height:86px;width:auto;height:auto;object-fit:contain">':'<span style="color:#94a3b8;font-weight:900">لا يوجد شعار مخصص</span>'};
  const baseHeader=window.pHeader;window.pHeader=function(title,number,status){const src=brandLogo();const html=baseHeader(title,number,status);if(!src)return html;return html.replace('<div class="p-logo">ح</div>','<div class="p-logo"><img src="'+src+'" style="max-width:100%;max-height:100%;object-fit:contain"></div>')};
  const oldPrintContract=window.printContract;window.printContract=function(id){const ct=linkedLoad('contracts').find(x=>String(x.id)===String(id));if(!ct)return alert('العقد غير موجود');const full=ct['المستأجر'];ct['المستأجر']=shortTenantName(full);try{return oldPrintContract(id)}finally{ct['المستأجر']=full}};
  const oldPFV=window.printFinanceVoucher;window.printFinanceVoucher=function(id){const r=load('finance').find(x=>String(x.id)===String(id));if(!r)return alert('السند غير موجود');const fields=['المستفيد','المورد','المستلم منه'],old={};fields.forEach(k=>{old[k]=r[k];if(r[k])r[k]=shortTenantName(r[k])});try{return oldPFV(id)}finally{fields.forEach(k=>r[k]=old[k])}};
