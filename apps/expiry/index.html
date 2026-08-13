@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#071a34">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>مستودع الإكسباير V5 Cloud — سنابل مارت</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -48,7 +51,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 <script>
 (()=>{
 'use strict';
-const VERSION='V5.0.2 Cloud';
+const VERSION='V5.0.3 Cloud';
 const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
 const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
 const T={products:'expiry_products',expiry:'expiry_expired',replacements:'expiry_replacements',purchases:'expiry_purchase_receipts',purchaseItems:'expiry_purchase_items',users:'expiry_users',audit:'expiry_audit_log',settings:'expiry_settings'};
@@ -194,7 +197,7 @@ function purchasesPage(){
 }
 function reportsPage(){
  if(reportView==='home')return `<div class="report-hub"><div class="report-card"><div class="icon">🏢</div><h3>تقرير مورد</h3><p>الإكسباير والمستبدل والمتبقي والقيمة لمورد محدد.</p><button class="btn primary" data-report="supplier">فتح التقرير</button></div><div class="report-card"><div class="icon">🔎</div><h3>تقرير صنف</h3><p>كشف كامل لحركة صنف محدد.</p><button class="btn primary" data-report="product">فتح التقرير</button></div><div class="report-card"><div class="icon">📅</div><h3>تقرير فترة</h3><p>من تاريخ إلى تاريخ بدون عرض كل البيانات.</p><button class="btn primary" data-report="period">فتح التقرير</button></div><div class="report-card"><div class="icon">📦</div><h3>تقرير المستودع</h3><p>الرصيد الحالي والقيمة والمتبقي عند الطلب.</p><button class="btn primary" data-report="warehouse">فتح التقرير</button></div></div>`;
- if(reportView==='supplier')return `<div class="card"><div class="card-head"><h3>تقرير مورد</h3><button class="btn secondary" data-report-back>رجوع</button></div><div class="form-grid">${supplierLookupField('rSupplier','المورد','')}<div class="field"><label>&nbsp;</label><button id="runSupplier" class="btn primary wide">عرض التقرير</button></div></div><div id="reportResult"></div></div>`;
+ if(reportView==='supplier')return `<div class="card"><div class="card-head"><div><h3>تقرير مورد</h3><div class="muted">ابحث بجزء من اسم المورد، وسيظهر مورد واحد فقط.</div></div><button class="btn secondary" data-report-back>رجوع</button></div><div class="form-grid"><div class="field span-2 lookup supplier-lookup"><label>بحث المورد</label><input id="rSupplier" type="text" autocomplete="off" placeholder="مثال: المراعي أو تيفاني أو جزء من الاسم"><div id="rSupplierSug" class="suggestions hidden"></div><small id="rSupplierHint" class="muted">اكتب جزءًا من اسم المورد.</small></div><div class="field"><label>&nbsp;</label><button id="runSupplier" class="btn primary wide">عرض التقرير</button></div></div><div id="reportResult"></div></div>`;
  if(reportView==='product')return `<div class="card"><div class="card-head"><h3>تقرير صنف</h3><button class="btn secondary" data-report-back>رجوع</button></div>${lookupField('rProduct','الصنف / الباركود')}<button id="runProduct" class="btn primary" style="margin-top:12px">عرض الكشف</button><div id="reportResult"></div></div>`;
  if(reportView==='period')return `<div class="card"><div class="card-head"><h3>تقرير من فترة إلى فترة</h3><button class="btn secondary" data-report-back>رجوع</button></div><div class="form-grid"><div class="field"><label>من</label><input id="rFrom" type="date"></div><div class="field"><label>إلى</label><input id="rTo" type="date" value="${today()}"></div><div class="field"><label>&nbsp;</label><button id="runPeriod" class="btn primary wide">عرض التقرير</button></div></div><div id="reportResult"></div></div>`;
  return `<div class="card"><div class="card-head"><h3>تقرير المستودع</h3><button class="btn secondary" data-report-back>رجوع</button></div><div class="field"><label>بحث اختياري</label><input id="rWarehouse" placeholder="اسم أو باركود"></div><button id="runWarehouse" class="btn primary" style="margin-top:12px">عرض النتائج</button><div id="reportResult"></div></div>`
@@ -260,7 +263,29 @@ function smartDate(d){if(!d)return '';const [y,m,day]=d.split('-');return `${m}/
 function exportSmart(id){const p=st.purchases.find(x=>String(x.id)===String(id));if(!p||p.status!=='approved')return toast('الفاتورة غير معتمدة');const items=st.purchaseItems.filter(x=>String(x.purchaseId)===String(id));const head=['Product Code','Unit Code','Net Unit Cost','Quantity','Product Variant','Tax Rate Name','Discount','Expiry'];const rows=[head,...items.map(i=>[i.productCode||'',i.unitCode||i.unit||'حبة',String(num(i.cost)),String(num(i.qty)),'',i.taxRate||'15%','0%',smartDate(i.expiry)])];const csv=rows.map(r=>r.map(csvCell).join(',')).join('\r\n');download(`SMART_${p.number}.csv`,csv,'text/csv;charset=utf-8');audit('تصدير سمارت',p.number)}
 function bindReports(){
  $('#page').onclick=e=>{const r=e.target.closest('[data-report]');if(r){reportView=r.dataset.report;render()}if(e.target.closest('[data-report-back]')){reportView='home';render()}};
- if(reportView==='supplier'){bindSupplierLookup('rSupplier');$('#runSupplier').onclick=()=>{const supplier=selectedSupplier('rSupplier');if(!supplier)return toast('ابحث عن المورد واختره');$('#reportResult').innerHTML=reportSupplierHtml(supplier)}}
+ if(reportView==='supplier'){
+  bindSupplierLookup('rSupplier');
+  const rsi=$('#rSupplier');
+  if(rsi){
+    rsi.value='';
+    rsi.focus();
+    rsi.addEventListener('input',()=>{
+      const best=bestSupplierMatch(rsi.value);
+      const hint=$('#rSupplierHint');
+      if(hint){
+        hint.innerHTML=best
+          ? `أفضل نتيجة: <b style="color:#18794e">${esc(best)}</b>`
+          : (rsi.value.trim()?'<span style="color:#991b1b">لا يوجد مورد مطابق</span>':'اكتب جزءًا من اسم المورد.');
+      }
+    });
+  }
+  $('#runSupplier').onclick=()=>{
+    const supplier=selectedSupplier('rSupplier');
+    if(!supplier)return toast('ابحث عن المورد واختره');
+    $('#rSupplier').value=supplier;
+    $('#reportResult').innerHTML=reportSupplierHtml(supplier);
+  };
+}
  if(reportView==='product'){let selected=null;bindLookup('rProduct',p=>selected=p);$('#runProduct').onclick=()=>{const p=selected||findProduct($('#rProduct').value)||matchesProducts($('#rProduct').value,1)[0];if(!p)return toast('اختر الصنف');$('#reportResult').innerHTML=productReportHtml(p)}}
  if(reportView==='period')$('#runPeriod').onclick=()=>$('#reportResult').innerHTML=periodHtml($('#rFrom').value,$('#rTo').value);
  if(reportView==='warehouse')$('#runWarehouse').onclick=()=>$('#reportResult').innerHTML=warehouseHtml($('#rWarehouse').value);
@@ -285,7 +310,10 @@ function bindSettings(){
  $('#restoreBtn').onclick=()=>$('#restoreFile').click();$('#restoreFile').onchange=e=>restoreBackup(e.target.files[0]);
 }
 async function restoreBackup(file){if(!file)return;try{const d=JSON.parse(await file.text());if(!Array.isArray(d.products)||!Array.isArray(d.expiry))throw new Error('ملف غير صالح');if(!confirm('سيتم دمج النسخة مع السحابة بدون حذف البيانات الحالية. متابعة؟'))return;setCloud('busy','جاري دمج النسخة…');const pushMany=async(table,rows,extraFn)=>{for(let i=0;i<rows.length;i+=150){const part=rows.slice(i,i+150).map(x=>({id:String(x.id),payload:x,updated_at:now(),updated_by:currentUser.name,...(extraFn?extraFn(x):{})}));await rest(`${table}?on_conflict=id`,{method:'POST',body:part,prefer:'resolution=merge-duplicates'})}};await pushMany(T.products,d.products,p=>({smart_code:p.smartCode||null,barcode:p.barcode||null,name:p.name||'',cost:num(p.cost),category:p.category||null}));await pushMany(T.expiry,d.expiry,x=>({product_id:String(x.productId),qty:num(x.qty),remaining:num(x.remaining),cost:num(x.cost),expiry_date:x.expiryDate||null,created_at:x.createdAt||now()}));await pushMany(T.replacements,d.replacements||[],x=>({product_id:String(x.productId),qty:num(x.qty),created_at:x.createdAt||now()}));await loadCloud();await audit('استعادة نسخة احتياطية','دمج سحابي');toast('تم دمج النسخة مع السحابة بنجاح')}catch(e){setCloud('bad','فشل الاستعادة');toast(e.message)}}
-if('serviceWorker' in navigator)window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('sw.js?v=502',{updateViaCache:'none'});await reg.update()}catch(e){console.warn('SW update skipped',e)}});
+if('serviceWorker' in navigator)window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('sw.js?v=503',{updateViaCache:'none'});await reg.update()}catch(e){console.warn('SW update skipped',e)}});
+if('caches' in window){
+  caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('expiry-v5-')&&k!=='expiry-v5-503').map(k=>caches.delete(k)))).catch(()=>{});
+}
 render();loadCloud().then(setupRealtime).catch(e=>{console.error(e);setCloud('bad','تعذر الاتصال بالسحابة');render()});
 })();
 </script>
