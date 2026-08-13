@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>مستودع الإكسباير | سنابل المع | V4.16.0</title>
+  <title>مستودع الإكسباير | سنابل المع | V4.16.1</title>
   <style>
 :root{--bg:#f4f7fb;--panel:#fff;--ink:#182230;--muted:#748094;--brand:#0f766e;--brand2:#115e59;--line:#e5eaf1;--danger:#c2414a;--warn:#b7791f;--ok:#16835a;--shadow:0 14px 35px rgba(18,35,58,.10);font-family:Tahoma,"Segoe UI",Arial,sans-serif}
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
@@ -114,7 +114,7 @@
       <header class="topbar">
         <button id="menuBtn" class="icon-btn" type="button" aria-label="القائمة">☰</button>
         <div><h2 id="pageTitle">الرئيسية</h2><small id="pageSubtitle">نظرة سريعة على المستودع</small></div>
-        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.16.0</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
+        <div id="cloudChip" class="cloud-chip busy" title="حالة المزامنة"><i class="cloud-dot"></i><span id="cloudText">جاري الاتصال…</span></div><div class="cloud-chip ok" title="رقم إصدار التطبيق"><span>الإصدار V4.16.1</span></div><div class="user-chip"><span id="currentUserName">أبوقصي</span><b>مدير</b></div>
       </header>
       <main id="pageHost" class="page-host" tabindex="-1"></main>
     </div>
@@ -192,7 +192,7 @@
 
 <script>
 (()=>{'use strict';
-const VERSION='V4.16.0';
+const VERSION='V4.16.1';
 const DB_KEY='sanabel_expiry_v4_cloud';
 const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
 const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
@@ -266,6 +266,42 @@ async function upsertRows(table,rows,{batchSize=80,onProgress=null,retries=4}={}
   if(i+batch.length<rows.length)await sleep(70);
  }
 }
+
+async function pushReplacementNow(rec){
+ const row=Object.assign(rowBase(rec),{
+  product_id:String(rec.productId),
+  qty:num(rec.qty),
+  created_at:rec.createdAt||rec.at||now()
+ });
+ await upsertRows(CLOUD_TABLES.replacements,[row],{batchSize:1,retries:4});
+ return true;
+}
+async function pullReplacementsOnly({renderAfter=true}={}){
+ try{
+  const rows=await rest(`${CLOUD_TABLES.replacements}?select=payload&order=created_at.desc`);
+  const cloudRows=rows.map(r=>r.payload).filter(Boolean);
+  let changed=false;
+  const touched=new Set();
+  for(const rec of cloudRows){
+   const before=db.replacements.find(x=>String(x.id)===String(rec.id));
+   if(!before || JSON.stringify(before)!==JSON.stringify(Object.assign({},before,rec)))changed=true;
+   upsertLocalById(db.replacements,rec);
+   if(rec.productId)touched.add(String(rec.productId));
+  }
+  if(changed){
+   for(const pid of touched){
+    try{recalcProductFIFO(pid)}catch(e){console.warn('FIFO refresh skipped',pid,e)}
+   }
+   saveLocal();
+   if(renderAfter&&currentUser&&!['expiry','replacement','purchases'].includes(currentRoute)&&!document.querySelector('.modal-wrap'))render();
+  }
+  return true;
+ }catch(e){
+  console.warn('Replacement pull skipped',e);
+  return false;
+ }
+}
+
 async function deleteAllRows(table){await rest(`${table}?id=not.is.null`,{method:'DELETE',headers:{'Prefer':'return=minimal'}})}
 async function deleteCloudRow(table,rowId){
  if(rowId==null)return;
@@ -336,7 +372,7 @@ function applyRealtimeChange(table,payload){
  try{const evt=payload?.eventType||payload?.event,row=payload?.new||{},old=payload?.old||{},obj=row?.payload;if(row?.updated_by&&row.updated_by===currentUser?.name)return;const del=(arr,idv)=>{const i=arr.findIndex(x=>String(x.id)===String(idv));if(i>=0)arr.splice(i,1)};
   if(table===CLOUD_TABLES.products){if(evt==='DELETE')del(db.products,old.id);else if(obj)upsertLocalById(db.products,obj);invalidateCaches()}
   else if(table===CLOUD_TABLES.expiry){if(evt==='DELETE')del(db.expiry,old.id);else if(obj)upsertLocalById(db.expiry,obj);invalidateCaches()}
-  else if(table===CLOUD_TABLES.replacements){if(evt==='DELETE')del(db.replacements,old.id);else if(obj)upsertLocalById(db.replacements,obj)}
+  else if(table===CLOUD_TABLES.replacements){const pid=String(obj?.productId||old?.product_id||old?.productId||'');if(evt==='DELETE')del(db.replacements,old.id);else if(obj)upsertLocalById(db.replacements,obj);if(pid)try{recalcProductFIFO(pid)}catch(e){console.warn('Realtime FIFO refresh skipped',e)}}
   else if(table===CLOUD_TABLES.users){if(evt==='DELETE')del(db.users,old.id);else if(obj)upsertLocalById(db.users,obj)}
   else if(table===CLOUD_TABLES.settings&&obj){db.settings=Object.assign({},db.settings,obj)}else return;
   saveLocal();const editing=['expiry','replacement','purchases'].includes(currentRoute)||!!document.querySelector('.modal-wrap');if(currentUser&&!editing)render();
@@ -679,7 +715,19 @@ function approvePurchase(pur){if(!hasPerm('purchases.approve'))return toast('ل�
 function bindPage(route){
  $$('[data-go]').forEach(b=>b.onclick=()=>navigate(b.dataset.go));
  if(route==='expiry'){const host=$('#pageHost');bindSupplierCombo($('#expirySupplier'));host.addEventListener('click',e=>{const eb=e.target.closest('[data-edit-expiry]'),del=e.target.closest('[data-delete-expiry]');if(eb)editExpiryModal(db.expiry.find(x=>x.id===eb.dataset.editExpiry));if(del)deleteExpiryRecord(db.expiry.find(x=>x.id===del.dataset.deleteExpiry))});const s=$('#expirySearch');setTimeout(()=>s?.focus(),30);const resolveExpiry=()=>{const p=productByQuery(s.value);$('#expiryProductId').value=p?.id||'';$('#expiryProduct').value=p?.name||'';$('#expiryBarcode').value=p?.barcode||'';$('#expiryCost').value=p?.cost??'';if(!p&&s.value.trim())toast('لا يوجد صنف مطابق للباركود أو البحث المدخل');if(p)$('#expiryQty').focus()};bindBarcodeControls(s,resolveExpiry);s.onblur=()=>{if(s.value.trim())resolveExpiry()};$('#expiryForm').onsubmit=e=>{e.preventDefault();if(!hasPerm('expiry.add'))return toast('ليس لديك صلاحية تسجيل الإكسباير');const pid=$('#expiryProductId').value;if(!pid)return toast('الصنف غير موجود');const q=num($('#expiryQty').value);const p=db.products.find(p=>p.id===pid);db.expiry.unshift({id:id('e'),productId:pid,productName:p?.name||'',barcode:p?.barcode||'',qty:q,remaining:q,expiryDate:$('#expiryDate').value,cost:num($('#expiryCost').value),supplier:($('#expirySupplier')?.value||'مورد عام'),note:$('#expiryNote').value,user:currentUser.name,createdAt:now()});const chosenSupplier=($('#expirySupplier')?.value||'مورد عام');audit('تسجيل إكسباير',`${p?.name||''} — ${chosenSupplier}`);toast('تم حفظ العملية');render()}}
- if(route==='replacement'){const host=$('#pageHost');host.addEventListener('click',e=>{const eb=e.target.closest('[data-edit-replacement]'),del=e.target.closest('[data-delete-replacement]');if(eb)editReplacementModal(db.replacements.find(x=>x.id===eb.dataset.editReplacement));if(del)deleteReplacementRecord(db.replacements.find(x=>x.id===del.dataset.deleteReplacement))});const s=$('#repSearch');setTimeout(()=>s?.focus(),30);const resolveRep=()=>{const p=productByQuery(s.value);$('#repProductId').value=p?.id||'';$('#repProduct').value=p?.name||'';$('#repBarcode').value=p?.barcode||'';$('#repAvailable').value=p?availableQty(p.id):'';$('#repAfter').value=p?Math.max(0,availableQty(p.id)-num($('#repQty').value)):'';if(!p&&s.value.trim())toast('لا يوجد صنف مطابق للباركود أو البحث المدخل');if(p)$('#repQty').focus()};bindBarcodeControls(s,resolveRep);s.onblur=()=>{if(s.value.trim())resolveRep()};$('#repQty').oninput=()=>{const pid=$('#repProductId').value;$('#repAfter').value=pid?Math.max(0,availableQty(pid)-num($('#repQty').value)):''};$('#replacementForm').onsubmit=e=>{e.preventDefault();if(!hasPerm('replacement.add'))return toast('ليس لديك صلاحية تسجيل الاستبدال');const pid=$('#repProductId').value,q=num($('#repQty').value);if(!pid)return toast('الصنف غير موجود');if(q>availableQty(pid))return toast('الكمية أكبر من الرصيد');const p=db.products.find(p=>p.id===pid);const rec={id:id('r'),productId:pid,productName:p?.name||'',barcode:p?.barcode||'',qty:q,date:$('#repDate').value,supplier:'مورد عام',note:$('#repNote').value,user:currentUser.name,createdAt:now(),allocations:[]};db.replacements.unshift(rec);try{recalcProductFIFO(pid)}catch(err){db.replacements=db.replacements.filter(x=>x.id!==rec.id);recalcProductFIFO(pid);return toast(err.message)}audit('استبدال صنف',`${p?.name||''} — ${rec.supplier||'مورد عام'}`);toast('تم اعتماد الاستبدال');render()}}
+ if(route==='replacement'){const host=$('#pageHost');host.addEventListener('click',e=>{const eb=e.target.closest('[data-edit-replacement]'),del=e.target.closest('[data-delete-replacement]');if(eb)editReplacementModal(db.replacements.find(x=>x.id===eb.dataset.editReplacement));if(del)deleteReplacementRecord(db.replacements.find(x=>x.id===del.dataset.deleteReplacement))});const s=$('#repSearch');setTimeout(()=>s?.focus(),30);const resolveRep=()=>{const p=productByQuery(s.value);$('#repProductId').value=p?.id||'';$('#repProduct').value=p?.name||'';$('#repBarcode').value=p?.barcode||'';$('#repAvailable').value=p?availableQty(p.id):'';$('#repAfter').value=p?Math.max(0,availableQty(p.id)-num($('#repQty').value)):'';if(!p&&s.value.trim())toast('لا يوجد صنف مطابق للباركود أو البحث المدخل');if(p)$('#repQty').focus()};bindBarcodeControls(s,resolveRep);s.onblur=()=>{if(s.value.trim())resolveRep()};$('#repQty').oninput=()=>{const pid=$('#repProductId').value;$('#repAfter').value=pid?Math.max(0,availableQty(pid)-num($('#repQty').value)):''};$('#replacementForm').onsubmit=async e=>{e.preventDefault();if(!hasPerm('replacement.add'))return toast('ليس لديك صلاحية تسجيل الاستبدال');const pid=$('#repProductId').value,q=num($('#repQty').value);if(!pid)return toast('الصنف غير موجود');if(q>availableQty(pid))return toast('الكمية أكبر من الرصيد');const p=db.products.find(p=>p.id===pid);const rec={id:id('r'),productId:pid,productName:p?.name||'',barcode:p?.barcode||'',qty:q,date:$('#repDate').value,supplier:'مورد عام',note:$('#repNote').value,user:currentUser.name,createdAt:now(),allocations:[]};db.replacements.unshift(rec);try{recalcProductFIFO(pid)}catch(err){db.replacements=db.replacements.filter(x=>x.id!==rec.id);recalcProductFIFO(pid);return toast(err.message)}audit('استبدال صنف',`${p?.name||''} — ${rec.supplier||'مورد عام'}`);
+ try{
+  setCloudStatus('busy','جاري رفع الاستبدال…');
+  await pushReplacementNow(rec);
+  setCloudStatus('ok','تمت مزامنة الاستبدال');
+  toast('تم اعتماد الاستبدال ومزامنته');
+ }catch(err){
+  console.error('Immediate replacement sync failed',err);
+  cloudDirty=true;scheduleCloudPush();
+  setCloudStatus('error','سيعاد رفع الاستبدال تلقائيًا');
+  toast('تم حفظ الاستبدال وسيعاد رفعه تلقائيًا');
+ }
+ render()}}
  if(route==='products'){refreshCloudStatusPanel();const cloudBox=$('#cloudProductsStatus');if(cloudBox)cloudBox.onclick=e=>{if(e.target.closest('#checkCloudProducts'))verifyCloudProducts();else if(e.target.closest('#uploadAllProducts'))uploadAllProductsWithProgress();else if(e.target.closest('#downloadCloudProducts'))downloadProductsFromCloud()};verifyCloudProducts({showMessage:false}).catch(()=>{});const search=$('#productSearch');let timer;search.oninput=()=>{clearTimeout(timer);timer=setTimeout(()=>{productQuery=search.value;productPage=1;$('#productsTable').innerHTML=renderProductsPage()},180)};$('#addProduct').onclick=()=>hasPerm('products.add')?productModal():toast('ليس لديك صلاحية إضافة صنف');$('#importProducts').onclick=()=>{if(!hasPerm('products.import'))return toast('ليس لديك صلاحية استيراد الأصناف');modal('تحديث قائمة الأصناف',`<div class="import-mode-grid"><div class="import-mode-card"><strong>تحديث ودمج</strong><small>يضيف الأصناف الجديدة ويحدّث الموجودة، ولا يحذف الأصناف غير الموجودة في الملف.</small><button type="button" class="btn primary" data-import-mode="merge">اختيار ملف للتحديث</button></div><div class="import-mode-card"><strong>استبدال كامل</strong><small>يجعل الملف الجديد هو القائمة المعتمدة، ويحذف من السحابة الأصناف غير الموجودة فيه. مناسب للملف الأحدث من سمارت.</small><button type="button" class="btn danger" data-import-mode="replace">اختيار ملف للاستبدال</button></div></div>`,()=>{$$('[data-import-mode]').forEach(b=>b.onclick=()=>{productImportMode=b.dataset.importMode;closeModal();$('#productFile').click()})});};$('#productFile').onchange=e=>importProducts(e.target.files[0],productImportMode);$('#productsTable').onclick=e=>{if(e.target.closest('#prevProducts')){productPage=Math.max(1,productPage-1);$('#productsTable').innerHTML=renderProductsPage();return}if(e.target.closest('#nextProducts')){productPage++;$('#productsTable').innerHTML=renderProductsPage();return}const eb=e.target.closest('[data-edit-product]'),dbtn=e.target.closest('[data-delete-product]');if(eb){if(!hasPerm('products.edit'))return toast('ليس لديك صلاحية تعديل الصنف');productModal(db.products.find(p=>p.id===eb.dataset.editProduct))}if(dbtn){if(!hasPerm('products.delete'))return toast('ليس لديك صلاحية حذف الصنف');const p=db.products.find(p=>p.id===dbtn.dataset.deleteProduct);if(p&&confirm('حذف الصنف؟')){deleteCloudRow(CLOUD_TABLES.products,p.id).then(()=>{db.products=db.products.filter(x=>x.id!==p.id);saveLocal();audit('حذف صنف',p.name);render();toast('تم حذف الصنف من جميع الأجهزة')}).catch(()=>toast('تعذر حذف الصنف من السحابة'))}}}}
  if(route==='users'){ $('#addUser').onclick=()=>hasPerm('users.manage')?userModal():toast('ليس لديك صلاحية إدارة المستخدمين');$('#pageHost').onclick=e=>{const eb=e.target.closest('[data-edit-user]'),dbtn=e.target.closest('[data-delete-user]');if(eb){if(!hasPerm('users.manage'))return toast('ليس لديك صلاحية إدارة المستخدمين');userModal(db.users.find(u=>u.id===eb.dataset.editUser))}if(dbtn&&!hasPerm('users.manage'))return toast('ليس لديك صلاحية إدارة المستخدمين');if(dbtn&&confirm('حذف المستخدم؟')){const uid=dbtn.dataset.deleteUser;deleteCloudRow(CLOUD_TABLES.users,uid).then(()=>{db.users=db.users.filter(u=>u.id!==uid);saveLocal();audit('حذف مستخدم',uid);render();toast('تم حذف المستخدم من جميع الأجهزة')}).catch(()=>toast('تعذر حذف المستخدم من السحابة'))}}}
  if(route==='purchases'){ $('#newPurchase').onclick=()=>hasPerm('purchases.add')?purchaseModal():toast('ليس لديك صلاحية إنشاء فاتورة');$('#pageHost').onclick=e=>{const review=e.target.closest('[data-review-purchase]'),ex=e.target.closest('[data-export-purchase]'),wa=e.target.closest('[data-whatsapp-purchase]'),del=e.target.closest('[data-delete-purchase]');if(review){if(!hasPerm('purchases.review')&&!hasPerm('purchases.approve')&&!hasPerm('purchases.export'))return toast('ليس لديك صلاحية مراجعة الفواتير');reviewPurchaseModal(db.purchases.find(x=>x.id===review.dataset.reviewPurchase));return}if(ex){if(!hasPerm('purchases.export'))return toast('ليس لديك صلاحية التصدير');const pur=db.purchases.find(x=>x.id===ex.dataset.exportPurchase);if(purchaseStatus(pur)!=='approved')return toast('يجب اعتماد الفاتورة قبل تصديرها');exportSmart(pur)}if(wa){if(!hasPerm('purchases.whatsapp'))return toast('ليس لديك صلاحية إرسال واتساب');sendWhatsApp(db.purchases.find(x=>x.id===wa.dataset.whatsappPurchase))}if(del&&!hasPerm('purchases.delete'))return toast('ليس لديك صلاحية حذف الفاتورة');if(del&&confirm('حذف الفاتورة؟')){const pid=del.dataset.deletePurchase;Promise.all([deleteCloudWhere(CLOUD_TABLES.purchaseItems,'purchase_id',pid),deleteCloudRow(CLOUD_TABLES.purchases,pid)]).then(()=>{db.purchases=db.purchases.filter(x=>x.id!==pid);saveLocal();audit('حذف فاتورة مشتريات',pid);render();toast('تم حذف الفاتورة من جميع الأجهزة')}).catch(()=>toast('تعذر حذف الفاتورة من السحابة'))}}}
@@ -953,7 +1001,10 @@ async function init(){
  migrateLegacySmartUnits();
  
  $('#mainNav').addEventListener('click',e=>{const b=e.target.closest('button[data-route]');if(!b)return;navigate(b.dataset.route)});$('#menuBtn').addEventListener('click',openSidebar);$('#sidebarBackdrop').addEventListener('click',closeSidebar);$('#logoutBtn').addEventListener('click',()=>{currentUser=null;$('#pinInput').value='';$('#appView').classList.add('hidden');$('#loginView').classList.remove('hidden')});
- const syncBtn=$('#syncNowBtn');if(syncBtn)syncBtn.addEventListener('click',async()=>{await cloudPush();await cloudPull({silent:false});toast('تمت المزامنة')});window.addEventListener('online',()=>{pullUsersOnly();if(!db.products.length)pullProductsIfEmpty()});pullUsersOnly();if(!db.products.length)pullProductsIfEmpty();setupRealtime();setInterval(()=>{if(!document.hidden)pullUsersOnly()},60000)
+ const syncBtn=$('#syncNowBtn');if(syncBtn)syncBtn.addEventListener('click',async()=>{await cloudPush();await cloudPull({silent:false});toast('تمت المزامنة')});window.addEventListener('online',()=>{pullUsersOnly();if(!db.products.length)pullProductsIfEmpty()});pullUsersOnly();if(!db.products.length)pullProductsIfEmpty();setupRealtime();pullReplacementsOnly({renderAfter:false});setInterval(()=>{if(!document.hidden)pullUsersOnly()},60000);
+setInterval(()=>{if(!document.hidden)pullReplacementsOnly({renderAfter:true})},10000);
+window.addEventListener('focus',()=>pullReplacementsOnly({renderAfter:true}));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)pullReplacementsOnly({renderAfter:true})})
 }
 document.addEventListener('DOMContentLoaded',init);
 })();
