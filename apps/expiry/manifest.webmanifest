@@ -1,0 +1,11 @@
+{
+  "name": "مستودع الإكسباير - سنابل مارت",
+  "short_name": "الإكسباير",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f8fc",
+  "theme_color": "#071a34",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": []
+}
