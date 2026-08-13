@@ -57,7 +57,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 <script>
 (()=>{
 'use strict';
-const VERSION='V5.0.4 Cloud';
+const VERSION='V5.0.5 Cloud';
 const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
 const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
 const T={products:'expiry_products',expiry:'expiry_expired',replacements:'expiry_replacements',purchases:'expiry_purchase_receipts',purchaseItems:'expiry_purchase_items',users:'expiry_users',audit:'expiry_audit_log',settings:'expiry_settings'};
@@ -151,8 +151,8 @@ function dashboard(){
  const rows=stockRows(),qty=rows.reduce((a,x)=>a+x.remaining,0),value=rows.reduce((a,x)=>a+x.value,0),rep=rows.reduce((a,x)=>a+x.replaced,0);
  return `<div class="hero"><div><h2>مستودع الإكسباير السحابي</h2><p>أي عملية يسجلها العامل تظهر مباشرة على أجهزة الإدارة.</p></div><span class="badge ok">Cloud First</span></div><div class="grid kpis"><div class="card kpi"><span>أصناف برصيد</span><strong>${rows.filter(x=>x.remaining>0).length}</strong></div><div class="card kpi"><span>الكمية المتبقية</span><strong>${qty}</strong></div><div class="card kpi"><span>قيمة الرصيد</span><strong>${money(value)} ر.س</strong></div><div class="card kpi"><span>إجمالي المستبدل</span><strong>${rep}</strong></div></div><div class="grid" style="grid-template-columns:1fr 1fr"><div class="card"><div class="card-head"><h3>آخر عمليات الإكسباير</h3></div>${miniExpiry(st.expiry.slice(0,6))}</div><div class="card"><div class="card-head"><h3>آخر الاستبدالات</h3></div>${miniRepl(st.replacements.slice(0,6))}</div></div>`
 }
-function miniExpiry(rows){return rows.length?`<div class="table-wrap"><table><thead><tr><th>الصنف</th><th>الباركود</th><th>الكمية</th><th>المتبقي</th><th>المستخدم</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.productName||getProduct(x.productId)?.name||'—')}</td><td>${esc(x.barcode||getProduct(x.productId)?.barcode||'—')}</td><td>${num(x.qty)}</td><td>${num(x.remaining)}</td><td>${esc(x.user||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد عمليات</div>'}
-function miniRepl(rows){return rows.length?`<div class="table-wrap"><table><thead><tr><th>الصنف</th><th>الباركود</th><th>المستبدل</th><th>المستخدم</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.productName||getProduct(x.productId)?.name||'—')}</td><td>${esc(x.barcode||getProduct(x.productId)?.barcode||'—')}</td><td>${num(x.qty)}</td><td>${esc(x.user||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد استبدالات</div>'}
+function miniExpiry(rows){return rows.length?`<div class="table-wrap"><table><thead><tr><th>الصنف</th><th>الباركود</th><th>الكمية</th><th>المتبقي</th><th>الوقت</th><th>المستخدم</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.productName||getProduct(x.productId)?.name||'—')}</td><td>${esc(x.barcode||getProduct(x.productId)?.barcode||'—')}</td><td>${num(x.qty)}</td><td>${num(x.remaining)}</td><td>${esc(operationTime(x))}</td><td>${esc(x.user||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد عمليات</div>'}
+function miniRepl(rows){return rows.length?`<div class="table-wrap"><table><thead><tr><th>الصنف</th><th>الباركود</th><th>المستبدل</th><th>الوقت</th><th>المستخدم</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.productName||getProduct(x.productId)?.name||'—')}</td><td>${esc(x.barcode||getProduct(x.productId)?.barcode||'—')}</td><td>${num(x.qty)}</td><td>${esc(operationTime(x))}</td><td>${esc(x.user||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد استبدالات</div>'}
 function supplierOptions(v=''){return suppliers().map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('')}
 function normalizeSupplierText(v){return String(v||'').trim().toLowerCase().replace(/[\u064B-\u065F\u0670]/g,'').replace(/ـ/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/ؤ/g,'و').replace(/ئ/g,'ي').replace(/[^\u0600-\u06FFa-z0-9 ]/gi,' ').replace(/\s+/g,' ').trim()}
 function bestSupplierMatch(q){
@@ -236,6 +236,41 @@ function bind(){
 }
 async function login(){const pin=String($('#pin').value||'').replace(/\D/g,'');const u=st.users.find(x=>x.active!==false&&String(x.pin)===pin);if(!u)return toast('الرقم السري غير صحيح');currentUser=u;saveSession();await audit('تسجيل دخول','V5 Cloud');render()}
 
+function localDateFromIso(v){
+ if(!v)return '';
+ const d=new Date(v);
+ if(Number.isNaN(d.getTime()))return String(v).slice(0,10);
+ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+ return `${y}-${m}-${day}`;
+}
+function localTimeFromIso(v){
+ if(!v)return '';
+ const d=new Date(v);
+ if(Number.isNaN(d.getTime()))return '';
+ return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+function operationDate(x){return localDateFromIso(x?.createdAt||x?.at||'')||String(x?.date||'').slice(0,10)}
+function operationTime(x){return x?.operationTime||localTimeFromIso(x?.createdAt||x?.at||'')||'—'}
+function recordInRange(x,from,to){
+ const d=operationDate(x);
+ return (!from||d>=from)&&(!to||d<=to);
+}
+function yesterdayDate(){
+ const d=new Date();d.setDate(d.getDate()-1);
+ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+ return `${y}-${m}-${day}`;
+}
+function recordRangeControls(prefix){
+ return `<div class="records-toolbar" style="margin-top:8px">
+  <button type="button" class="btn secondary" data-range="${prefix}:today">اليوم</button>
+  <button type="button" class="btn secondary" data-range="${prefix}:yesterday">أمس</button>
+  <div class="field" style="min-width:160px"><label>من تاريخ</label><input id="${prefix}From" type="date"></div>
+  <div class="field" style="min-width:160px"><label>إلى تاريخ</label><input id="${prefix}To" type="date"></div>
+  <button type="button" class="btn secondary" data-range="${prefix}:apply">تطبيق الفترة</button>
+  <button type="button" class="btn secondary" data-range="${prefix}:all">الكل</button>
+ </div>`;
+}
+
 function printHtml(title,html){
  const w=window.open('','_blank','width=1100,height=800');
  if(!w){toast('اسمح بالنوافذ المنبثقة للطباعة');return}
@@ -250,30 +285,36 @@ function printHtml(title,html){
 function expiryRecordAllocated(expiryId){
  return st.replacements.reduce((sum,r)=>sum+(r.allocations||[]).filter(a=>String(a.expiryId)===String(expiryId)).reduce((x,a)=>x+num(a.qty),0),0)
 }
-function expiryRecordsHtml(q=''){
+function expiryRecordsHtml(q='',from='',to=''){
  q=String(q||'').trim().toLowerCase();
  const canEdit=hasPerm('expiry.edit'),canDelete=hasPerm('expiry.delete');
  const rows=st.expiry.filter(x=>{
   const p=getProduct(x.productId);const hay=[x.productName,p?.name,x.barcode,p?.barcode,x.supplier,x.user,x.expiryDate].join(' ').toLowerCase();
-  return !q||hay.includes(q)
+  return (!q||hay.includes(q))&&recordInRange(x,from,to)
  });
- return `<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الصنف</th><th>الباركود</th><th>المورد</th><th>الكمية</th><th>المتبقي</th><th>التكلفة</th><th>الصلاحية</th><th>المستخدم</th>${canEdit||canDelete?'<th>الإجراء</th>':''}</tr></thead><tbody>${rows.length?rows.map(x=>{const p=getProduct(x.productId);return `<tr><td>${esc(String(x.createdAt||'').slice(0,10))}</td><td>${esc(x.productName||p?.name||'—')}</td><td>${esc(x.barcode||p?.barcode||'—')}</td><td>${esc(x.supplier||'مورد عام')}</td><td>${num(x.qty)}</td><td>${num(x.remaining)}</td><td>${money(x.cost)}</td><td>${esc(x.expiryDate||'')}</td><td>${esc(x.user||'—')}</td>${canEdit||canDelete?`<td><div class="record-actions">${canEdit?`<button class="btn secondary" data-edit-expiry="${x.id}">تعديل</button>`:''}${canDelete?`<button class="btn danger" data-delete-expiry="${x.id}">حذف</button>`:''}</div></td>`:''}</tr>`}).join(''):`<tr><td colspan="${canEdit||canDelete?10:9}" class="empty">لا توجد سجلات</td></tr>`}</tbody></table></div>`
+ return `<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الوقت</th><th>الصنف</th><th>الباركود</th><th>المورد</th><th>الكمية</th><th>المتبقي</th><th>التكلفة</th><th>الصلاحية</th><th>المستخدم</th>${canEdit||canDelete?'<th>الإجراء</th>':''}</tr></thead><tbody>${rows.length?rows.map(x=>{const p=getProduct(x.productId);return `<tr><td>${esc(operationDate(x))}</td><td>${esc(operationTime(x))}</td><td>${esc(x.productName||p?.name||'—')}</td><td>${esc(x.barcode||p?.barcode||'—')}</td><td>${esc(x.supplier||'مورد عام')}</td><td>${num(x.qty)}</td><td>${num(x.remaining)}</td><td>${money(x.cost)}</td><td>${esc(x.expiryDate||'')}</td><td>${esc(x.user||'—')}</td>${canEdit||canDelete?`<td><div class="record-actions">${canEdit?`<button class="btn secondary" data-edit-expiry="${x.id}">تعديل</button>`:''}${canDelete?`<button class="btn danger" data-delete-expiry="${x.id}">حذف</button>`:''}</div></td>`:''}</tr>`}).join(''):`<tr><td colspan="${canEdit||canDelete?11:10}" class="empty">لا توجد سجلات في الفترة المحددة</td></tr>`}</tbody></table></div>`
 }
-function replacementRecordsHtml(q=''){
+function replacementRecordsHtml(q='',from='',to=''){
  q=String(q||'').trim().toLowerCase();
  const canEdit=hasPerm('replacement.edit'),canDelete=hasPerm('replacement.delete');
  const rows=st.replacements.filter(x=>{
   const p=getProduct(x.productId);const hay=[x.productName,p?.name,x.barcode,p?.barcode,x.supplier,x.user,x.date].join(' ').toLowerCase();
-  return !q||hay.includes(q)
+  return (!q||hay.includes(q))&&recordInRange(x,from,to)
  });
- return `<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الصنف</th><th>الباركود</th><th>المورد</th><th>الكمية المستبدلة</th><th>المستخدم</th><th>ملاحظة</th>${canEdit||canDelete?'<th>الإجراء</th>':''}</tr></thead><tbody>${rows.length?rows.map(x=>{const p=getProduct(x.productId);return `<tr><td>${esc(x.date||String(x.createdAt||'').slice(0,10))}</td><td>${esc(x.productName||p?.name||'—')}</td><td>${esc(x.barcode||p?.barcode||'—')}</td><td>${esc(x.supplier||'مورد عام')}</td><td>${num(x.qty)}</td><td>${esc(x.user||'—')}</td><td>${esc(x.note||'')}</td>${canEdit||canDelete?`<td><div class="record-actions">${canEdit?`<button class="btn secondary" data-edit-replacement="${x.id}">تعديل</button>`:''}${canDelete?`<button class="btn danger" data-delete-replacement="${x.id}">حذف</button>`:''}</div></td>`:''}</tr>`}).join(''):`<tr><td colspan="${canEdit||canDelete?8:7}" class="empty">لا توجد سجلات</td></tr>`}</tbody></table></div>`
+ return `<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الوقت</th><th>الصنف</th><th>الباركود</th><th>المورد</th><th>الكمية المستبدلة</th><th>المستخدم</th><th>ملاحظة</th>${canEdit||canDelete?'<th>الإجراء</th>':''}</tr></thead><tbody>${rows.length?rows.map(x=>{const p=getProduct(x.productId);return `<tr><td>${esc(operationDate(x))}</td><td>${esc(operationTime(x))}</td><td>${esc(x.productName||p?.name||'—')}</td><td>${esc(x.barcode||p?.barcode||'—')}</td><td>${esc(x.supplier||'مورد عام')}</td><td>${num(x.qty)}</td><td>${esc(x.user||'—')}</td><td>${esc(x.note||'')}</td>${canEdit||canDelete?`<td><div class="record-actions">${canEdit?`<button class="btn secondary" data-edit-replacement="${x.id}">تعديل</button>`:''}${canDelete?`<button class="btn danger" data-delete-replacement="${x.id}">حذف</button>`:''}</div></td>`:''}</tr>`}).join(''):`<tr><td colspan="${canEdit||canDelete?9:8}" class="empty">لا توجد سجلات في الفترة المحددة</td></tr>`}</tbody></table></div>`
 }
 function openExpiryRecords(){
- modal('سجل الإكسباير',`<div class="records-toolbar"><input id="expiryRecordsSearch" placeholder="بحث بالصنف أو الباركود أو المورد أو المستخدم"><button id="printExpiryRecords" class="btn primary">🖨️ طباعة السجل</button></div><div id="expiryRecordsHost">${expiryRecordsHtml()}</div>`,()=>{
-  const inp=$('#expiryRecordsSearch'),host=$('#expiryRecordsHost');
-  inp.oninput=()=>host.innerHTML=expiryRecordsHtml(inp.value);
-  $('#printExpiryRecords').onclick=()=>printHtml('سجل الإكسباير',expiryRecordsHtml(inp.value));
-  host.onclick=e=>{
+ modal('سجل الإكسباير',`<div class="records-toolbar"><input id="expiryRecordsSearch" placeholder="بحث بالصنف أو الباركود أو المورد أو المستخدم"><button id="printExpiryRecords" class="btn primary">🖨️ طباعة الفترة</button></div>${recordRangeControls('expiryRange')}<div id="expiryRecordsHost">${expiryRecordsHtml()}</div>`,()=>{
+  const inp=$('#expiryRecordsSearch'),host=$('#expiryRecordsHost'),from=$('#expiryRangeFrom'),to=$('#expiryRangeTo');
+  const redraw=()=>host.innerHTML=expiryRecordsHtml(inp.value,from.value,to.value);
+  inp.oninput=redraw;from.onchange=redraw;to.onchange=redraw;
+  $('#printExpiryRecords').onclick=()=>{
+   const label=from.value||to.value?`سجل الإكسباير — ${from.value||'البداية'} إلى ${to.value||'النهاية'}`:'سجل الإكسباير — جميع الفترات';
+   printHtml(label,expiryRecordsHtml(inp.value,from.value,to.value))
+  };
+  $('.modal').onclick=e=>{
+   const rg=e.target.closest('[data-range]');
+   if(rg){const a=rg.dataset.range.split(':')[1];if(a==='today'){from.value=today();to.value=today()}if(a==='yesterday'){from.value=yesterdayDate();to.value=yesterdayDate()}if(a==='all'){from.value='';to.value=''}redraw();return}
    const ed=e.target.closest('[data-edit-expiry]'),del=e.target.closest('[data-delete-expiry]');
    if(ed)editExpiryRecord(ed.dataset.editExpiry);
    if(del)deleteExpiryRecord(del.dataset.deleteExpiry);
@@ -281,11 +322,17 @@ function openExpiryRecords(){
  })
 }
 function openReplacementRecords(){
- modal('سجل الاستبدال',`<div class="records-toolbar"><input id="replacementRecordsSearch" placeholder="بحث بالصنف أو الباركود أو المورد أو المستخدم"><button id="printReplacementRecords" class="btn primary">🖨️ طباعة السجل</button></div><div id="replacementRecordsHost">${replacementRecordsHtml()}</div>`,()=>{
-  const inp=$('#replacementRecordsSearch'),host=$('#replacementRecordsHost');
-  inp.oninput=()=>host.innerHTML=replacementRecordsHtml(inp.value);
-  $('#printReplacementRecords').onclick=()=>printHtml('سجل الاستبدال',replacementRecordsHtml(inp.value));
-  host.onclick=e=>{
+ modal('سجل الاستبدال',`<div class="records-toolbar"><input id="replacementRecordsSearch" placeholder="بحث بالصنف أو الباركود أو المورد أو المستخدم"><button id="printReplacementRecords" class="btn primary">🖨️ طباعة الفترة</button></div>${recordRangeControls('replacementRange')}<div id="replacementRecordsHost">${replacementRecordsHtml()}</div>`,()=>{
+  const inp=$('#replacementRecordsSearch'),host=$('#replacementRecordsHost'),from=$('#replacementRangeFrom'),to=$('#replacementRangeTo');
+  const redraw=()=>host.innerHTML=replacementRecordsHtml(inp.value,from.value,to.value);
+  inp.oninput=redraw;from.onchange=redraw;to.onchange=redraw;
+  $('#printReplacementRecords').onclick=()=>{
+   const label=from.value||to.value?`سجل الاستبدال — ${from.value||'البداية'} إلى ${to.value||'النهاية'}`:'سجل الاستبدال — جميع الفترات';
+   printHtml(label,replacementRecordsHtml(inp.value,from.value,to.value))
+  };
+  $('.modal').onclick=e=>{
+   const rg=e.target.closest('[data-range]');
+   if(rg){const a=rg.dataset.range.split(':')[1];if(a==='today'){from.value=today();to.value=today()}if(a==='yesterday'){from.value=yesterdayDate();to.value=yesterdayDate()}if(a==='all'){from.value='';to.value=''}redraw();return}
    const ed=e.target.closest('[data-edit-replacement]'),del=e.target.closest('[data-delete-replacement]');
    if(ed)editReplacementRecord(ed.dataset.editReplacement);
    if(del)deleteReplacementRecord(del.dataset.deleteReplacement);
@@ -375,7 +422,7 @@ function bindExpiry(){
  $('#openExpiryRecords').onclick=openExpiryRecords;
  bindSupplierLookup('exSupplier');
  bindLookup('exSearch',p=>{$('#exPid').value=p.id;$('#exName').value=p.name;$('#exBarcode').value=p.barcode||'';$('#exCost').value=p.cost??'';$('#exQty').focus()});
- $('#expiryForm').onsubmit=async e=>{e.preventDefault();if(!hasPerm('expiry.add'))return toast('لا توجد صلاحية');const p=getProduct($('#exPid').value);if(!p)return toast('اختر الصنف');const q=num($('#exQty').value);if(q<=0)return toast('أدخل الكمية');const supplier=selectedSupplier('exSupplier');if(!supplier)return toast('اختر المورد من نتيجة البحث');const rec={id:uid('e'),productId:p.id,productName:p.name,barcode:p.barcode||'',qty:q,remaining:q,expiryDate:$('#exDate').value,cost:num($('#exCost').value),supplier,note:$('#exNote').value,user:currentUser.name,createdAt:now()};const b=$('#exSave');b.disabled=true;setCloud('busy','جاري الحفظ…');try{await upsert(T.expiry,rec,{product_id:p.id,qty:q,remaining:q,cost:rec.cost,expiry_date:rec.expiryDate,created_at:rec.createdAt});upsertLocal(st.expiry,rec);await audit('تسجيل إكسباير',`${p.name} — ${rec.supplier}`);setCloud('ok','تم الحفظ والمزامنة');toast('تم الحفظ على السحابة');render()}catch(err){setCloud('bad','فشل الحفظ');toast('تعذر الحفظ: '+err.message)}finally{b.disabled=false}}
+ $('#expiryForm').onsubmit=async e=>{e.preventDefault();if(!hasPerm('expiry.add'))return toast('لا توجد صلاحية');const p=getProduct($('#exPid').value);if(!p)return toast('اختر الصنف');const q=num($('#exQty').value);if(q<=0)return toast('أدخل الكمية');const supplier=selectedSupplier('exSupplier');if(!supplier)return toast('اختر المورد من نتيجة البحث');const createdAt=now(),rec={id:uid('e'),productId:p.id,productName:p.name,barcode:p.barcode||'',qty:q,remaining:q,expiryDate:$('#exDate').value,cost:num($('#exCost').value),supplier,note:$('#exNote').value,user:currentUser.name,createdAt,operationTime:localTimeFromIso(createdAt)};const b=$('#exSave');b.disabled=true;setCloud('busy','جاري الحفظ…');try{await upsert(T.expiry,rec,{product_id:p.id,qty:q,remaining:q,cost:rec.cost,expiry_date:rec.expiryDate,created_at:rec.createdAt});upsertLocal(st.expiry,rec);await audit('تسجيل إكسباير',`${p.name} — ${rec.supplier}`);setCloud('ok','تم الحفظ والمزامنة');toast('تم الحفظ على السحابة');render()}catch(err){setCloud('bad','فشل الحفظ');toast('تعذر الحفظ: '+err.message)}finally{b.disabled=false}}
 }
 async function latestBatches(pid,supplier=''){const rows=await rest(`${T.expiry}?product_id=eq.${encodeURIComponent(pid)}&remaining=gt.0&select=id,remaining,expiry_date,created_at,payload&order=expiry_date.asc,created_at.asc`);if(!supplier)return rows;const ns=normalizeSupplierText(supplier);return rows.filter(r=>normalizeSupplierText(r.payload?.supplier||'مورد عام')===ns)}
 function bindReplacement(){
@@ -385,7 +432,7 @@ function bindReplacement(){
  bindLookup('rpSearch',p=>{$('#rpPid').value=p.id;$('#rpName').value=p.name;$('#rpBarcode').value=p.barcode||'';refreshBalance();$('#rpQty').focus()});
  $('#rpQty').oninput=refreshBalance;
  $('#repForm').onsubmit=async e=>{e.preventDefault();if(!hasPerm('replacement.add'))return toast('لا توجد صلاحية');const p=getProduct($('#rpPid').value),q=num($('#rpQty').value),supplier=selectedSupplier('rpSupplier');if(!p||q<=0)return toast('اختر الصنف والكمية');if(!supplier)return toast('اختر المورد من نتيجة البحث');const b=$('#rpSave');b.disabled=true;setCloud('busy','جاري فحص رصيد المورد…');let changed=[];try{const batches=await latestBatches(p.id,supplier);const total=batches.reduce((a,x)=>a+num(x.remaining),0);if(q>total)throw new Error(`رصيد المورد «${supplier}» المتاح ${total} فقط`);let left=q,alloc=[];for(const row of batches){if(left<=0)break;const take=Math.min(left,num(row.remaining)),newRemain=num(row.remaining)-take,pay={...(row.payload||{}),remaining:newRemain};await patch(T.expiry,row.id,{remaining:newRemain,payload:pay,updated_at:now(),updated_by:currentUser.name});changed.push({id:row.id,old:num(row.remaining),payload:row.payload});alloc.push({expiryId:row.id,qty:take});left-=take}
- const rec={id:uid('r'),productId:p.id,productName:p.name,barcode:p.barcode||'',qty:q,date:$('#rpDate').value,supplier,note:$('#rpNote').value,user:currentUser.name,createdAt:now(),allocations:alloc};await upsert(T.replacements,rec,{product_id:p.id,qty:q,created_at:rec.createdAt});upsertLocal(st.replacements,rec);
+ const createdAt=now(),rec={id:uid('r'),productId:p.id,productName:p.name,barcode:p.barcode||'',qty:q,date:$('#rpDate').value,supplier,note:$('#rpNote').value,user:currentUser.name,createdAt,operationTime:localTimeFromIso(createdAt),allocations:alloc};await upsert(T.replacements,rec,{product_id:p.id,qty:q,created_at:rec.createdAt});upsertLocal(st.replacements,rec);
  for(const a of alloc){const local=st.expiry.find(x=>String(x.id)===String(a.expiryId));if(local)local.remaining=Math.max(0,num(local.remaining)-num(a.qty))}
  await audit('استبدال صنف',`${p.name} — ${supplier} — كمية ${q}`);setCloud('ok','تمت المزامنة');toast('تم الاستبدال وربطه بالمورد');render()
  }catch(err){for(const c of changed){try{await patch(T.expiry,c.id,{remaining:c.old,payload:{...(c.payload||{}),remaining:c.old},updated_at:now(),updated_by:currentUser.name})}catch{}}setCloud('bad','تعذر الاستبدال');toast(err.message)}finally{b.disabled=false}}
@@ -454,9 +501,9 @@ function bindSettings(){
  $('#restoreBtn').onclick=()=>$('#restoreFile').click();$('#restoreFile').onchange=e=>restoreBackup(e.target.files[0]);
 }
 async function restoreBackup(file){if(!file)return;try{const d=JSON.parse(await file.text());if(!Array.isArray(d.products)||!Array.isArray(d.expiry))throw new Error('ملف غير صالح');if(!confirm('سيتم دمج النسخة مع السحابة بدون حذف البيانات الحالية. متابعة؟'))return;setCloud('busy','جاري دمج النسخة…');const pushMany=async(table,rows,extraFn)=>{for(let i=0;i<rows.length;i+=150){const part=rows.slice(i,i+150).map(x=>({id:String(x.id),payload:x,updated_at:now(),updated_by:currentUser.name,...(extraFn?extraFn(x):{})}));await rest(`${table}?on_conflict=id`,{method:'POST',body:part,prefer:'resolution=merge-duplicates'})}};await pushMany(T.products,d.products,p=>({smart_code:p.smartCode||null,barcode:p.barcode||null,name:p.name||'',cost:num(p.cost),category:p.category||null}));await pushMany(T.expiry,d.expiry,x=>({product_id:String(x.productId),qty:num(x.qty),remaining:num(x.remaining),cost:num(x.cost),expiry_date:x.expiryDate||null,created_at:x.createdAt||now()}));await pushMany(T.replacements,d.replacements||[],x=>({product_id:String(x.productId),qty:num(x.qty),created_at:x.createdAt||now()}));await loadCloud();await audit('استعادة نسخة احتياطية','دمج سحابي');toast('تم دمج النسخة مع السحابة بنجاح')}catch(e){setCloud('bad','فشل الاستعادة');toast(e.message)}}
-if('serviceWorker' in navigator)window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('sw.js?v=504',{updateViaCache:'none'});await reg.update()}catch(e){console.warn('SW update skipped',e)}});
+if('serviceWorker' in navigator)window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('sw.js?v=505',{updateViaCache:'none'});await reg.update()}catch(e){console.warn('SW update skipped',e)}});
 if('caches' in window){
-  caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('expiry-v5-')&&k!=='expiry-v5-504').map(k=>caches.delete(k)))).catch(()=>{});
+  caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('expiry-v5-')&&k!=='expiry-v5-505').map(k=>caches.delete(k)))).catch(()=>{});
 }
 render();loadCloud().then(setupRealtime).catch(e=>{console.error(e);setCloud('bad','تعذر الاتصال بالسحابة');render()});
 })();
