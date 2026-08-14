@@ -1,12 +1,12 @@
 {
-  "name": "نظام مؤسسة حسن محمد الشريمي V2.5.1",
-  "short_name": "الشريمي V2.5.1",
-  "start_url": "./?v=230",
+  "name": "نظام مؤسسة حسن محمد الشريمي V2.6 Realtime",
+  "short_name": "الشريمي V2.6",
+  "start_url": "./?v=260",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f9fd",
   "theme_color": "#071a34",
   "lang": "ar",
   "dir": "rtl",
-  "description": "نظام الشريمي V2.3 — صلاحيات الأقسام ومراكز التكلفة"
+  "description": "نظام مؤسسة حسن محمد الشريمي — مزامنة Supabase Realtime بين الكمبيوتر والجوال والآيباد"
 }
