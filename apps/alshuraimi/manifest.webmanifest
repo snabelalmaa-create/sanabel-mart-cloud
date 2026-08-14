@@ -1,7 +1,7 @@
 {
-  "name": "نظام مؤسسة حسن محمد الشريمي V2.6 Realtime",
-  "short_name": "الشريمي V2.6",
-  "start_url": "./?v=260",
+  "name": "نظام مؤسسة حسن محمد الشريمي V2.6.1.1 Realtime",
+  "short_name": "الشريمي V2.6.1",
+  "start_url": "./?v=261",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f9fd",
