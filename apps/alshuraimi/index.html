@@ -11,7 +11,7 @@
 </script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نظام مؤسسة حسن محمد الشريمي - V2.6.1 Realtime</title>
+<title>نظام مؤسسة حسن محمد الشريمي - V2.6.2 Realtime</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -158,10 +158,10 @@ body{background:#f6f9fd!important;color:var(--ink)!important;font-size:15px!impo
 @media(max-width:700px){.main{padding:12px 12px 28px!important}.topbar{align-items:stretch!important}.top-icons{width:100%;overflow:auto}.sh-current-user{max-width:170px;overflow:hidden;text-overflow:ellipsis}.hero{padding:16px!important}.hero h1{font-size:24px!important}.quickbar{position:relative!important;grid-template-columns:repeat(2,1fr)!important}.cards,.mini-cards,.modules,.form,.row2,.row3{grid-template-columns:1fr!important}}
 </style>
 
-<!-- SHURAIMI_CLOUD_V261_REALTIME_START -->
+<!-- SHURAIMI_CLOUD_V262_REALTIME_START -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style id="shuraimi-cloud-v261-style">
-.sh-cloud-bar{position:fixed;left:14px;top:14px;z-index:10050;display:flex;align-items:center;gap:8px;max-width:min(470px,calc(100vw - 28px));padding:9px 10px;border:1px solid #dbe6f3;border-radius:14px;background:#fff;color:#0b1736;box-shadow:0 10px 30px rgba(2,6,23,.12);font:800 12px Tajawal,Arial,sans-serif;direction:rtl}
+<style id="shuraimi-cloud-v262-style">
+.sh-cloud-bar{position:fixed;left:14px;top:14px;z-index:10050;display:flex;align-items:center;gap:8px;max-width:min(520px,calc(100vw - 28px));padding:9px 10px;border:1px solid #dbe6f3;border-radius:14px;background:#fff;color:#0b1736;box-shadow:0 10px 30px rgba(2,6,23,.12);font:800 12px Tajawal,Arial,sans-serif;direction:rtl}
 .sh-cloud-bar .sh-cloud-dot{width:9px;height:9px;border-radius:50%;background:#94a3b8;flex:0 0 auto}.sh-cloud-bar .sh-cloud-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sh-cloud-bar button{border:0;border-radius:9px;background:#eef5ff;color:#155cc5;font-weight:900;padding:5px 8px;cursor:pointer}.sh-cloud-bar.ok .sh-cloud-dot{background:#16a34a}.sh-cloud-bar.sync .sh-cloud-dot{background:#2563eb;animation:shpulse 1s infinite}.sh-cloud-bar.err .sh-cloud-dot{background:#ef4444}.sh-cloud-bar.offline .sh-cloud-dot{background:#f59e0b}@keyframes shpulse{50%{opacity:.35}}
 .sh-cloud-update{background:#fff7ed!important;color:#b45309!important}
 @media(max-width:700px){.sh-cloud-bar{top:auto;bottom:12px;left:12px;right:12px;max-width:none;justify-content:center}}
@@ -170,91 +170,222 @@ body{background:#f6f9fd!important;color:var(--ink)!important;font-size:15px!impo
 (function(){
 'use strict';
 const C={
- version:'2.6.1',
- table:'alshuraimi_cloud_items',legacyTable:'alshuraimi_cloud_data',legacyStorageKey:'full_state_v1',
+ version:'2.6.2',
+ table:'alshuraimi_cloud_data',
+ legacyStorageKey:'full_state_v1',
+ rowPrefix:'kv:',
  workspaceId:'8b9ab303-9874-4ae7-8ffe-b4f83f7b5cd6',
  url:'https://rueapdmdkjytsxkfumpw.supabase.co',
  anonKey:'sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9',
- metaKey:'__shuraimi_realtime_meta_v261',
- applying:false,ready:false,busy:new Set(),timers:new Map(),channel:null,sb:null,booted:false,reloadTimer:null
+ metaKey:'__shuraimi_realtime_meta_v262',
+ previousMetaKeys:['__shuraimi_realtime_meta_v261','__shuraimi_realtime_meta_v260'],
+ applying:false,ready:false,baseOk:false,busy:new Set(),timers:new Map(),channel:null,sb:null,booted:false,reloadTimer:null,pollBusy:false,seen:new Map()
 };
-const nativeSet=Storage.prototype.setItem,nativeRemove=Storage.prototype.removeItem,nativeClear=Storage.prototype.clear;
+const nativeSet=Storage.prototype.setItem,nativeRemove=Storage.prototype.removeItem,nativeClear=Storage.prototype.clear,nativeGetItem=Storage.prototype.getItem;
 function now(){return new Date().toISOString()}
-function nativeGet(k){return Storage.prototype.getItem.call(localStorage,k)}
+function nativeGet(k){return nativeGetItem.call(localStorage,k)}
 function meta(){try{return JSON.parse(nativeGet(C.metaKey)||'{}')}catch(_){return {}}}
 function setMeta(p){nativeSet.call(localStorage,C.metaKey,JSON.stringify({...meta(),...p}))}
-function deviceId(){let m=meta();if(!m.deviceId){m.deviceId='dev_'+Math.random().toString(36).slice(2)+Date.now().toString(36);setMeta({deviceId:m.deviceId})}return m.deviceId}
+function deviceId(){
+ let m=meta();
+ if(!m.deviceId){
+  m.deviceId=(crypto&&crypto.randomUUID)?crypto.randomUUID():'dev_'+Math.random().toString(36).slice(2)+Date.now().toString(36);
+  setMeta({deviceId:m.deviceId});
+ }
+ return m.deviceId
+}
 function managed(k){
- if(!k||k===C.metaKey)return false;const x=String(k).toLowerCase();
+ if(!k||k===C.metaKey)return false;
+ const x=String(k).toLowerCase();
  if(x.includes('current_user')||x.includes('signed_session')||x.includes('login_session')||x.includes('active_user')||x.includes('device_id'))return false;
- if(x.startsWith('__shuraimi_'))return false;return true;
+ if(x.startsWith('__shuraimi_'))return false;
+ return true;
 }
 function pending(){const p=meta().pending;return p&&typeof p==='object'?p:{}}
-function markPending(k,deleted=false){if(!C.ready||C.applying||!managed(k))return;const p=pending();p[k]={at:now(),deleted:!!deleted};setMeta({pending:p});scheduleKey(k)}
+function importPreviousPending(){
+ const cur=pending(); let changed=false;
+ for(const mk of C.previousMetaKeys){
+  try{
+   const old=JSON.parse(nativeGet(mk)||'{}'), p=old&&old.pending&&typeof old.pending==='object'?old.pending:{};
+   for(const [k,v] of Object.entries(p)){
+    if(managed(k)&&!(k in cur)){cur[k]=v&&typeof v==='object'?v:{at:now(),deleted:false};changed=true}
+   }
+  }catch(_){}
+ }
+ if(changed)setMeta({pending:cur,recoveredPending:true})
+}
+function markPending(k,deleted=false){
+ if(!C.ready||C.applying||!managed(k))return;
+ const p=pending();p[k]={at:now(),deleted:!!deleted};setMeta({pending:p});scheduleKey(k)
+}
 function clearPending(k){const m=meta(),p=m.pending&&typeof m.pending==='object'?m.pending:{};delete p[k];setMeta({pending:p,lastSyncAt:now(),lastError:''})}
-function setStatus(type,text,offerRefresh=false){const b=document.getElementById('shCloudBar');if(!b)return;b.className='sh-cloud-bar '+type;const t=b.querySelector('.sh-cloud-text');if(t)t.textContent=text;b.title=text;const btn=b.querySelector('button');if(btn){btn.textContent=offerRefresh?'تحديث':'↻';btn.className=offerRefresh?'sh-cloud-update':'';btn.onclick=offerRefresh?()=>location.reload():()=>window.shuraimiCloudSync?.()}}
+function setStatus(type,text,offerRefresh=false){
+ const b=document.getElementById('shCloudBar');if(!b)return;
+ b.className='sh-cloud-bar '+type;const t=b.querySelector('.sh-cloud-text');if(t)t.textContent=text;b.title=text;
+ const btn=b.querySelector('button');if(btn){btn.textContent=offerRefresh?'تحديث':'↻';btn.className=offerRefresh?'sh-cloud-update':'';btn.onclick=offerRefresh?()=>location.reload():()=>window.shuraimiCloudSync?.()}
+}
 function apiHeaders(extra={}){return {'apikey':C.anonKey,'Authorization':'Bearer '+C.anonKey,'Content-Type':'application/json',...extra}}
-async function rest(path,opt={}){const ctrl=new AbortController();const tm=setTimeout(()=>ctrl.abort(),15000);try{const r=await fetch(C.url+path,{...opt,headers:apiHeaders(opt.headers||{}),signal:ctrl.signal});const txt=await r.text();if(!r.ok)throw new Error((txt||r.statusText||('HTTP '+r.status)).slice(0,500));return txt?JSON.parse(txt):null}finally{clearTimeout(tm)}}
+async function rest(path,opt={}){
+ const ctrl=new AbortController(),tm=setTimeout(()=>ctrl.abort(),15000);
+ try{
+  const r=await fetch(C.url+path,{...opt,headers:apiHeaders(opt.headers||{}),signal:ctrl.signal});
+  const txt=await r.text();
+  if(!r.ok)throw new Error((txt||r.statusText||('HTTP '+r.status)).slice(0,500));
+  return txt?JSON.parse(txt):null
+ }finally{clearTimeout(tm)}
+}
 function localKeys(){const a=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(managed(k))a.push(k)}return a}
+function cloudKey(k){return C.rowPrefix+String(k)}
+function localKey(storageKey){return String(storageKey||'').startsWith(C.rowPrefix)?String(storageKey).slice(C.rowPrefix.length):''}
 function scheduleKey(k){clearTimeout(C.timers.get(k));C.timers.set(k,setTimeout(()=>pushKey(k),650))}
 Storage.prototype.setItem=function(k,v){const r=nativeSet.call(this,k,v);if(this===localStorage)markPending(k,false);return r};
 Storage.prototype.removeItem=function(k){const should=this===localStorage&&managed(k);const r=nativeRemove.call(this,k);if(should)markPending(k,true);return r};
-Storage.prototype.clear=function(){if(this!==localStorage)return nativeClear.call(this);const keys=localKeys(),m=meta();const r=nativeClear.call(this);nativeSet.call(localStorage,C.metaKey,JSON.stringify(m));if(C.ready)keys.forEach(k=>markPending(k,true));return r};
+Storage.prototype.clear=function(){
+ if(this!==localStorage)return nativeClear.call(this);
+ const keys=localKeys(),m=meta(),oldMetas={};
+ C.previousMetaKeys.forEach(k=>oldMetas[k]=nativeGet(k));
+ const r=nativeClear.call(this);nativeSet.call(localStorage,C.metaKey,JSON.stringify(m));
+ Object.entries(oldMetas).forEach(([k,v])=>{if(v!=null)nativeSet.call(localStorage,k,v)});
+ if(C.ready)keys.forEach(k=>markPending(k,true));return r
+};
 async function pushKey(k){
- if(!C.ready||!managed(k)||C.applying||C.busy.has(k))return false;const p=pending()[k];if(!p)return true;
+ if(!C.ready||!C.baseOk||!managed(k)||C.applying||C.busy.has(k))return false;
+ const p=pending()[k];if(!p)return true;
  if(!navigator.onLine){setStatus('offline','غير متصل — التغييرات محفوظة على هذا الجهاز');return false}
- C.busy.add(k);setStatus('sync','جارٍ مزامنة آخر التغييرات…');
+ C.busy.add(k);setStatus('sync','جارٍ رفع التغيير إلى Supabase…');
  try{
-  const row={workspace_id:C.workspaceId,storage_key:k,value_text:p.deleted?null:nativeGet(k),is_deleted:!!p.deleted,updated_at:now(),updated_by:deviceId()};
+  const stamp=now(), ver=Date.now(), payload={key:k,value:p.deleted?null:nativeGet(k),deleted:!!p.deleted,updated_by:deviceId(),updated_at:stamp};
+  const row={workspace_id:C.workspaceId,storage_key:cloudKey(k),payload,version:ver,updated_at:stamp};
   await rest('/rest/v1/'+C.table+'?on_conflict=workspace_id%2Cstorage_key',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(row)});
-  clearPending(k);if(Object.keys(pending()).length===0)setStatus('ok','متزامن لحظيًا مع Supabase');return true;
- }catch(e){console.error('Realtime push',k,e);setMeta({lastError:String(e.message||e)});setStatus('err','تعذر الرفع: '+String(e.message||e).replace(/\s+/g,' ').slice(0,95));return false}
- finally{C.busy.delete(k)}
+  C.seen.set(cloudKey(k),String(ver)+'|'+stamp);clearPending(k);setStatus('ok',C.channel?'متزامن لحظيًا مع Supabase':'متزامن مع Supabase • تحديث تلقائي');return true
+ }catch(e){
+  console.error('Cloud push',k,e);setMeta({lastError:String(e.message||e)});
+  setStatus('err','تعذر رفع التغيير — محفوظ محليًا وسيعاد تلقائيًا');return false
+ }finally{C.busy.delete(k)}
 }
-async function flushPending(){if(!C.ready)return true;for(const k of Object.keys(pending()))await pushKey(k);return Object.keys(pending()).length===0}
-async function getRows(){return await rest('/rest/v1/'+C.table+'?workspace_id=eq.'+encodeURIComponent(C.workspaceId)+'&select=storage_key,value_text,is_deleted,version,updated_at,updated_by&order=storage_key.asc')||[]}
-async function getLegacy(){
- try{const rows=await rest('/rest/v1/'+C.legacyTable+'?workspace_id=eq.'+encodeURIComponent(C.workspaceId)+'&storage_key=eq.'+encodeURIComponent(C.legacyStorageKey)+'&select=payload,version,updated_at&limit=1');return rows&&rows[0]||null}catch(e){console.warn('Legacy read skipped',e);return null}
+async function flushPending(){for(const k of Object.keys(pending()))await pushKey(k)}
+async function getAllRows(){
+ const q='/rest/v1/'+C.table+'?workspace_id=eq.'+encodeURIComponent(C.workspaceId)+'&select=storage_key,payload,version,updated_at&order=updated_at.asc';
+ return await rest(q)||[]
 }
-function applyValue(k,value,deleted=false){if(!managed(k))return false;C.applying=true;try{if(deleted)nativeRemove.call(localStorage,k);else nativeSet.call(localStorage,k,String(value??''))}finally{C.applying=false}return true}
-function applyRow(r,{quiet=false}={}){if(!r||!managed(r.storage_key)||pending()[r.storage_key])return false;const changed=applyValue(r.storage_key,r.value_text,!!r.is_deleted);if(changed)setMeta({lastSyncAt:r.updated_at||now()});if(changed&&!quiet)softRefresh();return changed}
+function rowToken(r){return String(r?.version??'')+'|'+String(r?.updated_at??'')}
+function applyValue(k,value,deleted){
+ const old=nativeGet(k);if(deleted){if(old===null)return false;C.applying=true;try{nativeRemove.call(localStorage,k)}finally{C.applying=false}return true}
+ const val=String(value??'');if(old===val)return false;C.applying=true;try{nativeSet.call(localStorage,k,val)}finally{C.applying=false}return true
+}
+function applyKvRow(r,{quiet=false}={}){
+ if(!r||!String(r.storage_key||'').startsWith(C.rowPrefix))return false;
+ const k=localKey(r.storage_key);if(!managed(k))return false;
+ const token=rowToken(r);if(C.seen.get(r.storage_key)===token)return false;
+ const p=r.payload&&typeof r.payload==='object'?r.payload:{};
+ C.seen.set(r.storage_key,token);
+ if(pending()[k])return false;
+ const changed=applyValue(k,p.value,!!p.deleted);
+ if(changed)setMeta({lastSyncAt:r.updated_at||now()});
+ if(changed&&!quiet)softRefresh();
+ return changed
+}
 function applyLegacyPayload(payload){
- const obj=payload&&typeof payload==='object'?payload:{};let n=0;C.applying=true;try{for(const [k,v] of Object.entries(obj)){if(!managed(k))continue;nativeSet.call(localStorage,k,typeof v==='string'?v:JSON.stringify(v));n++}}finally{C.applying=false}return n
+ const obj=payload&&typeof payload==='object'?payload:{}, pend=pending();let n=0;
+ C.applying=true;
+ try{
+  for(const [k,v] of Object.entries(obj)){
+   if(!managed(k)||pend[k])continue;
+   nativeSet.call(localStorage,k,typeof v==='string'?v:JSON.stringify(v));n++
+  }
+ }finally{C.applying=false}
+ return n
 }
-function softRefresh(){const active=document.activeElement,editing=active&&['INPUT','TEXTAREA','SELECT'].includes(active.tagName),modal=document.querySelector('.modal.show,.modal[style*="display: block"],.modal[style*="display:flex"]');if(editing||modal){setStatus('ok','وصل تحديث من جهاز آخر',true);return}clearTimeout(C.reloadTimer);C.reloadTimer=setTimeout(()=>location.reload(),650)}
-async function uploadAllLocal(){for(const k of localKeys()){const p=pending();p[k]={at:now(),deleted:false};setMeta({pending:p});await pushKey(k)}}
+function softRefresh(){
+ const active=document.activeElement,editing=active&&['INPUT','TEXTAREA','SELECT'].includes(active.tagName);
+ const modal=document.querySelector('.modal.show,.modal[style*="display: block"],.modal[style*="display:flex"]');
+ if(editing||modal){setStatus('ok','وصل تحديث من جهاز آخر — اضغط تحديث بعد إنهاء الإدخال',true);return}
+ clearTimeout(C.reloadTimer);C.reloadTimer=setTimeout(()=>location.reload(),500)
+}
+async function uploadAllLocal(){
+ for(const k of localKeys()){
+  const p=pending();if(!p[k]){p[k]={at:now(),deleted:false};setMeta({pending:p})}
+  await pushKey(k)
+ }
+}
 async function initialSync(){
  if(!navigator.onLine){C.ready=true;setStatus('offline','غير متصل — العمل المحلي مستمر');return false}
- C.ready=false;setStatus('sync','جارٍ قراءة بيانات المؤسسة من السحابة…');
+ C.ready=false;C.baseOk=false;setStatus('sync','جارٍ قراءة بيانات المؤسسة من Supabase…');
  try{
-  let rows=await getRows();
-  if(!rows.length){
-   const legacy=await getLegacy();
-   if(legacy&&legacy.payload&&typeof legacy.payload==='object'){
-    const count=applyLegacyPayload(legacy.payload);C.ready=true;setStatus('sync','تم العثور على بيانات V2.5.2 — جارٍ نقلها للمزامنة الجديدة…');await uploadAllLocal();setMeta({migratedFromV252:true,initialApplied:true});setStatus('ok','تم استرجاع البيانات وربط Realtime');setTimeout(()=>location.reload(),300);return true;
-   }
+  const rows=await getAllRows();C.baseOk=true;
+  const kvRows=rows.filter(r=>String(r.storage_key||'').startsWith(C.rowPrefix));
+  const legacy=rows.find(r=>String(r.storage_key)===C.legacyStorageKey);
+  let changed=false;
+  if(kvRows.length){
+   for(const r of kvRows)changed=applyKvRow(r,{quiet:true})||changed;
+   C.ready=true;await flushPending();
+  }else if(legacy&&legacy.payload&&typeof legacy.payload==='object'){
+   applyLegacyPayload(legacy.payload);C.ready=true;
+   setStatus('sync','تم العثور على بياناتك السابقة — جارٍ تفعيل المزامنة الجديدة…');
+   await uploadAllLocal();setMeta({migratedFromV252:true})
+  }else{
    C.ready=true;
-   const ks=localKeys();
-   if(ks.length){setStatus('sync','السحابة الجديدة فارغة — رفع بيانات هذا الجهاز بأمان…');await uploadAllLocal();setStatus('ok','تم إنشاء النسخة السحابية • Realtime')}
-   else setStatus('ok','السحابة جاهزة — لا توجد بيانات مسجلة');
-   setMeta({initialApplied:true});return true;
+   if(localKeys().length){setStatus('sync','جارٍ إنشاء النسخة السحابية من بيانات هذا الجهاز…');await uploadAllLocal()}
   }
-  let changed=false;for(const r of rows)changed=applyRow(r,{quiet:true})||changed;
-  C.ready=true;await flushPending();setStatus('ok','متزامن لحظيًا مع Supabase');
-  const m=meta();if(changed&&!m.initialApplied){setMeta({initialApplied:true});setTimeout(()=>location.reload(),300)}else setMeta({initialApplied:true});return true;
- }catch(e){C.ready=true;console.error('Initial realtime sync',e);setMeta({lastError:String(e.message||e)});setStatus('err','مشكلة المزامنة: '+String(e.message||e).replace(/\s+/g,' ').slice(0,105));return false}
+  setMeta({initialApplied:true,lastError:''});
+  setStatus('ok','متزامن مع Supabase • جاري تشغيل Realtime');
+  if(changed)setTimeout(()=>location.reload(),350);
+  return true
+ }catch(e){
+  C.ready=true;C.baseOk=false;console.error('Initial cloud sync',e);setMeta({lastError:String(e.message||e)});
+  setStatus('err','مشكلة الاتصال بجدول المزامنة الأساسي — اضغط ↻ بعد تشغيل SQL V2.6.2');return false
+ }
 }
 function setupRealtime(){
- if(!window.supabase?.createClient){setStatus('err','Realtime غير متاح — زر ↻ ما زال يعمل');return}
- try{C.sb=window.supabase.createClient(C.url,C.anonKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});if(C.channel)try{C.sb.removeChannel(C.channel)}catch(_){}C.channel=C.sb.channel('alshuraimi-v261-'+deviceId());C.channel.on('postgres_changes',{event:'*',schema:'public',table:C.table,filter:'workspace_id=eq.'+C.workspaceId},payload=>{if(!C.ready)return;const r=payload.new||payload.old||{};if(r.updated_by&&String(r.updated_by)===String(deviceId()))return;applyRow(r)});C.channel.subscribe(status=>{if(status==='SUBSCRIBED')setStatus('ok','متزامن لحظيًا مع Supabase');else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')setStatus('err','Realtime متوقف — اضغط ↻ للمزامنة')})}catch(e){console.warn('Realtime setup',e);setStatus('err','تعذر تشغيل Realtime — المزامنة اليدوية متاحة')}
+ if(!C.baseOk||!window.supabase?.createClient)return;
+ try{
+  C.sb=window.supabase.createClient(C.url,C.anonKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  if(C.channel)try{C.sb.removeChannel(C.channel)}catch(_){}
+  C.channel=C.sb.channel('alshuraimi-v262-'+deviceId());
+  C.channel.on('postgres_changes',{event:'*',schema:'public',table:C.table,filter:'workspace_id=eq.'+C.workspaceId},payload=>{
+   if(!C.ready)return;
+   const r=payload.new||payload.old||{}, p=r.payload&&typeof r.payload==='object'?r.payload:{};
+   if(!String(r.storage_key||'').startsWith(C.rowPrefix))return;
+   if(p.updated_by&&String(p.updated_by)===String(deviceId())){C.seen.set(r.storage_key,rowToken(r));return}
+   applyKvRow(r)
+  });
+  C.channel.subscribe(status=>{
+   if(status==='SUBSCRIBED')setStatus('ok','متزامن لحظيًا مع Supabase');
+   else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){C.channel=null;setStatus('ok','متزامن مع Supabase • تحديث تلقائي كل 4 ثوانٍ')}
+  })
+ }catch(e){console.warn('Realtime setup',e);C.channel=null;setStatus('ok','متزامن مع Supabase • تحديث تلقائي كل 4 ثوانٍ')}
 }
-function installUI(){let b=document.getElementById('shCloudBar');if(!b){b=document.createElement('div');b.id='shCloudBar';b.className='sh-cloud-bar sync';b.innerHTML='<span class="sh-cloud-dot"></span><span class="sh-cloud-text">بدء المزامنة…</span><button type="button" title="مزامنة الآن">↻</button>';document.body.appendChild(b)}b.querySelector('button').onclick=()=>initialSync();if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('./sw.js?v=261',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});window.addEventListener('online',async()=>{await initialSync();setupRealtime()});window.addEventListener('offline',()=>setStatus('offline','غير متصل — الحفظ محلي وسيُرفع عند عودة الإنترنت'))}
-async function boot(){if(C.booted)return;C.booted=true;deviceId();installUI();await initialSync();setupRealtime();setInterval(()=>{if(C.ready&&navigator.onLine&&Object.keys(pending()).length)flushPending()},10000);const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V2.6.1<br>Supabase Realtime • قراءة السحابة أولًا • وضع دون اتصال'}
+async function poll(){
+ if(C.pollBusy||!C.ready||!C.baseOk||!navigator.onLine)return;
+ C.pollBusy=true;
+ try{
+  const rows=await getAllRows();let changed=false;
+  for(const r of rows)if(String(r.storage_key||'').startsWith(C.rowPrefix))changed=applyKvRow(r,{quiet:true})||changed;
+  if(changed)softRefresh();
+  if(Object.keys(pending()).length)await flushPending()
+ }catch(e){console.warn('Cloud poll',e)}
+ finally{C.pollBusy=false}
+}
+function installUI(){
+ let b=document.getElementById('shCloudBar');
+ if(!b){b=document.createElement('div');b.id='shCloudBar';b.className='sh-cloud-bar sync';b.innerHTML='<span class="sh-cloud-dot"></span><span class="sh-cloud-text">بدء المزامنة…</span><button type="button" title="مزامنة الآن">↻</button>';document.body.appendChild(b)}
+ b.querySelector('button').onclick=()=>window.shuraimiCloudSync?.();
+ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('./sw.js?v=262',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
+ window.addEventListener('online',async()=>{const ok=await initialSync();if(ok)setupRealtime()});
+ window.addEventListener('offline',()=>setStatus('offline','غير متصل — الحفظ محلي وسيُرفع عند عودة الإنترنت'))
+}
+async function syncNow(){const ok=await initialSync();if(ok)setupRealtime();return ok}
+async function boot(){
+ if(C.booted)return;C.booted=true;deviceId();importPreviousPending();installUI();
+ const ok=await initialSync();if(ok)setupRealtime();
+ setInterval(poll,4000);
+ const f=document.querySelector('.footer-note');if(f)f.innerHTML='نظام مؤسسة حسن محمد الشريمي V2.6.2<br>Supabase Realtime • مزامنة آمنة بين الأجهزة • وضع دون اتصال'
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
-window.shuraimiCloudSync=initialSync;window.shuraimiCloudForceUpload=uploadAllLocal;window.shuraimiCloudPending=()=>Object.keys(pending());
+window.shuraimiCloudSync=syncNow;window.shuraimiCloudForceUpload=uploadAllLocal;window.shuraimiCloudPending=()=>Object.keys(pending());
 })();
 </script>
-<!-- SHURAIMI_CLOUD_V261_REALTIME_END -->
+<!-- SHURAIMI_CLOUD_V262_REALTIME_END -->
 
 <style id="unified-reports-v111">
 .report-center{display:grid;gap:16px}.report-hero{background:linear-gradient(135deg,#0b3470,#155cc5);color:#fff;border-radius:24px;padding:22px;display:flex;justify-content:space-between;gap:16px;align-items:center;box-shadow:0 16px 38px rgba(21,92,197,.18)}.report-hero h2{margin:0 0 5px;font-size:28px}.report-hero p{margin:0;color:#dbeafe;font-weight:800}
