@@ -1,0 +1,17 @@
+نظام الشريمي V2.6.2 — إصلاح مزامنة إضافة المراكز
+
+1) شغّل SUPABASE_REALTIME_V2.6.2.sql في Supabase > SQL Editor مرة واحدة.
+2) استبدل فقط داخل apps/alshuraimi:
+   - index.html
+   - manifest.webmanifest
+   - sw.js
+3) Commit + Push.
+4) افتح أولاً الجوال الذي أضفت منه مركز التكلفة، بالرابط:
+   https://snabelalmaa-create.github.io/sanabel-mart-cloud/apps/alshuraimi/?v=262
+5) انتظر ظهور: متزامن لحظياً مع Supabase أو متزامن مع Supabase • تحديث تلقائي.
+6) بعدها افتح الكمبيوتر على نفس الرابط واضغط Ctrl+F5 مرة واحدة.
+
+مهم:
+- النسخة تستعيد التغييرات المعلقة من V2.6.1 وتحاول رفعها تلقائياً.
+- تستخدم alshuraimi_cloud_data الموجود أصلاً، ولا تعتمد على alshuraimi_cloud_items.
+- يوجد Polling احتياطي كل 4 ثوانٍ حتى لو لم يعمل Realtime.
