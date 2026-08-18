@@ -63,7 +63,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:
 <script>
 (()=>{
 'use strict';
-const VERSION='V5.0.7 Cloud';
+const VERSION='V5.0.8 Cloud';
 const SUPABASE_URL='https://rueapdmdkjytsxkfumpw.supabase.co';
 const SUPABASE_KEY='sb_publishable_CihlHx8brphzcuqf3imxeA_u9a1zVy9';
 const T={products:'expiry_products',expiry:'expiry_expired',replacements:'expiry_replacements',purchases:'expiry_purchase_receipts',purchaseItems:'expiry_purchase_items',users:'expiry_users',audit:'expiry_audit_log',settings:'expiry_settings'};
@@ -181,8 +181,8 @@ function dashboard(){
  const rows=stockRows(),qty=rows.reduce((a,x)=>a+x.remaining,0),value=rows.reduce((a,x)=>a+x.value,0),rep=rows.reduce((a,x)=>a+x.replaced,0);
  return `<div class="hero"><div><h2>مستودع الإكسباير السحابي</h2><p>أي عملية يسجلها العامل تظهر مباشرة على أجهزة الإدارة.</p></div><span class="badge ok">Cloud First</span></div><div class="grid kpis"><div class="card kpi"><span>أصناف برصيد</span><strong>${rows.filter(x=>x.remaining>0).length}</strong></div><div class="card kpi"><span>الكمية المتبقية</span><strong>${qty}</strong></div><div class="card kpi"><span>قيمة الرصيد</span><strong>${money(value)} ر.س</strong></div><div class="card kpi"><span>إجمالي المستبدل</span><strong>${rep}</strong></div></div><div class="grid" style="grid-template-columns:1fr 1fr"><div class="card"><div class="card-head"><h3>آخر عمليات الإكسباير</h3></div>${miniExpiry(st.expiry.slice(0,6))}</div><div class="card"><div class="card-head"><h3>آخر الاستبدالات</h3></div>${miniRepl(st.replacements.slice(0,6))}</div></div><div class="card" style="margin-top:16px"><div class="card-head"><div><h3>🏢 أكثر الشركات إكسباير</h3><div class="muted">أعلى 5 موردين حسب إجمالي كمية الإكسباير المسجلة.</div></div></div>${topSuppliersHtml(5)}</div>`
 }
-function miniExpiry(rows){return rows.length?`<div class="table-wrap"><table><thead><tr><th>الصنف</th><th>الباركود</th><th>الكمية</th><th>المتبقي</th><th>الوقت</th><th>المستخدم</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.productName||getProduct(x.productId)?.name||'—')}</td><td>${esc(x.barcode||getProduct(x.productId)?.barcode||'—')}</td><td>${num(x.qty)}</td><td>${num(x.remaining)}</td><td>${esc(operationTime(x))}</td><td>${esc(x.user||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد عمليات</div>'}
-function miniRepl(rows){return rows.length?`<div class="table-wrap"><table><thead><tr><th>الصنف</th><th>الباركود</th><th>المستبدل</th><th>الوقت</th><th>المستخدم</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.productName||getProduct(x.productId)?.name||'—')}</td><td>${esc(x.barcode||getProduct(x.productId)?.barcode||'—')}</td><td>${num(x.qty)}</td><td>${esc(operationTime(x))}</td><td>${esc(x.user||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد استبدالات</div>'}
+function miniExpiry(rows){return rows.length?`<div class="table-wrap"><table><thead><tr><th>الصنف</th><th>الباركود</th><th>الكمية</th><th>المتبقي</th><th>التاريخ والوقت</th><th>المستخدم</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.productName||getProduct(x.productId)?.name||'—')}</td><td>${esc(x.barcode||getProduct(x.productId)?.barcode||'—')}</td><td>${num(x.qty)}</td><td>${num(x.remaining)}</td><td style="white-space:nowrap">${esc(operationDateTime(x))}</td><td>${esc(x.user||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد عمليات</div>'}
+function miniRepl(rows){return rows.length?`<div class="table-wrap"><table><thead><tr><th>الصنف</th><th>الباركود</th><th>المستبدل</th><th>التاريخ والوقت</th><th>المستخدم</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.productName||getProduct(x.productId)?.name||'—')}</td><td>${esc(x.barcode||getProduct(x.productId)?.barcode||'—')}</td><td>${num(x.qty)}</td><td style="white-space:nowrap">${esc(operationDateTime(x))}</td><td>${esc(x.user||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد استبدالات</div>'}
 function supplierOptions(v=''){return suppliers().map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('')}
 function normalizeSupplierText(v){return String(v||'').trim().toLowerCase().replace(/[\u064B-\u065F\u0670]/g,'').replace(/ـ/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/ؤ/g,'و').replace(/ئ/g,'ي').replace(/[^\u0600-\u06FFa-z0-9 ]/gi,' ').replace(/\s+/g,' ').trim()}
 function bestSupplierMatch(q){
@@ -243,7 +243,7 @@ function workerLastExpiryHtml(){
  const rows=workerLastExpiryRows(7);
  return `<div class="card" style="margin-top:16px">
    <div class="card-head"><div><h3>🧾 آخر 7 عمليات لك</h3><div class="muted">للتأكد أن العملية تم تسجيلها. العملية الثامنة تُخفي الأقدم من العرض فقط.</div></div></div>
-   ${rows.length?`<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الوقت</th><th>الصنف</th><th>الباركود</th><th>الكمية</th><th>المورد</th></tr></thead><tbody>${rows.map(x=>{const p=getProduct(x.productId);return `<tr><td>${esc(operationDate(x))}</td><td>${esc(operationTime(x))}</td><td>${esc(x.productName||p?.name||'—')}</td><td>${esc(x.barcode||p?.barcode||'—')}</td><td>${num(x.qty)}</td><td>${esc(x.supplier||'مورد عام')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty">لم تسجل أي عملية إكسباير حتى الآن</div>'}
+   ${rows.length?`<div class="table-wrap"><table><thead><tr><th>التاريخ والوقت</th><th>الصنف</th><th>الباركود</th><th>الكمية</th><th>المورد</th></tr></thead><tbody>${rows.map(x=>{const p=getProduct(x.productId);return `<tr><td style="white-space:nowrap;font-weight:800">${esc(operationDateTime(x))}</td><td>${esc(x.productName||p?.name||'—')}</td><td>${esc(x.barcode||p?.barcode||'—')}</td><td>${num(x.qty)}</td><td>${esc(x.supplier||'مورد عام')}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty">لم تسجل أي عملية إكسباير حتى الآن</div>'}
  </div>`;
 }
 
@@ -303,6 +303,19 @@ function localTimeFromIso(v){
 }
 function operationDate(x){return localDateFromIso(x?.createdAt||x?.at||'')||String(x?.date||'').slice(0,10)}
 function operationTime(x){return x?.operationTime||localTimeFromIso(x?.createdAt||x?.at||'')||'—'}
+function operationDateTime(x){
+ const raw=x?.createdAt||x?.at||'';
+ if(raw){
+  const d=new Date(raw);
+  if(!Number.isNaN(d.getTime())){
+   const date=d.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});
+   const time=d.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',hour12:true});
+   return `${date} — ${time}`;
+  }
+ }
+ const d=operationDate(x),t=operationTime(x);
+ return `${d||'—'} — ${t||'—'}`;
+}
 function recordInRange(x,from,to){
  const d=operationDate(x);
  return (!from||d>=from)&&(!to||d<=to);
@@ -553,9 +566,9 @@ function bindSettings(){
  $('#restoreBtn').onclick=()=>$('#restoreFile').click();$('#restoreFile').onchange=e=>restoreBackup(e.target.files[0]);
 }
 async function restoreBackup(file){if(!file)return;try{const d=JSON.parse(await file.text());if(!Array.isArray(d.products)||!Array.isArray(d.expiry))throw new Error('ملف غير صالح');if(!confirm('سيتم دمج النسخة مع السحابة بدون حذف البيانات الحالية. متابعة؟'))return;setCloud('busy','جاري دمج النسخة…');const pushMany=async(table,rows,extraFn)=>{for(let i=0;i<rows.length;i+=150){const part=rows.slice(i,i+150).map(x=>({id:String(x.id),payload:x,updated_at:now(),updated_by:currentUser.name,...(extraFn?extraFn(x):{})}));await rest(`${table}?on_conflict=id`,{method:'POST',body:part,prefer:'resolution=merge-duplicates'})}};await pushMany(T.products,d.products,p=>({smart_code:p.smartCode||null,barcode:p.barcode||null,name:p.name||'',cost:num(p.cost),category:p.category||null}));await pushMany(T.expiry,d.expiry,x=>({product_id:String(x.productId),qty:num(x.qty),remaining:num(x.remaining),cost:num(x.cost),expiry_date:x.expiryDate||null,created_at:x.createdAt||now()}));await pushMany(T.replacements,d.replacements||[],x=>({product_id:String(x.productId),qty:num(x.qty),created_at:x.createdAt||now()}));await loadCloud();await audit('استعادة نسخة احتياطية','دمج سحابي');toast('تم دمج النسخة مع السحابة بنجاح')}catch(e){setCloud('bad','فشل الاستعادة');toast(e.message)}}
-if('serviceWorker' in navigator)window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('sw.js?v=507',{updateViaCache:'none'});await reg.update()}catch(e){console.warn('SW update skipped',e)}});
+if('serviceWorker' in navigator)window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('sw.js?v=508',{updateViaCache:'none'});await reg.update()}catch(e){console.warn('SW update skipped',e)}});
 if('caches' in window){
-  caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('expiry-v5-')&&k!=='expiry-v5-507').map(k=>caches.delete(k)))).catch(()=>{});
+  caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('expiry-v5-')&&k!=='expiry-v5-508').map(k=>caches.delete(k)))).catch(()=>{});
 }
 render();loadCloud().then(setupRealtime).catch(e=>{console.error(e);setCloud('bad','تعذر الاتصال بالسحابة');render()});
 })();
