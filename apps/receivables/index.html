@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>سنابل OS - إدارة الذمم المدينة V7.2.7 Payment Balance Fix</title>
+<title>سنابل OS - إدارة الذمم المدينة V7.2.9 Payment Methods</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -272,12 +272,32 @@ async function loadTenants(){const {data,error}=await sb.from('tenants').select(
 function updateTenantLabel(){const t=tenants.find(x=>x.id===tenantId);tenantName.textContent=t?.name||'لا توجد مؤسسة'}
 async function switchTenant(){updateTenantLabel();await loadAll()}
 async function loadAll(){if(!tenantId)return;await loadPaymentMethods();await loadCustomers();await loadReceipts();if(document.getElementById('rCollector')&&!rCollector.value)rCollector.value=currentUserName();renderAll()}
-async function loadPaymentMethods(){const {data,error}=await sb.from('os_payment_methods').select('*').eq('tenant_id',tenantId).order('name');if(error){toast('خطأ طرق الدفع: '+error.message);return}paymentMethods=data||[];if(!paymentMethods.length){toast('لا توجد طرق دفع لهذه المؤسسة')}renderPaymentOptions()}
-function normalizePayName(v){return norm(v).replace(/\s+/g,' ').toLowerCase()}
-function isCurrentPaymentMethod(name){const n=normalizePayName(name);return ['نقدي','شبكة','تحويل','خصم'].some(x=>normalizePayName(x)===n)}
+async function loadPaymentMethods(){
+  const {data,error}=await sb.from('os_payment_methods').select('*').eq('tenant_id',tenantId).order('name');
+  if(error){toast('خطأ طرق الدفع: '+error.message);return}
+  paymentMethods=data||[];
+  if(!paymentMethods.length){toast('لا توجد طرق دفع لهذه المؤسسة')}
+  renderPaymentOptions();
+}
+function normalizePaymentLabel(v){return norm(v).replace(/\s+/g,' ').toLowerCase()}
+function allowedNewPaymentMethod(name){
+  const n=normalizePaymentLabel(name);
+  return ['نقدي','شبكة','تحويل','خصم'].some(x=>normalizePaymentLabel(x)===n);
+}
 function renderPaymentOptions(){
-  const current=paymentMethods.filter(p=>p.is_active!==false&&isCurrentPaymentMethod(p.name));
-  const currentOpts=current.map(p=>`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join('');
+  const allowedNames=['نقدي','شبكة','تحويل','خصم'];
+
+  // خيارات إصدار سند جديد: الأربع طرق المطلوبة فقط
+  rPay.innerHTML=allowedNames.map(name=>`<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+
+  // عند تعديل سند قديم: نحافظ على طريقة الدفع التاريخية الموجودة
+  const historical=paymentMethods.map(p=>p.name).filter(Boolean);
+  const editNames=[...new Set([...allowedNames,...historical])];
+  ePay.innerHTML=editNames.map(name=>`<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+
+  // التقارير: نظهر كل الطرق التاريخية حتى تظل المدفوعات السابقة قابلة للفلترة
+  fPay.innerHTML='<option value="">الكل</option>'+editNames.map(name=>`<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+}">${escapeHtml(p.name)}</option>`).join('');
   const allOpts=paymentMethods.map(p=>`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join('');
   rPay.innerHTML=currentOpts;
   ePay.innerHTML=allOpts;
@@ -525,14 +545,43 @@ function latestRemaining(rows){
 }
 function totalCurrentRemaining(rows){
   const active=(rows||[]).filter(r=>r.status!=='deleted');
-  const byClient=new Map();
+  const latestByClient=new Map();
+
   active.forEach(r=>{
     const key=String(r.client_id||r.client||'');
-    if(!byClient.has(key))byClient.set(key,[]);
-    byClient.get(key).push(r);
+    const prev=latestByClient.get(key);
+
+    if(!prev){
+      latestByClient.set(key,r);
+      return;
+    }
+
+    const rCreated=String(r.created_at||'');
+    const pCreated=String(prev.created_at||'');
+
+    // الأولوية لوقت إنشاء السند لأنه يمثل آخر إدخال فعلي
+    if(rCreated && pCreated){
+      if(rCreated > pCreated) latestByClient.set(key,r);
+      return;
+    }
+
+    // احتياط: التاريخ ثم رقم/معرف السند
+    const rDate=String(r.date||'');
+    const pDate=String(prev.date||'');
+    if(rDate > pDate){
+      latestByClient.set(key,r);
+      return;
+    }
+    if(rDate===pDate && String(r.id||'') > String(prev.id||'')){
+      latestByClient.set(key,r);
+    }
   });
+
   let total=0;
-  byClient.forEach(clientRows=>{ total+=latestRemaining(clientRows); });
+  latestByClient.forEach(r=>{
+    total += Number(r.remain||0);
+  });
+
   return total;
 }
 function summarizePayments(rows){let active=rows.filter(r=>r.status!=='deleted');let map={};paymentMethods.forEach(m=>map[m.name]={count:0,total:0});active.forEach(r=>{let key=r.pay||'غير محدد';if(!map[key])map[key]={count:0,total:0};map[key].count++;map[key].total+=Number(r.amount||0)});return {active,map,total:active.reduce((s,r)=>s+Number(r.amount||0),0),remain:totalCurrentRemaining(active),clients:new Set(active.map(r=>r.client)).size}}
