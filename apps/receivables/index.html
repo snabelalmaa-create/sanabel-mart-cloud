@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>سنابل OS - إدارة الذمم المدينة V7.2.9 Payment Methods</title>
+<title>سنابل OS - إدارة الذمم المدينة V7.3.0 Discount Method Fix</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -273,9 +273,31 @@ function updateTenantLabel(){const t=tenants.find(x=>x.id===tenantId);tenantName
 async function switchTenant(){updateTenantLabel();await loadAll()}
 async function loadAll(){if(!tenantId)return;await loadPaymentMethods();await loadCustomers();await loadReceipts();if(document.getElementById('rCollector')&&!rCollector.value)rCollector.value=currentUserName();renderAll()}
 async function loadPaymentMethods(){
-  const {data,error}=await sb.from('os_payment_methods').select('*').eq('tenant_id',tenantId).order('name');
+  const required=['نقدي','شبكة','تحويل','خصم'];
+
+  let {data,error}=await sb.from('os_payment_methods').select('*').eq('tenant_id',tenantId).order('name');
   if(error){toast('خطأ طرق الدفع: '+error.message);return}
+
   paymentMethods=data||[];
+
+  // تأكد أن الطرق الأربع المطلوبة موجودة فعليًا في قاعدة البيانات.
+  for(const name of required){
+    const exists=paymentMethods.some(p=>norm(p.name)===name);
+    if(!exists){
+      const {data:created,error:createError}=await sb
+        .from('os_payment_methods')
+        .insert({tenant_id:tenantId,name,is_active:true})
+        .select()
+        .single();
+
+      if(!createError && created){
+        paymentMethods.push(created);
+      }else if(createError){
+        console.warn('تعذر إنشاء طريقة الدفع '+name,createError);
+      }
+    }
+  }
+
   if(!paymentMethods.length){toast('لا توجد طرق دفع لهذه المؤسسة')}
   renderPaymentOptions();
 }
@@ -524,7 +546,7 @@ async function importClientsExcel(event){
     event.target.value='';
   }
 }
-async function saveReceipt(){if(!requirePermission('add_receipt','لا تملك صلاحية إصدار السندات.'))return;let client=rClient.value.trim(),amount=Number(rAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let cid=customerIdByName(client);if(!cid){if(confirm('العميل غير موجود. هل تريد إضافته تلقائيًا؟')){let {data,error}=await sb.from('os_customers').insert({tenant_id:tenantId,name:client,notes:'أضيف تلقائيًا من سند قبض'}).select().single();if(error)return alert('خطأ إضافة العميل: '+error.message);cid=data.id;await loadCustomers()}else return}let payId=paymentIdByName(rPay.value);let receipt_no='RC-'+Date.now().toString().slice(-8);const payload={tenant_id:tenantId,module_id:'receivables',customer_id:cid,receipt_no,receipt_date:rDate.value||todayISO(),amount,remaining:Number(rRemain.value)||0,payment_method_id:payId,reference_no:rRef.value.trim()||null,collector_name:rCollector.value.trim()||currentUserName(),notes:rNote.value.trim()||null,status:'pending'};const {error}=await sb.from('os_receipts').insert(payload);if(error){alert('خطأ حفظ السند: '+error.message);return}clearReceipt();toast('تم حفظ السند في السحابة');await loadAll()}
+async function saveReceipt(){if(!requirePermission('add_receipt','لا تملك صلاحية إصدار السندات.'))return;let client=rClient.value.trim(),amount=Number(rAmount.value);if(!client||!amount)return alert('أدخل العميل والمبلغ');let cid=customerIdByName(client);if(!cid){if(confirm('العميل غير موجود. هل تريد إضافته تلقائيًا؟')){let {data,error}=await sb.from('os_customers').insert({tenant_id:tenantId,name:client,notes:'أضيف تلقائيًا من سند قبض'}).select().single();if(error)return alert('خطأ إضافة العميل: '+error.message);cid=data.id;await loadCustomers()}else return}let payId=paymentIdByName(rPay.value);if(!payId){await loadPaymentMethods();payId=paymentIdByName(rPay.value)}if(!payId)return alert('تعذر العثور على طريقة الدفع المختارة. اضغط تحديث ثم حاول مرة أخرى.');let receipt_no='RC-'+Date.now().toString().slice(-8);const payload={tenant_id:tenantId,module_id:'receivables',customer_id:cid,receipt_no,receipt_date:rDate.value||todayISO(),amount,remaining:Number(rRemain.value)||0,payment_method_id:payId,reference_no:rRef.value.trim()||null,collector_name:rCollector.value.trim()||currentUserName(),notes:rNote.value.trim()||null,status:'pending'};const {error}=await sb.from('os_receipts').insert(payload);if(error){alert('خطأ حفظ السند: '+error.message);return}clearReceipt();toast('تم حفظ السند في السحابة');await loadAll()}
 function clearReceipt(){rClient.value='';rDate.value=todayISO();rAmount.value='';rRemain.value='';rRef.value='';rCollector.value='';rNote.value=''}
 function filterRows(prefix){let rows=receipts.slice();let from=document.getElementById(prefix+'From')?.value,to=document.getElementById(prefix+'To')?.value,client=document.getElementById(prefix+'Client')?.value?.trim(),pay=document.getElementById(prefix+'Pay')?.value,status=document.getElementById(prefix+'Status')?.value;if(status){rows=rows.filter(r=>r.status===status)}else{rows=rows.filter(r=>r.status!=='deleted')}if(from)rows=rows.filter(r=>r.date>=from);if(to)rows=rows.filter(r=>r.date<=to);if(client)rows=rows.filter(r=>String(r.client).includes(client));if(pay)rows=rows.filter(r=>r.pay===pay);return rows}
 function toggleGear(id,ev){if(ev)ev.stopPropagation();document.querySelectorAll('.gear-list').forEach(m=>{if(m.id!==id)m.classList.remove('open')});const el=document.getElementById(id);if(el)el.classList.toggle('open')}document.addEventListener('click',()=>document.querySelectorAll('.gear-list').forEach(m=>m.classList.remove('open')));
