@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>سنابل OS - إدارة الذمم المدينة V7.3.1 Login + Payment Fix</title>
+<title>سنابل OS - إدارة الذمم المدينة V7.3.2 Manager PIN Fix</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -167,10 +167,38 @@ function setSecuritySettings(v){localStorage.setItem(SECURITY_KEY,JSON.stringify
 function loadSecuritySettings(){let s=getSecuritySettings(); if(document.getElementById('secDeleteReceipt')){secDeleteReceipt.checked=s.deleteReceipt!==false;secRestoreReceipt.checked=s.restoreReceipt!==false;secEditApproved.checked=!!s.editApproved;secStatus.value=s.pin?'محفوظ ومفعل':'لم يتم تعيين رقم سري';secPin.value='';secPin2.value=''}}
 function saveSecuritySettings(){let pin=secPin.value.trim(),pin2=secPin2.value.trim();let current=getSecuritySettings();if(pin||pin2){if(pin.length<3)return alert('الرقم السري يجب أن يكون 3 أرقام/أحرف على الأقل');if(pin!==pin2)return alert('تأكيد الرقم السري غير مطابق');current.pin=btoa(unescape(encodeURIComponent(pin)))}current.deleteReceipt=secDeleteReceipt.checked;current.restoreReceipt=secRestoreReceipt.checked;current.editApproved=secEditApproved.checked;setSecuritySettings(current);loadSecuritySettings();toast('تم حفظ إعدادات الأمان')}
 function clearSecuritySettings(){if(!confirm('هل تريد مسح الرقم السري وإعدادات الأمان؟'))return;localStorage.removeItem(SECURITY_KEY);loadSecuritySettings();toast('تم مسح إعدادات الأمان')}
-function verifyPin(pin){let s=getSecuritySettings();if(!s.pin)return false;return s.pin===btoa(unescape(encodeURIComponent(String(pin||''))))}
-function requireManagerPin(title,hint){let s=getSecuritySettings();if(!s.pin){alert('لم يتم تعيين رقم المدير. افتح الإعدادات > أمان النظام واحفظ رقمًا سريًا أولاً.');return Promise.resolve(null)}pinModalTitle.textContent=title||'صلاحية المدير';pinModalHint.textContent=hint||'أدخل الرقم السري للمدير لتأكيد العملية.';pinInput.value='';pinReason.value='';pinModal.classList.add('active');setTimeout(()=>pinInput.focus(),80);return new Promise(res=>{pendingPinResolve=res})}
+function verifyPin(pin){
+  const entered=String(pin||'').trim();
+  if(!entered)return false;
+
+  // 1) رقم أمان النظام المحلي إن كان محفوظًا
+  const s=getSecuritySettings();
+  if(s.pin){
+    const encoded=btoa(unescape(encodeURIComponent(entered)));
+    if(s.pin===encoded)return true;
+  }
+
+  // 2) رقم دخول أي مالك أو مدير نشط في قائمة الموظفين
+  const manager=(appUsers||[]).find(u=>{
+    const role=String(u.role||'').toLowerCase();
+    return u.is_active!==false &&
+      (role==='owner'||role==='manager') &&
+      String(u.pin||'').trim()===entered;
+  });
+
+  return !!manager;
+}
+function requireManagerPin(title,hint){
+  pinModalTitle.textContent=title||'صلاحية المدير';
+  pinModalHint.textContent=hint||'أدخل الرقم السري للمالك أو المدير لتأكيد العملية.';
+  pinInput.value='';
+  pinReason.value='';
+  pinModal.classList.add('active');
+  setTimeout(()=>pinInput.focus(),80);
+  return new Promise(res=>{pendingPinResolve=res});
+}
 function closePinModal(result){pinModal.classList.remove('active');if(pendingPinResolve){pendingPinResolve(result);pendingPinResolve=null}}
-function confirmPinModal(){if(!verifyPin(pinInput.value)){alert('الرقم السري غير صحيح');pinInput.focus();return}closePinModal({ok:true,reason:pinReason.value.trim()})}
+function confirmPinModal(){if(!verifyPin(pinInput.value)){alert('الرقم السري غير صحيح أو المستخدم ليس مالكًا/مديرًا نشطًا');pinInput.focus();return}closePinModal({ok:true,reason:pinReason.value.trim()})}
 
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
 function money(n){return (Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ريال'}
