@@ -1,0 +1,20 @@
+{
+  "name": "سنابل المع - بوابة عملاء الآجل",
+  "short_name": "سنابل المع",
+  "description": "رصيد العميل وفواتيره وكشف الحساب المرتبط ببرنامج سمارت",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#071a34",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
