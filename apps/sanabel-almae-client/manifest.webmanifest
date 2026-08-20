@@ -1,7 +1,7 @@
 {
   "name": "سنابل المع - بوابة عملاء الآجل",
   "short_name": "سنابل المع",
-  "description": "رصيد العميل وفواتيره وكشف الحساب المرتبط ببرنامج سمارت",
+  "description": "بوابة سنابل المع لعرض الرصيد والفواتير وكشف الحساب والسدادات",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -11,9 +11,15 @@
   "dir": "rtl",
   "icons": [
     {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

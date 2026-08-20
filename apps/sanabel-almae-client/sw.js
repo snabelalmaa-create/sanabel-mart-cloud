@@ -1,5 +1,5 @@
-const CACHE='sanabel-almae-client-v12';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg'];
+const CACHE='sanabel-almae-client-v13';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./logo-sanabel.png','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
   self.skipWaiting();
