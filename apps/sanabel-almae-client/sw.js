@@ -1,28 +1,7 @@
-const CACHE='sanabel-almae-client-v13';
+const CACHE='sanabel-almae-client-v14';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./logo-sanabel.png','./icon-192.png','./icon-512.png'];
-
-self.addEventListener('install',event=>{
-  self.skipWaiting();
-  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).catch(()=>{}));
-});
-
-self.addEventListener('activate',event=>{
-  event.waitUntil(
-    caches.keys()
-      .then(keys=>Promise.all(keys.filter(k=>k.startsWith('sanabel-almae-client-')&&k!==CACHE).map(k=>caches.delete(k))))
-      .then(()=>self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch',event=>{
-  if(event.request.method!=='GET') return;
-  event.respondWith(
-    fetch(event.request)
-      .then(response=>{
-        const copy=response.clone();
-        caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{});
-        return response;
-      })
-      .catch(()=>caches.match(event.request).then(r=>r||caches.match('./')))
-  );
-});
+self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).catch(()=>{}))});
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('sanabel-almae-client-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{const cp=r.clone();caches.open(CACHE).then(c=>c.put(e.request,cp)).catch(()=>{});return r}).catch(()=>caches.match(e.request).then(r=>r||caches.match('./'))))});
+self.addEventListener('push',e=>{let d={};try{d=e.data?e.data.json():{}}catch{d={body:e.data?e.data.text():''}};const title=d.title||'سنابل المع';const options={body:d.body||'لديك تحديث جديد على حسابك.',icon:'./icon-192.png',badge:'./icon-192.png',tag:d.tag||'sanabel-account-update',renotify:true,data:{url:d.url||'./index.html?from=notification&login=1'}};e.waitUntil(self.registration.showNotification(title,options))});
+self.addEventListener('notificationclick',e=>{e.notification.close();const url=new URL(e.notification.data?.url||'./index.html?from=notification&login=1',self.location.href).href;e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{for(const c of list){if('navigate'in c){c.navigate(url);return c.focus()}}return clients.openWindow(url)}))});
