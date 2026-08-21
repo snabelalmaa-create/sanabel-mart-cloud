@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>سنابل المع | معاينة التصميم الإداري V3</title>
+<style>
+:root{
+  --navy:#061a31;
+  --navy2:#0a3159;
+  --blue:#0f5f9c;
+  --gold:#d7a748;
+  --gold2:#f0cb78;
+  --bg:#f3f6fa;
+  --card:#ffffff;
+  --ink:#102035;
+  --muted:#758399;
+  --line:#e6ebf1;
+  --green:#0f9960;
+  --red:#d84848;
+  --amber:#c88414;
+  --shadow:0 18px 44px rgba(11,31,55,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+button,input,select{font:inherit}
+.app{display:grid;grid-template-columns:255px 1fr;min-height:100vh}
+.sidebar{
+  background:linear-gradient(180deg,#06182c,#092b4e 72%,#08243f);
+  color:#fff;padding:18px 14px;position:sticky;top:0;height:100vh;box-shadow:-12px 0 35px rgba(3,15,30,.12)
+}
+.brand{display:flex;align-items:center;gap:11px;padding:8px 8px 18px;border-bottom:1px solid rgba(255,255,255,.1)}
+.brand img{width:48px;height:48px;object-fit:contain;background:#fff;border-radius:15px;padding:5px}
+.brand strong{display:block;font-size:18px}.brand span{display:block;color:#bdd0e3;font-size:12px;margin-top:3px}
+.nav{padding-top:16px}.nav button{
+  width:100%;display:flex;align-items:center;gap:11px;border:0;background:transparent;color:#d7e5f2;
+  padding:12px 13px;margin:4px 0;border-radius:13px;font-weight:700;text-align:right
+}
+.nav button:hover{background:rgba(255,255,255,.07)}.nav button.active{background:linear-gradient(135deg,rgba(215,167,72,.22),rgba(255,255,255,.08));color:#fff;border:1px solid rgba(240,203,120,.18)}
+.nav .ico{width:27px;height:27px;border-radius:9px;background:rgba(255,255,255,.09);display:grid;place-items:center}
+.side-bottom{position:absolute;bottom:18px;right:14px;left:14px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px}
+.version{font-size:12px;color:#b8cade}.version b{color:#fff}
+.main{min-width:0}
+.topbar{
+  height:72px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:10
+}
+.page-title h1{margin:0;font-size:23px}.page-title p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.top-actions{display:flex;gap:9px;align-items:center}
+.pill{background:#f4f7fb;border:1px solid var(--line);border-radius:999px;padding:9px 12px;font-weight:700;font-size:13px}
+.user{display:flex;gap:10px;align-items:center}.avatar{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--gold2),var(--gold));display:grid;place-items:center;font-weight:900;color:var(--navy)}
+.content{padding:22px 24px 34px}
+.preview-note{background:#fff7df;border:1px solid #efd79a;color:#7b5916;padding:10px 13px;border-radius:13px;margin-bottom:18px;font-size:13px;font-weight:700}
+.metrics{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.metric:after{content:"";position:absolute;width:70px;height:70px;border-radius:50%;background:rgba(15,95,156,.05);left:-22px;top:-24px}
+.metric small{display:block;color:var(--muted);font-weight:700}.metric b{display:block;font-size:22px;margin-top:7px}.metric .sub{font-size:11px;color:var(--muted);margin-top:5px}
+.metric.gold b{color:#9a6b12}.metric.green b{color:var(--green)}.metric.red b{color:var(--red)}
+.grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(300px,.75fr);gap:16px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 17px;border-bottom:1px solid var(--line)}
+.panel-head h3{margin:0;font-size:17px}.panel-head span{color:var(--muted);font-size:12px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;padding:13px 16px;background:#fbfcfe;border-bottom:1px solid var(--line)}
+.filters input,.filters select{border:1px solid #dbe2ea;background:#fff;border-radius:11px;padding:9px 11px;outline:none}
+.filters input{min-width:230px}.filters .btn{border:0;border-radius:11px;padding:9px 14px;font-weight:800;background:var(--navy);color:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}th{background:#f7f9fc;color:#6d7b8f;font-weight:800;padding:12px;text-align:right;border-bottom:1px solid var(--line)}
+td{padding:13px 12px;border-bottom:1px solid #eef2f6;vertical-align:middle}tr:hover td{background:#fbfdff}
+.amount{font-weight:900;direction:ltr;text-align:right}.balance{font-weight:800}.muted{color:var(--muted)}
+.badge{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:900}.pending{background:#fff4df;color:#9b6310}.approved{background:#e8f8f1;color:#08764a}.returned{background:#fff0f0;color:#ad3434}
+.action{border:0;border-radius:9px;padding:7px 9px;font-weight:800;font-size:11px}.action.approve{background:#e8f8f1;color:#08764a}.action.back{background:#fff1e8;color:#a85d17}
+.side-card{padding:16px}.method-list{display:grid;gap:10px}.method{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fbfcfe}
+.method strong{font-size:14px}.method b{font-size:17px}.method small{display:block;color:var(--muted);margin-top:3px}
+.customer-card{margin-top:14px;border:1px solid var(--line);border-radius:17px;padding:15px;background:linear-gradient(145deg,#fbfdff,#f4f8fc)}
+.customer-top{display:flex;justify-content:space-between;gap:10px}.grade{width:48px;height:48px;border-radius:15px;background:#eaf8f1;color:var(--green);display:grid;place-items:center;font-size:25px;font-weight:900}
+.customer-card h4{margin:0 0 3px}.customer-card p{margin:0;color:var(--muted);font-size:12px}
+.customer-stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}.cs{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}.cs small{color:var(--muted)}.cs b{display:block;margin-top:4px}
+.lower{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.activity{padding:14px 16px}.event{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #eef2f6}.event:last-child{border-bottom:0}
+.ev-ico{width:34px;height:34px;border-radius:11px;background:#eef4fb;display:grid;place-items:center}.event b{font-size:13px}.event small{color:var(--muted)}
+.quick-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:16px}.qa{border:1px solid var(--line);background:#fff;border-radius:14px;padding:15px;text-align:right;cursor:pointer}.qa:hover{box-shadow:0 9px 22px rgba(10,35,62,.07)}.qa b{display:block}.qa small{color:var(--muted);display:block;margin-top:5px}
+.view{display:none}.view.active{display:block}
+@media(max-width:1250px){.metrics{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){.app{grid-template-columns:82px 1fr}.brand div,.nav button span.txt,.side-bottom{display:none}.brand{justify-content:center}.sidebar{padding:14px 8px}.nav button{justify-content:center}.grid,.lower{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
+
+.rangebar{display:flex;gap:10px;align-items:end;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);margin-bottom:14px}
+.rangebar .fieldx{display:grid;gap:6px}.rangebar label{font-size:12px;color:var(--muted);font-weight:800}.rangebar input{border:1px solid #dbe2ea;border-radius:11px;padding:9px 11px;background:#fff}
+.rangebar button{border:0;background:var(--navy);color:#fff;border-radius:11px;padding:10px 16px;font-weight:900}
+.compare-metrics{display:grid;grid-template-columns:repeat(5,minmax(160px,1fr));gap:12px;margin-bottom:15px}
+.cm{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:var(--shadow)}
+.cm small{color:var(--muted);font-weight:800}.cm b{display:block;font-size:23px;margin-top:7px}.cm .hint{font-size:11px;color:var(--muted);margin-top:5px}
+.progress-wrap{margin-top:10px;height:8px;background:#edf1f5;border-radius:99px;overflow:hidden}.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:99px}
+.chartbox{padding:16px}.bars{display:grid;gap:13px}.barrow{display:grid;grid-template-columns:80px 1fr 90px;gap:10px;align-items:center}.track{height:13px;background:#edf1f5;border-radius:99px;overflow:hidden;display:flex}.salesbar{height:100%;background:#b8c9dc}.paybar{height:100%;background:#2d7fb7}.barrow b{font-size:12px}.legend{display:flex;gap:18px;font-size:12px;color:var(--muted);margin-bottom:14px}.dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-left:5px}.dot.sales{background:#b8c9dc}.dot.pay{background:#2d7fb7}
+@media(max-width:1250px){.compare-metrics{grid-template-columns:repeat(3,1fr)}}@media(max-width:800px){.compare-metrics{grid-template-columns:1fr 1fr}}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="logo-sanabel.png" alt="سنابل المع">
+      <div><strong>سنابل المع</strong><span>إدارة الذمم والسداد</span></div>
+    </div>
+    <div class="nav">
+      <button class="active" data-view="dashboard"><span class="ico">⌂</span><span class="txt">لوحة التحكم</span></button>
+      <button data-view="pending"><span class="ico">⏳</span><span class="txt">السندات المعلقة</span></button>
+      <button data-view="approved"><span class="ico">✓</span><span class="txt">السندات المعتمدة</span></button>
+      <button data-view="returned"><span class="ico">↩</span><span class="txt">المرتجعة للمحاسب</span></button>
+      <button data-view="customers"><span class="ico">👥</span><span class="txt">كشف العملاء</span></button>
+      <button data-view="collections"><span class="ico">📊</span><span class="txt">تحليل السداد والمبيعات</span></button>
+      <button data-view="users"><span class="ico">⚙</span><span class="txt">المستخدمون والصلاحيات</span></button>
+      <button data-view="audit"><span class="ico">▤</span><span class="txt">سجل الرقابة</span></button>
+    </div>
+    <div class="side-bottom"><div class="version">معاينة التصميم <b>DESIGN‑V3</b><br>غير مرتبطة ببيانات العملاء</div></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="page-title"><h1 id="pageTitle">لوحة التحكم</h1><p>مركز متابعة سداد العملاء واعتماد سندات القبض</p></div>
+      <div class="top-actions">
+        <div class="pill">آخر تحديث: الآن</div>
+        <div class="user"><div><b>المالك</b><div class="muted" style="font-size:11px">صلاحية كاملة</div></div><div class="avatar">م</div></div>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="preview-note">هذه معاينة تصميم فقط. لا يوجد أي اتصال بقاعدة البيانات ولا تم تعديل تطبيق العميل أو وظائفه.</div>
+
+      <section class="view active" id="dashboard">
+        <div class="metrics">
+          <div class="metric"><small>إجمالي سداد اليوم</small><b>48,750.00 ريال</b><div class="sub">31 سند قبض</div></div>
+          <div class="metric gold"><small>بانتظار الاعتماد</small><b>8 سندات</b><div class="sub">بقيمة 12,680 ريال</div></div>
+          <div class="metric green"><small>المعتمد اليوم</small><b>36,070.00 ريال</b><div class="sub">23 سندًا</div></div>
+          <div class="metric"><small>نقدي</small><b>9,450.00</b><div class="sub">7 سندات</div></div>
+          <div class="metric"><small>تحويل</small><b>25,100.00</b><div class="sub">14 سندًا</div></div>
+          <div class="metric"><small>شبكة</small><b>14,200.00</b><div class="sub">10 سندات</div></div>
+        </div>
+
+        <div class="grid">
+          <div class="panel">
+            <div class="panel-head"><div><h3>أحدث سندات القبض</h3><span>سندات اليوم القادمة للمراجعة</span></div><span>عرض الكل ←</span></div>
+            <div class="filters">
+              <input placeholder="بحث باسم العميل أو رقم السند">
+              <select><option>كل طرق الدفع</option><option>نقدي</option><option>تحويل</option><option>شبكة</option></select>
+              <select><option>اليوم</option><option>هذا الأسبوع</option><option>هذا الشهر</option></select>
+              <button class="btn">تحديث</button>
+            </div>
+            <table>
+              <thead><tr><th>رقم السند</th><th>العميل</th><th>المبلغ</th><th>المتبقي بعد السداد</th><th>طريقة الدفع</th><th>الموظف</th><th>الوقت</th><th>الحالة</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><b>#RC-88142</b></td><td>مؤسسة الندى للتجارة</td><td class="amount">2,500.00</td><td class="balance">7,430.00</td><td>تحويل</td><td>أحمد علي</td><td>05:34 م</td><td><span class="badge pending">بانتظار الاعتماد</span></td><td><button class="action approve">اعتماد</button> <button class="action back">إرجاع</button></td></tr>
+                <tr><td><b>#RC-88139</b></td><td>عبدالله محمد</td><td class="amount">1,250.00</td><td class="balance">3,820.00</td><td>نقدي</td><td>خالد حسن</td><td>04:58 م</td><td><span class="badge approved">معتمد</span></td><td>—</td></tr>
+                <tr><td><b>#RC-88135</b></td><td>بقالة السعادة</td><td class="amount">4,000.00</td><td class="balance">11,610.00</td><td>شبكة</td><td>أحمد علي</td><td>04:21 م</td><td><span class="badge pending">بانتظار الاعتماد</span></td><td><button class="action approve">اعتماد</button> <button class="action back">إرجاع</button></td></tr>
+                <tr><td><b>#RC-88130</b></td><td>أسواق الوادي</td><td class="amount">3,750.00</td><td class="balance">5,000.00</td><td>تحويل</td><td>محمد صالح</td><td>03:46 م</td><td><span class="badge returned">مرتجع للمحاسب</span></td><td>—</td></tr>
+                <tr><td><b>#RC-88128</b></td><td>مؤسسة روابي الجنوب</td><td class="amount">900.00</td><td class="balance">1,870.00</td><td>نقدي</td><td>خالد حسن</td><td>03:15 م</td><td><span class="badge approved">معتمد</span></td><td>—</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <div class="panel">
+              <div class="panel-head"><div><h3>ملخص طرق الدفع</h3><span>إجمالي اليوم</span></div></div>
+              <div class="side-card">
+                <div class="method-list">
+                  <div class="method"><div><strong>تحويل بنكي</strong><small>14 سندًا</small></div><b>25,100</b></div>
+                  <div class="method"><div><strong>شبكة</strong><small>10 سندات</small></div><b>14,200</b></div>
+                  <div class="method"><div><strong>نقدي</strong><small>7 سندات</small></div><b>9,450</b></div>
+                </div>
+              </div>
+            </div>
+            <div class="customer-card">
+              <div class="customer-top">
+                <div><h4>أفضل عميل هذا الشهر</h4><p>مؤسسة روابي الجنوب</p></div>
+                <div class="grade">A</div>
+              </div>
+              <div class="customer-stats">
+                <div class="cs"><small>متوسط دورة السداد</small><b>18 يوم</b></div>
+                <div class="cs"><small>نسبة الالتزام</small><b>96%</b></div>
+                <div class="cs"><small>إجمالي السداد</small><b>32,600</b></div>
+                <div class="cs"><small>الرصيد الحالي</small><b>1,870</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lower">
+          <div class="panel">
+            <div class="panel-head"><div><h3>آخر أنشطة الرقابة</h3><span>من اعتمد أو أعاد السندات</span></div></div>
+            <div class="activity">
+              <div class="event"><div class="ev-ico">✓</div><div><b>تم اعتماد السند #RC-88139</b><small>بواسطة المدير محمد</small></div><small>منذ 8 دقائق</small></div>
+              <div class="event"><div class="ev-ico">↩</div><div><b>إرجاع السند #RC-88130 للمحاسب</b><small>السبب: طريقة الدفع تحتاج تعديل</small></div><small>منذ 20 دقيقة</small></div>
+              <div class="event"><div class="ev-ico">👤</div><div><b>تسجيل دخول مستخدم</b><small>المحاسب خالد حسن</small></div><small>منذ 41 دقيقة</small></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div><h3>إجراءات سريعة</h3><span>أكثر المهام استخدامًا</span></div></div>
+            <div class="quick-actions">
+              <div class="qa"><b>السندات المعلقة</b><small>مراجعة 8 سندات تنتظر اعتمادك</small></div>
+              <div class="qa"><b>كشف حساب عميل</b><small>بحث سريع بالسداد والمتبقي فقط</small></div>
+              <div class="qa"><b>تقارير طرق الدفع</b><small>نقدي، تحويل، شبكة والفترة</small></div>
+              <div class="qa"><b>تقييم العملاء</b><small>تصنيف A–D ومتوسط دورة السداد</small></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="pending"><div class="panel"><div class="panel-head"><h3>السندات المعلقة</h3><span>تصميم معاينة</span></div><div class="side-card">نفس الجدول الرئيسي ولكن مفلتر تلقائيًا على السندات التي تنتظر اعتماد المدير، مع زر اعتماد وزر إرجاع للمحاسب وسبب الإرجاع.</div></div></section>
+      <section class="view" id="approved"><div class="panel"><div class="panel-head"><h3>السندات المعتمدة</h3><span>تصميم معاينة</span></div><div class="side-card">أرشيف كامل للسندات المعتمدة مع البحث، الفترة، طريقة الدفع، الطباعة والتصدير.</div></div></section>
+      <section class="view" id="returned"><div class="panel"><div class="panel-head"><h3>المرتجعة للمحاسب</h3><span>تصميم معاينة</span></div><div class="side-card">قائمة السندات التي أعادها المدير مع سبب الإرجاع وحالة إعادة المراجعة.</div></div></section>
+      <section class="view" id="customers"><div class="panel"><div class="panel-head"><h3>كشف العملاء</h3><span>بدون فواتير داخل الكشف</span></div><div class="side-card">يظهر العميل، إجمالي السداد، آخر سداد، المتبقي بعد كل سند، التقييم، ومتوسط دورة السداد. كشف الحساب نفسه يعرض سندات السداد والمتبقي فقط.</div></div></section>
+
+      <section class="view" id="collections">
+        <div class="rangebar">
+          <div class="fieldx"><label>من تاريخ</label><input type="date" value="2026-08-01"></div>
+          <div class="fieldx"><label>إلى تاريخ</label><input type="date" value="2026-08-21"></div>
+          <button onclick="demoRefresh()">استعراض الفترة</button>
+          <div class="muted" style="font-size:12px;margin-right:auto">المقارنة حسب المبيعات الآجلة والسدادات المعتمدة خلال الفترة المحددة</div>
+        </div>
+
+        <div class="compare-metrics">
+          <div class="cm"><small>إجمالي المبيعات الآجلة</small><b>184,500.00 ريال</b><div class="hint">خلال الفترة المحددة</div></div>
+          <div class="cm"><small>إجمالي السدادات المعتمدة</small><b style="color:var(--green)">121,750.00 ريال</b><div class="hint">سندات معتمدة فقط</div></div>
+          <div class="cm"><small>نسبة السداد</small><b>66.0%</b><div class="progress-wrap"><div class="progress-fill" style="width:66%"></div></div></div>
+          <div class="cm"><small>المتبقي من مبيعات الفترة</small><b style="color:var(--red)">62,750.00 ريال</b><div class="hint">رصيد غير مسدد من المبيعات الآجلة للفترة</div></div>
+          <div class="cm"><small>عدد العملاء غير المسددين بالكامل</small><b>37 عميل</b><div class="hint">من أصل 64 عميلًا لديهم مبيعات آجلة</div></div>
+        </div>
+
+        <div class="grid">
+          <div class="panel">
+            <div class="panel-head"><div><h3>مقارنة المبيعات الآجلة بالسداد</h3><span>عرض يومي للفترة المحددة</span></div><span>نسبة التحصيل 66%</span></div>
+            <div class="chartbox">
+              <div class="legend"><span><i class="dot sales"></i> المبيعات الآجلة</span><span><i class="dot pay"></i> السدادات المعتمدة</span></div>
+              <div class="bars">
+                <div class="barrow"><b>1–4 أغسطس</b><div class="track"><div class="salesbar" style="width:72%"></div><div class="paybar" style="width:28%"></div></div><b>58%</b></div>
+                <div class="barrow"><b>5–8 أغسطس</b><div class="track"><div class="salesbar" style="width:63%"></div><div class="paybar" style="width:37%"></div></div><b>71%</b></div>
+                <div class="barrow"><b>9–12 أغسطس</b><div class="track"><div class="salesbar" style="width:68%"></div><div class="paybar" style="width:32%"></div></div><b>64%</b></div>
+                <div class="barrow"><b>13–16 أغسطس</b><div class="track"><div class="salesbar" style="width:61%"></div><div class="paybar" style="width:39%"></div></div><b>74%</b></div>
+                <div class="barrow"><b>17–21 أغسطس</b><div class="track"><div class="salesbar" style="width:70%"></div><div class="paybar" style="width:30%"></div></div><b>63%</b></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><div><h3>ملخص التحصيل</h3><span>الفترة المحددة</span></div></div>
+            <div class="side-card">
+              <div class="method-list">
+                <div class="method"><div><strong>نقدي</strong><small>السدادات المعتمدة</small></div><b>31,450</b></div>
+                <div class="method"><div><strong>تحويل</strong><small>السدادات المعتمدة</small></div><b>56,100</b></div>
+                <div class="method"><div><strong>شبكة</strong><small>السدادات المعتمدة</small></div><b>34,200</b></div>
+              </div>
+              <div class="notice" style="margin-top:13px">
+                في النسخة الفعلية نحسب <b>المتبقي من مبيعات الفترة</b> من الرصيد غير المسدد للفواتير الآجلة الواقعة داخل الفترة، وليس بمجرد طرح كل سندات الفترة من المبيعات؛ لأن بعض السدادات قد تخص مبيعات أقدم.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:16px">
+          <div class="panel-head"><div><h3>تفصيل العملاء للفترة</h3><span>من الأكثر تحصيلًا إلى الأقل</span></div><span>تصدير Excel / PDF لاحقًا</span></div>
+          <table>
+            <thead><tr><th>العميل</th><th>المبيعات الآجلة</th><th>السداد المعتمد</th><th>نسبة السداد</th><th>المتبقي غير المسدد</th><th>آخر سداد</th><th>متوسط دورة السداد</th><th>التقييم</th></tr></thead>
+            <tbody>
+              <tr><td><b>مؤسسة روابي الجنوب</b></td><td class="amount">18,500</td><td class="amount">17,200</td><td><span class="badge approved">93%</span></td><td class="amount">1,300</td><td>20/08/2026</td><td>18 يوم</td><td><b style="color:var(--green)">A</b></td></tr>
+              <tr><td><b>أسواق الوادي</b></td><td class="amount">22,400</td><td class="amount">14,700</td><td><span class="badge approved">66%</span></td><td class="amount">7,700</td><td>18/08/2026</td><td>31 يوم</td><td><b style="color:var(--amber)">B</b></td></tr>
+              <tr><td><b>بقالة السعادة</b></td><td class="amount">12,000</td><td class="amount">5,000</td><td><span class="badge pending">42%</span></td><td class="amount">7,000</td><td>14/08/2026</td><td>47 يوم</td><td><b style="color:var(--amber)">C</b></td></tr>
+              <tr><td><b>مؤسسة الندى للتجارة</b></td><td class="amount">27,800</td><td class="amount">8,500</td><td><span class="badge returned">31%</span></td><td class="amount">19,300</td><td>11/08/2026</td><td>65 يوم</td><td><b style="color:var(--red)">D</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="view" id="users"><div class="panel"><div class="panel-head"><h3>المستخدمون والصلاحيات</h3><span>مالك / مدير / محاسب / مراجع</span></div><div class="side-card">واجهة لإضافة المستخدمين وتفعيل صلاحيات مشاهدة، اعتماد، إرجاع، تقارير، تصدير، إدارة مستخدمين وسجل الرقابة.</div></div></section>
+      <section class="view" id="audit"><div class="panel"><div class="panel-head"><h3>سجل الرقابة</h3><span>كل حركة باسم المستخدم والوقت</span></div><div class="side-card">يتم عرض تسجيل الدخول، الاعتماد، الإرجاع، تعديل الصلاحيات، الطباعة والتصدير مع اسم المستخدم والتاريخ والوقت.</div></div></section>
+    </div>
+  </main>
+</div>
+<script>
+const titles={dashboard:'لوحة التحكم',pending:'السندات المعلقة',approved:'السندات المعتمدة',returned:'المرتجعة للمحاسب',customers:'كشف العملاء',collections:'تحليل السداد والمبيعات',users:'المستخدمون والصلاحيات',audit:'سجل الرقابة'};
+document.querySelectorAll('.nav button').forEach(btn=>{
+ btn.addEventListener('click',()=>{
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.getElementById(btn.dataset.view).classList.add('active');
+  document.getElementById('pageTitle').textContent=titles[btn.dataset.view]||'سنابل المع';
+ });
+});
+function demoRefresh(){alert('هذه معاينة تصميم فقط. في النسخة الفعلية سيتم جلب بيانات الفترة من النظام.');}
+</script>
+</body></html>

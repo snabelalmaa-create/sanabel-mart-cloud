@@ -1,0 +1,12 @@
+{
+  "name":"سنابل المع - إدارة الذمم والسداد",
+  "short_name":"سنابل المع",
+  "start_url":"./index.html",
+  "display":"standalone",
+  "background_color":"#f3f6fa",
+  "theme_color":"#061a31",
+  "icons":[
+    {"src":"icon-192.png","sizes":"192x192","type":"image/png"},
+    {"src":"icon-512.png","sizes":"512x512","type":"image/png"}
+  ]
+}
