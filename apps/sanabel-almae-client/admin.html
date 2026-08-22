@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071a34">
+<title>سنابل المع | إدارة بوابة العملاء</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#071a34;--navy2:#0d3a65;--gold:#d6a343;--bg:#f4f7fb;--card:#fff;--ink:#0b1730;--muted:#718096;--line:#e7edf5;--green:#149c68;--red:#df4d4d;--blue:#2563eb}
+*{box-sizing:border-box}body{margin:0;font-family:Tajawal,Arial,sans-serif;background:linear-gradient(180deg,#eef4fa,#f8fbff);color:var(--ink)}
+.wrap{max-width:900px;margin:auto;padding:22px}.head{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;border-radius:24px;padding:22px;display:flex;justify-content:space-between;align-items:center;gap:16px;box-shadow:0 18px 45px rgba(8,30,60,.14)}
+.head h1{margin:0;font-size:26px}.head p{margin:5px 0 0;color:#c9d8e9}.logo{width:68px;height:68px;border-radius:18px;background:#fff;padding:5px;display:grid;place-items:center}.logo img{max-width:100%;max-height:100%;object-fit:contain}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.tab{border:1px solid var(--line);background:#fff;border-radius:13px;padding:11px 15px;font-weight:900;color:#526277}.tab.active{background:var(--navy);color:#fff}
+.pane{display:none}.pane.active{display:block}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 10px 30px rgba(8,30,60,.06)}
+.notice{background:#fff9e9;border:1px solid #f4ddb0;color:#7a5411;border-radius:15px;padding:12px 14px;line-height:1.8;font-size:13px;font-weight:700;margin-bottom:14px}
+.field{margin:12px 0}.field label{display:block;font-weight:900;margin-bottom:7px}.field input{width:100%;border:1px solid #d7e1ec;border-radius:14px;padding:13px 14px;outline:none;background:#fff}.field input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.08)}
+.pin{letter-spacing:7px;text-align:center;font-weight:900}.btn{border:0;border-radius:13px;padding:12px 15px;font-weight:900;cursor:pointer}.primary{background:linear-gradient(135deg,#0b4e8d,var(--navy));color:#fff}.ghost{background:#f5f8fc;border:1px solid var(--line);color:#29415f}.gold{background:linear-gradient(135deg,#e0b75e,#a66f1f);color:var(--navy)}
+.row{display:flex;gap:9px;flex-wrap:wrap}.row .btn{flex:1;min-width:160px}.msg{display:none;margin:10px 0;border-radius:13px;padding:10px 12px;font-size:13px;font-weight:800}.msg.show{display:block}.msg.err{background:#fff0f0;color:#a92c2c;border:1px solid #ffd7d7}.msg.ok{background:#ebfff5;color:#0b744b;border:1px solid #c7f1dd}
+.result{background:#fff;border:1px solid var(--line);border-radius:15px;padding:12px;margin:8px 0}.result h4{margin:0 0 5px}.result small{color:var(--muted)}.badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900}.activeb{background:#e9fbf2;color:#0d7d51}.blockedb{background:#ffecec;color:#b92f2f}.pendingb{background:#fff4dd;color:#a86200}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.mini{border:0;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:900;cursor:pointer}.red{background:#fff0f0;color:#b83232}.green{background:#eafbf3;color:#08794e}.goldmini{background:#fff6e5;color:#9a6200}
+.brand-preview{height:170px;background:#fff;border:1px solid var(--line);border-radius:18px;display:grid;place-items:center;margin:12px 0;padding:12px}.brand-preview img{max-width:100%;max-height:145px;object-fit:contain}
+.hide{display:none!important}.codebox{background:var(--navy);color:#fff;border-radius:18px;padding:18px;text-align:center;margin:12px 0}.codebox b{display:block;font-size:34px;letter-spacing:4px;direction:ltr}
+.footer{text-align:center;color:#8491a2;font-size:12px;margin:18px 0 6px}
+@media(max-width:600px){.wrap{padding:12px}.head{border-radius:18px}.head h1{font-size:21px}.logo{width:56px;height:56px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div><h1>إدارة بوابة عملاء الآجل</h1><p>واجهة المدير فقط — مستقلة عن شاشة دخول العملاء</p></div>
+    <div class="logo"><img src="logo-sanabel.png" alt="سنابل المع"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-pane="clients">العملاء</button>
+    <button class="tab" data-pane="brand">الهوية</button>
+    <button class="tab" data-pane="setup">إعداد الربط</button>
+  </div>
+
+  <section id="clients" class="pane active">
+    <div class="card">
+      <div class="notice">أدخل رقم مدير البوابة. من هنا تستطيع البحث عن العميل، ربطه بالجوال، إعادة الرقم السري، إيقافه أو إعادة تفعيله.</div>
+      <div id="clientsMsg" class="msg"></div>
+      <div class="field"><label>رقم مدير البوابة</label><input id="adminPin" class="pin" type="password" inputmode="numeric" maxlength="6" placeholder="••••••"></div>
+      <div class="field"><label>البحث عن العميل</label><input id="searchText" placeholder="اسم العميل أو رقمه أو رقم الحساب"></div>
+      <div class="row"><button class="btn ghost" onclick="searchClients()">بحث</button><button class="btn primary" onclick="loadClients()">عرض عملاء البوابة</button></div>
+      <div id="searchResults"></div>
+      <div id="selectedBox" class="card hide">
+        <div><b id="selectedName">—</b></div>
+        <div class="field"><label>رقم جوال العميل</label><input id="selectedPhone" inputmode="tel" placeholder="05xxxxxxxx"></div>
+        <button class="btn gold" onclick="createClient()">ربط العميل وتجهيز الدخول</button>
+      </div>
+      <div id="activationResult"></div>
+    </div>
+    <div class="card"><h3>عملاء البوابة</h3><div id="clientList"><div style="color:#718096">أدخل رقم المدير ثم اضغط «عرض عملاء البوابة».</div></div></div>
+  </section>
+
+  <section id="brand" class="pane">
+    <div class="card">
+      <div class="notice">تغيير الشعار وبيانات المنشأة يطبق على جميع العملاء. يتطلب رقم المدير.</div>
+      <div id="brandMsg" class="msg"></div>
+      <div class="brand-preview"><img id="brandPreview" src="logo-sanabel.png"></div>
+      <div class="field"><label>رقم مدير البوابة</label><input id="brandPin" class="pin" type="password" inputmode="numeric" maxlength="6" placeholder="••••••"></div>
+      <div class="field"><label>الشعار</label><input id="brandFile" type="file" accept="image/png,image/jpeg,image/webp" onchange="prepareLogo(this.files[0])"></div>
+      <div class="field"><label>اسم المنشأة</label><input id="companyName" placeholder="أسواق سنابل المع المركزية"></div>
+      <div class="field"><label>الرقم الضريبي</label><input id="vatNumber" inputmode="numeric" placeholder="311174789100003"></div>
+      <div class="field"><label>العنوان</label><input id="companyAddress" placeholder="رجال المع - الحبيل"></div>
+      <button class="btn gold" onclick="saveBrand()">حفظ الهوية والشعار</button>
+    </div>
+  </section>
+
+  <section id="setup" class="pane">
+    <div class="card">
+      <div class="notice">هذا القسم للإعداد الأولي فقط، ولا تحتاجه في الاستخدام اليومي إذا كان الربط الحالي يعمل.</div>
+      <div id="setupMsg" class="msg"></div>
+      <div class="field"><label>رمز الإعداد الأولي</label><input id="bootstrapCode" inputmode="numeric" maxlength="8"></div>
+      <div class="field"><label>اسم الشركة</label><input id="smartCompany"></div>
+      <div class="field"><label>اسم المستخدم</label><input id="smartUsername"></div>
+      <div class="field"><label>كلمة المرور</label><input id="smartPassword" type="password"></div>
+      <div class="field"><label>رقم مدير البوابة (6 أرقام)</label><input id="portalAdminPin" class="pin" type="password" inputmode="numeric" maxlength="6"></div>
+      <button class="btn primary" onclick="setupSmart()">اختبار الربط وحفظه</button>
+    </div>
+  </section>
+
+  <div class="footer">سنابل المع — إدارة بوابة العملاء</div>
+</div>
+
+<script>
+const API='https://rueapdmdkjytsxkfumpw.supabase.co/functions/v1/sanabel-almae-client-api-v5';
+let selected=null,pendingLogo='',branding={};
+function msg(el,text,type='err'){el.textContent=text;el.className='msg show '+type}
+function clear(el){el.textContent='';el.className='msg'}
+function money(n){return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+async function api(action,payload={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...payload})});let d={};try{d=await r.json()}catch{}if(!r.ok||d.success===false)throw new Error(d.message||'تعذر الاتصال بالخادم');return d}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('active',p.id===b.dataset.pane));if(b.dataset.pane==='brand'){brandPin.value=brandPin.value||adminPin.value;loadBranding()}});
+
+async function searchClients(){clear(clientsMsg);const pin=adminPin.value.trim(),q=searchText.value.trim();if(!/^\d{6}$/.test(pin)||!q)return msg(clientsMsg,'أدخل رقم المدير وكلمة البحث');searchResults.innerHTML='جاري البحث...';try{const rows=(await api('admin-search-smart-clients',{admin_pin:pin,query:q})).data||[];searchResults.innerHTML=rows.length?rows.map(c=>`<div class="result"><h4>${c.name||'عميل'}</h4><small>رقم العميل: ${c.id} • الحساب: ${c.account_num||'—'} • الرصيد: ${money(c.current_balance||0)}</small><div class="actions"><button class="mini goldmini" onclick='pickClient(${JSON.stringify(String(c.id))},${JSON.stringify(String(c.name||''))},${JSON.stringify(String(c.phone||''))})'>اختيار</button></div></div>`).join(''):'<div class="result">لم يتم العثور على نتائج</div>'}catch(e){searchResults.innerHTML='';msg(clientsMsg,e.message)}}
+function pickClient(id,name,ph){selected={id:Number(id),name,phone:ph};selectedName.textContent=name||'عميل';selectedPhone.value=/^05\d{8}$/.test(ph)?ph:'';selectedBox.classList.remove('hide');activationResult.innerHTML=''}
+async function createClient(){clear(clientsMsg);const pin=adminPin.value.trim(),ph=selectedPhone.value.trim();if(!selected||!/^\d{6}$/.test(pin)||!/^05\d{8}$/.test(ph))return msg(clientsMsg,'اختر العميل وأدخل رقم جوال صحيح');try{const r=await api('admin-create-client',{admin_pin:pin,smart_client_id:selected.id,phone:ph});activationResult.innerHTML=`<div class="codebox"><small>تم تجهيز دخول العميل ${r.customer?.name||''}</small><b>${r.default_pin||'10002000'}</b><small>يدخل به مرة واحدة ثم يغيره.</small></div>`;await loadClients()}catch(e){msg(clientsMsg,e.message)}}
+async function setStatus(id,status){const pin=adminPin.value.trim();if(!/^\d{6}$/.test(pin))return msg(clientsMsg,'أدخل رقم مدير البوابة');try{await api('admin-set-status',{admin_pin:pin,account_id:id,status});await loadClients()}catch(e){msg(clientsMsg,e.message)}}
+async function resetPin(id,smartId,ph,name){const pin=adminPin.value.trim();if(!/^\d{6}$/.test(pin))return msg(clientsMsg,'أدخل رقم مدير البوابة');try{const r=await api('admin-reset-pin',{admin_pin:pin,smart_client_id:Number(smartId),phone:ph});activationResult.innerHTML=`<div class="codebox"><small>تمت إعادة الرقم السري للعميل ${name||''}</small><b>${r.default_pin||'10002000'}</b></div>`;await loadClients()}catch(e){msg(clientsMsg,e.message)}}
+async function loadClients(){clear(clientsMsg);const pin=adminPin.value.trim();if(!/^\d{6}$/.test(pin))return msg(clientsMsg,'أدخل رقم مدير البوابة');clientList.innerHTML='جاري التحميل...';try{const rows=(await api('admin-list-clients',{admin_pin:pin})).data||[];clientList.innerHTML=rows.length?rows.map(c=>`<div class="result"><h4>${c.display_name||'عميل'} <span class="badge ${c.status==='active'?'activeb':c.status==='blocked'?'blockedb':'pendingb'}">${c.status==='active'?'نشط':c.status==='blocked'?'موقوف':'بانتظار التفعيل'}</span></h4><small>رقم العميل: ${c.smart_client_id} • ${c.phone||'—'}</small><div class="actions"><button class="mini goldmini" onclick='resetPin(${JSON.stringify(c.id)},${JSON.stringify(c.smart_client_id)},${JSON.stringify(c.phone||'')},${JSON.stringify(c.display_name||'')})'>إعادة الرقم السري</button>${c.status==='blocked'?`<button class="mini green" onclick='setStatus(${JSON.stringify(c.id)},"active")'>إعادة تفعيل</button>`:`<button class="mini red" onclick='setStatus(${JSON.stringify(c.id)},"blocked")'>إيقاف العميل</button>`}</div></div>`).join(''):'<div class="result">لا يوجد عملاء بعد</div>'}catch(e){clientList.innerHTML='';msg(clientsMsg,e.message)}}
+
+async function loadBranding(){try{const r=await api('branding');branding=r.data||{};companyName.value=branding.company_name||'';vatNumber.value=branding.vat_number||'';companyAddress.value=branding.company_address||'';brandPreview.src=branding.logo_data_url||'logo-sanabel.png'}catch{}}
+function prepareLogo(file){clear(brandMsg);if(!file)return;if(!/^image\/(png|jpeg|webp)$/i.test(file.type))return msg(brandMsg,'اختر صورة PNG أو JPG أو WEBP');const rd=new FileReader();rd.onload=()=>{const img=new Image();img.onload=()=>{const max=600,scale=Math.min(1,max/Math.max(img.width,img.height)),w=Math.max(1,Math.round(img.width*scale)),h=Math.max(1,Math.round(img.height*scale));const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);pendingLogo=c.toDataURL('image/png');brandPreview.src=pendingLogo};img.src=String(rd.result)};rd.readAsDataURL(file)}
+async function saveBrand(){clear(brandMsg);const pin=brandPin.value.trim();if(!/^\d{6}$/.test(pin))return msg(brandMsg,'أدخل رقم مدير البوابة');try{const r=await api('admin-set-branding',{admin_pin:pin,logo_data_url:pendingLogo||branding.logo_data_url||'',company_name:companyName.value.trim(),vat_number:vatNumber.value.trim(),company_address:companyAddress.value.trim()});branding={...branding,...(r.data||{})};pendingLogo='';msg(brandMsg,r.message||'تم حفظ الهوية','ok')}catch(e){msg(brandMsg,e.message)}}
+async function setupSmart(){clear(setupMsg);const bootstrap=bootstrapCode.value.trim(),company=smartCompany.value.trim(),username=smartUsername.value.trim(),password=smartPassword.value,pin=portalAdminPin.value.trim();if(!bootstrap||!company||!username||!password||!/^\d{6}$/.test(pin))return msg(setupMsg,'أكمل جميع الحقول واختر رقم مدير من 6 أرقام');try{const r=await api('setup-smart',{bootstrap_code:bootstrap,company,username,password,admin_pin:pin});msg(setupMsg,r.message||'تم الربط','ok');adminPin.value=pin;smartPassword.value=''}catch(e){msg(setupMsg,e.message)}}
+loadBranding();
+</script>
+</body></html>
