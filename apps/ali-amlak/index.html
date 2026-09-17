@@ -443,7 +443,23 @@ function editContract(cid){
  const values={contractShop:c.shopId,tenantName:c.tenant,tenantPhone:c.phone||'',tenantId:c.tenantId||'',tenantType:c.tenantType||'فرد',tenantActivity:c.activity||'',tenantAddress:c.tenantAddress||'',contractStart:c.start,contractMonths:c.months,contractRent:c.rent,openingArrears:c.opening||0,deposit:c.deposit||0,dueDay:c.dueDay||1,contractPaymentMethod:c.paymentMethod||'شهري',allowSublease:String(!!c.allowSublease),hasEjarContract:String(!!c.hasEjarContract),ejarContractNo:c.ejarContractNo||'',ejarCommercialName:c.ejarCommercialName||'',ejarDueDate:c.ejarDueDate||'',ejarEndDate:c.ejarEndDate||'',contractNotes:c.notes||''};
  Object.entries(values).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val});toggleEjarFields();openModal('contractModal');
 }
+function rebuildContractDuesAfterStartChange(c,old){
+ const receipts=db.receipts.filter(r=>r.contractId===c.id).slice().sort((a,b)=>String(a.createdAt||a.date||'').localeCompare(String(b.createdAt||b.date||'')));
+ // عند تعديل تاريخ بداية العقد نعيد بناء جدول الاستحقاقات بالكامل وفق التاريخ الجديد.
+ // تبقى سندات القبض نفسها محفوظة، ثم يعاد توزيع كل سند من الأقدم للأحدث على الجدول الجديد.
+ db.dues=db.dues.filter(d=>d.contractId!==c.id);
+ generateDues(c);
+ for(const r of receipts){
+   const al=allocatePayment(c.id,Number(r.amount||0));
+   r.allocations=al.allocations;
+   r.advance=al.advance;
+   r.reallocatedAt=new Date().toISOString();
+ }
+ log('إعادة تسوية استحقاقات العقد','تعديل بداية العقد من '+dateAr(old.start)+' إلى '+dateAr(c.start)+' — '+c.tenant);
+ toast(receipts.length?'تم تعديل تاريخ البداية وإعادة تسوية الأشهر وتوزيع السندات تلقائيًا':'تم تعديل تاريخ البداية وإعادة إنشاء جدول الاستحقاقات');
+}
 function syncContractDuesAfterEdit(c,old){
+ if(old.start!==c.start){rebuildContractDuesAfterStartChange(c,old);return}
  const existing=db.dues.filter(d=>d.contractId===c.id), opening=existing.find(d=>d.type==='opening'), rents=existing.filter(d=>d.type==='rent').sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
  if(c.opening>0){if(opening){opening.amount=c.opening;opening.dueDate=c.start;opening.label='رصيد سابق'}else db.dues.push({id:id('d'),contractId:c.id,label:'رصيد سابق',dueDate:c.start,amount:c.opening,paid:0,type:'opening'})}
  else if(opening){if((opening.paid||0)>0){c.opening=opening.amount;toast('تعذر حذف الرصيد السابق لوجود سداد عليه','error')}else db.dues=db.dues.filter(d=>d.id!==opening.id)}
