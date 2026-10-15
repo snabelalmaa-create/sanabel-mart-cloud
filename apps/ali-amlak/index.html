@@ -594,7 +594,8 @@ async function pushCloud(silent=false){
 }
 async function pullCloud(silent=false){
   if(!db.settings.cloudEnabled)return silent?false:toast('احفظ إعدادات السحابة واختبر الاتصال أولًا','error');
-  if(cloudPullBusy||cloudPushBusy||cloudDirty)return false;
+  if(cloudPullBusy||cloudPushBusy){if(!silent)toast('انتظر انتهاء عملية المزامنة الحالية','error');return false;}
+  if(cloudDirty){if(silent)return false;cloudDirty=false;clearTimeout(cloudPushTimer);}
   if(!silent&&!confirm('سيتم تنزيل أحدث نسخة من السحابة إلى هذا الجهاز. متابعة؟'))return false;
   cloudPullBusy=true;setCloudState('جارٍ فحص التحديثات…','busy');
   try{
@@ -602,7 +603,7 @@ async function pullCloud(silent=false){
     if(!r.ok)throw new Error(await cloudError(r));
     const rows=await r.json();if(!rows.length||!rows[0].payload){setCloudState('السحابة فارغة','error');if(!silent)toast('لا توجد نسخة بيانات في السحابة','error');return false}
     const remoteUpdated=rows[0].updated_at||'';const localUpdated=db.settings.lastCloudUpdatedAt||db._sync?.serverUpdatedAt||'';
-    if(remoteUpdated&&localUpdated&&new Date(remoteUpdated)<=new Date(localUpdated)){setCloudState('متزامن الآن');return true}
+    if(silent&&remoteUpdated&&localUpdated&&db.shops?.length>0&&new Date(remoteUpdated)<=new Date(localUpdated)){setCloudState('متزامن الآن');return true}
     const cloud=rows[0].payload,cloudUrl=db.settings.cloudUrl,cloudKey=db.settings.cloudAnonKey;
     db=migrate(cloud);db.settings.cloudUrl=cloudUrl;db.settings.cloudAnonKey=cloudKey;db.settings.cloudEnabled=true;db.settings.lastCloudSync=new Date().toISOString();db.settings.lastCloudUpdatedAt=remoteUpdated||db.settings.lastCloudSync;db._sync=db._sync||{};db._sync.serverUpdatedAt=db.settings.lastCloudUpdatedAt;
     cloudDirty=false;localStorage.setItem('aliAmlakDB',JSON.stringify(db));renderAll();setCloudState('تم استلام تحديث جديد');if(!silent)toast('تم تنزيل البيانات من السحابة ✅');return true;
