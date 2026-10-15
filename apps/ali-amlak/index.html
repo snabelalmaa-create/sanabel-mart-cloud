@@ -243,7 +243,7 @@ const DEFAULT_DATA={
 let db=loadDB(), currentUser=null, currentPage='dashboard';
 function loadDB(){try{const x=JSON.parse(localStorage.getItem('aliAmlakDB'));return x?migrate(x):structuredClone(DEFAULT_DATA)}catch{return structuredClone(DEFAULT_DATA)}}
 function migrate(x){for(const k of Object.keys(DEFAULT_DATA)) if(x[k]===undefined)x[k]=structuredClone(DEFAULT_DATA[k]);x.settings=x.settings||structuredClone(DEFAULT_DATA.settings);if(!x.settings.businessName||x.settings.businessName==='علي أملاك')x.settings.businessName='أملاك علي يحيى الشريمي وأولاده';if(!x.settings.ownerName)x.settings.ownerName='علي يحيى الشريمي وأولاده';for(const [k,v] of Object.entries(DEFAULT_DATA.settings))if(x.settings[k]===undefined)x.settings[k]=v;if(!x.settings.cloudUrl)x.settings.cloudUrl=DEFAULT_DATA.settings.cloudUrl;if(!x.settings.cloudAnonKey)x.settings.cloudAnonKey=DEFAULT_DATA.settings.cloudAnonKey;if(x.settings.cloudUrl&&x.settings.cloudAnonKey)x.settings.cloudEnabled=true;(x.contracts||[]).forEach(c=>{if(c.hasEjarContract===undefined)c.hasEjarContract=false;if(c.ejarContractNo===undefined)c.ejarContractNo='';if(c.ejarCommercialName===undefined)c.ejarCommercialName='';if(c.ejarDueDate===undefined)c.ejarDueDate='';if(c.ejarEndDate===undefined)c.ejarEndDate='';if(c.contractType===undefined)c.contractType='monthly'});return x}
-let cloudPushTimer=null,cloudPollTimer=null,cloudPushBusy=false,cloudPullBusy=false,cloudPushPending=false,cloudDirty=false;
+let cloudPushTimer=null,cloudPollTimer=null,cloudPushBusy=false,cloudPushPending=false,cloudDirty=false,cloudInitialChecked=false;
 const DEVICE_ID=localStorage.getItem('aliAmlakDeviceId')||('dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8));
 localStorage.setItem('aliAmlakDeviceId',DEVICE_ID);
 function saveDB(){
@@ -570,8 +570,14 @@ async function pushCloud(silent=false){
   if(!db.settings.cloudEnabled)return silent?false:toast('احفظ إعدادات السحابة واختبر الاتصال أولًا','error');
   if(!silent&&!confirm('سيتم تحديث النسخة السحابية ببيانات هذا الجهاز. متابعة؟'))return false;
   if(cloudPushBusy){cloudPushPending=true;return false}
+  if(!cloudInitialChecked){await syncNow(true);if(!cloudInitialChecked)return false;}
   cloudPushBusy=true;cloudPushPending=false;setCloudState('جارٍ رفع التغييرات…','busy');
   try{
+    const check=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_store?id=eq.main&select=payload,updated_at',{headers:cloudHeaders(false),cache:'no-store'});
+    if(!check.ok)throw new Error('تعذر التحقق من النسخة السحابية: '+await cloudError(check));
+    const remoteRows=await check.json();const remote=remoteRows[0]?.payload;
+    const count=d=>['shops','contracts','receipts','dues','expenses'].reduce((n,k)=>n+(Array.isArray(d?.[k])?d[k].length:0),0);
+    if(remote&&count(remote)>count(db)){cloudDirty=false;cloudPushPending=false;setCloudState('تم منع استبدال بيانات السحابة','error');return false;}
     const payload=structuredClone(db);payload.settings.cloudAnonKey='';
     payload._sync=payload._sync||{};payload._sync.deviceId=DEVICE_ID;payload._sync.pushedAt=new Date().toISOString();
     const body={id:'main',payload,updated_at:new Date().toISOString()};
@@ -584,7 +590,7 @@ async function pushCloud(silent=false){
     if(!silent){renderAll();toast('تم رفع البيانات إلى السحابة ✅')}
     return true;
   }catch(e){console.error('Cloud push failed',e);setCloudState('فشل الرفع','error');if(silent)toast('تعذر رفع التغييرات للسحابة: '+String(e.message||e).slice(0,120),'error');else toast('فشل الرفع: '+String(e.message||e).slice(0,170),'error');return false}
-  finally{cloudPushBusy=false;if(cloudPushPending||cloudDirty)setTimeout(()=>pushCloud(true),600)}
+  finally{cloudPushBusy=false;if(cloudPushPending&&cloudDirty)setTimeout(()=>pushCloud(true),600)}
 }
 async function pullCloud(silent=false){
   if(!db.settings.cloudEnabled)return silent?false:toast('احفظ إعدادات السحابة واختبر الاتصال أولًا','error');
@@ -592,7 +598,7 @@ async function pullCloud(silent=false){
   if(!silent&&!confirm('سيتم تنزيل أحدث نسخة من السحابة إلى هذا الجهاز. متابعة؟'))return false;
   cloudPullBusy=true;setCloudState('جارٍ فحص التحديثات…','busy');
   try{
-    const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_store?id=eq.main&select=payload,updated_at&t='+Date.now(),{headers:{...cloudHeaders(false),'Cache-Control':'no-cache'}});
+    const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_store?id=eq.main&select=payload,updated_at',{headers:{...cloudHeaders(false),'Cache-Control':'no-cache'},cache:'no-store'});
     if(!r.ok)throw new Error(await cloudError(r));
     const rows=await r.json();if(!rows.length||!rows[0].payload){setCloudState('السحابة فارغة','error');if(!silent)toast('لا توجد نسخة بيانات في السحابة','error');return false}
     const remoteUpdated=rows[0].updated_at||'';const localUpdated=db.settings.lastCloudUpdatedAt||db._sync?.serverUpdatedAt||'';
@@ -605,6 +611,14 @@ async function pullCloud(silent=false){
 }
 async function syncNow(silent=true){
   if(!db?.settings?.cloudEnabled)return false;
+  if(!cloudInitialChecked){
+    const localHasData=['shops','contracts','receipts','dues','expenses'].some(k=>Array.isArray(db[k])&&db[k].length);
+    if(cloudDirty&&localHasData){setCloudState('تغييرات محلية تحتاج مراجعة قبل المزامنة','error');return false;}
+    cloudDirty=false;
+    const ok=await pullCloud(silent);
+    if(ok){cloudInitialChecked=true;return true;}
+    return false;
+  }
   if(cloudDirty){const ok=await pushCloud(silent);if(!ok)return false}
   return pullCloud(silent)
 }
