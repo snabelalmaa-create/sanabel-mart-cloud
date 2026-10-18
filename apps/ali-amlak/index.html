@@ -75,15 +75,22 @@
     @page thermal80{size:80mm auto;margin:3mm}
     @media print{
       html,body{background:#fff!important}
-      body *{visibility:hidden!important}
+      /* اطبع محتوى الكشف فقط: إخفاء التطبيق يمنع احتساب ارتفاع صفحاته كصفحات فارغة */
+      body{height:auto!important;min-height:0!important;margin:0!important;padding:0!important;overflow:visible!important}
+      body > :not(#printSheet){display:none!important}
       .print-sheet,.print-sheet *{visibility:visible!important}
-      .print-sheet{display:block!important;position:absolute;inset:0;background:#fff;color:#000;font-family:Tahoma,Arial;direction:rtl;box-sizing:border-box}
+      .print-sheet{display:block!important;position:static!important;inset:auto!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;background:#fff;color:#000;font-family:Tahoma,Arial;direction:rtl;box-sizing:border-box}
+      .print-sheet table{page-break-inside:auto;break-inside:auto}
+      .print-sheet thead{display:table-header-group}
+      .print-sheet tfoot{display:table-footer-group}
+      .print-sheet tr{page-break-inside:avoid;break-inside:avoid}
+      .print-sheet .signature-row{break-inside:avoid;page-break-inside:avoid}
       .print-sheet.thermal{page:thermal80;width:74mm;padding:3mm;margin:0;font-size:12px}
       .print-sheet h2,.print-sheet h3{text-align:center;margin:4px}.print-sheet .line{border-top:1px dashed #000;margin:8px 0}
       .print-sheet table{min-width:0;font-size:12px}.print-sheet th,.print-sheet td{padding:5px;border:0;white-space:normal}
       .print-sheet.a4{padding:0;font-size:12px;margin:0 auto;box-sizing:border-box}
-      .print-sheet.a4.portrait{page:a4portrait;width:190mm;min-height:270mm}
-      .print-sheet.a4.landscape{page:a4landscape;width:277mm;min-height:190mm}
+      .print-sheet.a4.portrait{page:a4portrait;width:190mm;min-height:0}
+      .print-sheet.a4.landscape{page:a4landscape;width:277mm;min-height:0}
       .print-sheet.a4.landscape table{font-size:10px}
       .print-sheet.a4.landscape th,.print-sheet.a4.landscape td{padding:5px}
       .print-sheet.a4 h2{font-size:22px}.print-sheet.a4 h3{font-size:17px}.print-sheet.a4 table{width:100%;min-width:100%;font-size:11px;border-collapse:collapse;margin-top:10px}
