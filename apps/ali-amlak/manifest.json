@@ -1,11 +1,24 @@
 {
-  "name":"أملاك علي يحيى الشريمي وأولاده",
-  "short_name":"أملاك الشريمي",
-  "start_url":"./",
-  "scope":"./",
-  "display":"standalone",
-  "background_color":"#f3f7fb",
-  "theme_color":"#102a43",
-  "lang":"ar",
-  "dir":"rtl"
+  "name": "أملاك علي يحيى الشريمي وأولاده",
+  "short_name": "أملاك الشريمي",
+  "description": "إدارة العقارات والمحلات والعقود والسندات",
+  "id": "./index.html",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "standalone"
+  ],
+  "background_color": "#f3f7fb",
+  "theme_color": "#07563f",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
