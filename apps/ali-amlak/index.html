@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#102a43" />
   <meta name="description" content="أملاك علي يحيى الشريمي وأولاده - إدارة المحلات والعقود والسندات مع بيان الأشهر المدفوعة والمتأخرة" />
-  <link rel="manifest" href="manifest.json" />
+  <link rel="manifest" href="manifest.json?v=16" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=16" />
+  <link rel="apple-touch-icon" href="icon.svg?v=16" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="أملاك الشريمي" />
   <title>أملاك علي يحيى الشريمي وأولاده V7 Cloud Sync | إدارة المحلات التجارية</title>
   <style>
     :root{
@@ -304,7 +309,7 @@ function toast(msg,type='success'){const e=document.createElement('div');e.class
 
 function seedDemoContract(){if(db.contracts.length)return;const start=new Date();start.setMonth(start.getMonth()-3);start.setDate(1);const c={id:'c1',shopId:'s1',tenant:'مؤسسة الندى التجارية',phone:'0500000000',tenantId:'7000000000',start:start.toISOString().slice(0,10),months:12,rent:2500,opening:1500,deposit:0,dueDay:1,notes:'',status:'active',createdAt:new Date().toISOString()};db.contracts.push(c);generateDues(c);const c2={id:'c2',shopId:'s3',tenant:'مؤسسة الروابي',phone:'0511111111',tenantId:'7111111111',start:today().slice(0,8)+'01',months:12,rent:3000,opening:0,deposit:0,dueDay:1,notes:'',status:'active',createdAt:new Date().toISOString()};db.contracts.push(c2);generateDues(c2);db.shops.find(s=>s.id==='s1').status='rented';db.shops.find(s=>s.id==='s3').status='rented';saveDB()}
 
-function init(){document.getElementById('todayText').textContent=new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date());document.getElementById('receiptDate').value=today();document.getElementById('expenseDate').value=today();document.getElementById('contractStart').value=today();updateContractEndDate();populateLogin();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=14').catch(()=>{});setTimeout(()=>syncNow(true),900);cloudPollTimer=setInterval(()=>syncNow(true),8000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow(true)});window.addEventListener('online',()=>syncNow(true));}
+function init(){document.getElementById('todayText').textContent=new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date());document.getElementById('receiptDate').value=today();document.getElementById('expenseDate').value=today();document.getElementById('contractStart').value=today();updateContractEndDate();populateLogin();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=16').catch(()=>{});setTimeout(()=>syncNow(true),900);cloudPollTimer=setInterval(()=>syncNow(true),8000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow(true)});window.addEventListener('online',()=>syncNow(true));}
 function populateLogin(){document.getElementById('loginUser').innerHTML=db.users.filter(u=>u.active).map(u=>`<option value="${u.id}">${u.name} — ${roleLabel(u.role)}</option>`).join('')}
 function login(){const u=db.users.find(x=>x.id===document.getElementById('loginUser').value);const pin=document.getElementById('loginPin').value;if(!u||u.pin!==pin)return toast('الرقم السري غير صحيح','error');currentUser=u;sessionStorage.setItem('aliAmlakUser',u.id);document.getElementById('loginScreen').classList.add('hidden');document.getElementById('app').classList.remove('hidden');document.getElementById('currentUserName').textContent=u.name;document.getElementById('currentUserRole').textContent=roleLabel(u.role);buildNav();showPage(u.role==='collector'?'collector':'dashboard');toast('مرحبًا '+u.name)}
 function logout(){currentUser=null;sessionStorage.removeItem('aliAmlakUser');document.getElementById('app').classList.add('hidden');document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('loginPin').value='';populateLogin()}
