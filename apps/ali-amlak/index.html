@@ -309,7 +309,7 @@ function toast(msg,type='success'){const e=document.createElement('div');e.class
 
 function seedDemoContract(){if(db.contracts.length)return;const start=new Date();start.setMonth(start.getMonth()-3);start.setDate(1);const c={id:'c1',shopId:'s1',tenant:'مؤسسة الندى التجارية',phone:'0500000000',tenantId:'7000000000',start:start.toISOString().slice(0,10),months:12,rent:2500,opening:1500,deposit:0,dueDay:1,notes:'',status:'active',createdAt:new Date().toISOString()};db.contracts.push(c);generateDues(c);const c2={id:'c2',shopId:'s3',tenant:'مؤسسة الروابي',phone:'0511111111',tenantId:'7111111111',start:today().slice(0,8)+'01',months:12,rent:3000,opening:0,deposit:0,dueDay:1,notes:'',status:'active',createdAt:new Date().toISOString()};db.contracts.push(c2);generateDues(c2);db.shops.find(s=>s.id==='s1').status='rented';db.shops.find(s=>s.id==='s3').status='rented';saveDB()}
 
-function init(){document.getElementById('todayText').textContent=new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date());document.getElementById('receiptDate').value=today();document.getElementById('expenseDate').value=today();document.getElementById('contractStart').value=today();updateContractEndDate();populateLogin();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=16').catch(()=>{});setTimeout(()=>syncNow(true),900);cloudPollTimer=setInterval(()=>syncNow(true),8000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow(true)});window.addEventListener('online',()=>syncNow(true));}
+function init(){document.getElementById('todayText').textContent=new Intl.DateTimeFormat('ar-SA-u-ca-gregory',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date());document.getElementById('receiptDate').value=today();document.getElementById('expenseDate').value=today();document.getElementById('contractStart').value=today();updateContractEndDate();populateLogin();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js?v=17').catch(()=>{});setTimeout(()=>syncNow(true),900);cloudPollTimer=setInterval(()=>syncNow(true),8000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow(true)});window.addEventListener('online',()=>syncNow(true));}
 function populateLogin(){document.getElementById('loginUser').innerHTML=db.users.filter(u=>u.active).map(u=>`<option value="${u.id}">${u.name} — ${roleLabel(u.role)}</option>`).join('')}
 function login(){const u=db.users.find(x=>x.id===document.getElementById('loginUser').value);const pin=document.getElementById('loginPin').value;if(!u||u.pin!==pin)return toast('الرقم السري غير صحيح','error');currentUser=u;sessionStorage.setItem('aliAmlakUser',u.id);document.getElementById('loginScreen').classList.add('hidden');document.getElementById('app').classList.remove('hidden');document.getElementById('currentUserName').textContent=u.name;document.getElementById('currentUserRole').textContent=roleLabel(u.role);buildNav();showPage(u.role==='collector'?'collector':'dashboard');toast('مرحبًا '+u.name)}
 function logout(){currentUser=null;sessionStorage.removeItem('aliAmlakUser');document.getElementById('app').classList.add('hidden');document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('loginPin').value='';populateLogin()}
@@ -492,9 +492,15 @@ function rebuildContractDuesAfterScheduleChange(c,old){
  log('إعادة تسوية استحقاقات العقد',(old.contractType==='annual'?'سنوي':'شهري')+' ← '+(c.contractType==='annual'?'سنوي':'شهري')+' — '+c.tenant);
  toast(receipts.length?'تمت إعادة تسوية جدول الاستحقاقات وإعادة توزيع السندات تلقائيًا':'تمت إعادة إنشاء جدول الاستحقاقات حسب بيانات العقد الجديدة');
 }
+function contractDuesNeedRepair(c){
+ const expected=buildContractDues(c),actual=db.dues.filter(d=>d.contractId===c.id);
+ const key=d=>[d.type,d.dueDate,Number(d.amount),d.label].join('|');
+ if(expected.map(key).sort().join('\n')!==actual.map(key).sort().join('\n'))return true;
+ return actual.some(d=>Math.abs(Number(d.paid||0)-paidForDueAsOf(d.id))>0.001);
+}
 function syncContractDuesAfterEdit(c,old){
  const scheduleChanged=old.start!==c.start||old.contractType!==c.contractType||Number(old.months)!==Number(c.months)||Number(old.rent)!==Number(c.rent)||Number(old.opening||0)!==Number(c.opening||0)||Number(old.dueDay||1)!==Number(c.dueDay||1);
- if(scheduleChanged)rebuildContractDuesAfterScheduleChange(c,old);
+ if(scheduleChanged||contractDuesNeedRepair(c))rebuildContractDuesAfterScheduleChange(c,old);
 }
 function saveContract(){
  const shopId=v('contractShop'),tenant=v('tenantName'),start=v('contractStart'),contractType=v('contractType')==='annual'?'annual':'monthly',term=+v('contractMonths'),months=contractType==='annual'?term*12:term,rent=+v('contractRent'),hasEjarContract=v('hasEjarContract')==='true';
@@ -513,16 +519,19 @@ function saveContract(){
 }
 function annualDueDate(start,yearIndex){const [y,m,d]=String(start).split('-').map(Number),ty=y+yearIndex,lastDay=new Date(Date.UTC(ty,m,0)).getUTCDate(),day=Math.min(d,lastDay);return ty+'-'+String(m).padStart(2,'0')+'-'+String(day).padStart(2,'0')}
 function annualDueLabel(start,yearIndex){const due=annualDueDate(start,yearIndex),end=contractEndDate({start:due,months:12});return 'السنة '+(yearIndex+1)+' — '+dateAr(due)+' إلى '+dateAr(end)}
-function generateDues(c){
- if(c.opening>0)db.dues.push({id:id('d'),contractId:c.id,label:'رصيد سابق',dueDate:c.start,amount:c.opening,paid:0,type:'opening'});
+function buildContractDues(c){
+ const dues=[];
+ if(c.opening>0)dues.push({id:id('d'),contractId:c.id,label:'رصيد سابق',dueDate:c.start,amount:c.opening,paid:0,type:'opening'});
  const st=new Date(c.start+'T12:00:00');
  if(c.contractType==='annual'){
    const years=Math.max(1,Math.round(Number(c.months||12)/12));
-   for(let i=0;i<years;i++){const dueDate=annualDueDate(c.start,i);db.dues.push({id:id('d'),contractId:c.id,label:annualDueLabel(c.start,i),dueDate,amount:c.rent,paid:0,type:'annual'})}
+   for(let i=0;i<years;i++){const dueDate=annualDueDate(c.start,i);dues.push({id:id('d'),contractId:c.id,label:annualDueLabel(c.start,i),dueDate,amount:c.rent,paid:0,type:'annual'})}
  }else{
-   for(let i=0;i<c.months;i++){const d=new Date(st.getFullYear(),st.getMonth()+i,c.dueDay,12);db.dues.push({id:id('d'),contractId:c.id,label:AR_MONTHS[d.getMonth()]+' '+d.getFullYear(),dueDate:d.toISOString().slice(0,10),amount:c.rent,paid:0,type:'rent'})}
+   for(let i=0;i<c.months;i++){const d=new Date(st.getFullYear(),st.getMonth()+i,c.dueDay,12);dues.push({id:id('d'),contractId:c.id,label:AR_MONTHS[d.getMonth()]+' '+d.getFullYear(),dueDate:d.toISOString().slice(0,10),amount:c.rent,paid:0,type:'rent'})}
  }
+ return dues;
 }
+function generateDues(c){db.dues.push(...buildContractDues(c))}
 function startReceipt(cid){openModal('receiptModal');document.getElementById('receiptContract').value=cid;document.getElementById('receiptDate').value=today();previewAllocation()}
 function startReceiptForShop(sid){const c=activeContractForShop(sid);if(c)startReceipt(c.id)}
 function allocationDisplayLabel(a){const d=db.dues.find(x=>x.id===a.dueId),raw=String(a.label||d?.label||'استحقاق'),base=raw.replace(/^جزء من إيجار\s+/,'').replace(/^إيجار\s+/,'').replace(/^جزء من شهر\s+/,'').replace(/^عن شهر\s+/,'').replace(/^جزء من الاستحقاق السنوي\s+/,'').replace(/^عن الاستحقاق السنوي\s+/,'');const dueAmount=Number(a.dueAmount??d?.amount??a.amount??0),dueType=a.dueType||d?.type||'rent',paidAmount=Number(a.amount||0),isPartial=paidAmount+0.001<dueAmount;if(dueType==='rent')return (isPartial?'جزء من شهر ':'عن شهر ')+base;if(dueType==='annual')return (isPartial?'جزء من الاستحقاق السنوي ':'عن الاستحقاق السنوي ')+base;if(dueType==='opening')return isPartial?'جزء من '+base:base;return base}
@@ -648,3 +657,4 @@ window.addEventListener('load',init);
 </script>
 </body>
 </html>
+
