@@ -373,6 +373,15 @@ td .sub{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 @media (max-width:860px){.topbar .menu-btn{display:inline-flex}.toolbar input,.toolbar select,.toolbar .seg{width:100%}.toolbar label.inl{flex:1}.toolbar .seg button{flex:1}}
 @media (max-width:520px){.col-item{flex-wrap:wrap}.col-item>div:last-child{width:100%;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line-2);padding-top:10px}.col-item .debt{margin:0}}
 
+.gs{position:relative;width:340px;max-width:34vw}
+.gs svg{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.gs input{padding-right:34px;min-height:38px;background:#fff;font-size:13.5px}
+.gs-res{position:absolute;top:calc(100% + 6px);right:0;left:0;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px -12px rgba(0,0,0,.25);padding:6px;z-index:40;max-height:420px;overflow:auto}
+.gs-res button{display:flex;gap:10px;align-items:center;width:100%;border:0;background:none;padding:9px 10px;border-radius:10px;cursor:pointer;text-align:right}
+.gs-res button:hover{background:var(--line-2)}
+.gs-res button svg{position:static;transform:none;width:18px;flex:none;color:var(--brand)}
+.gs-res b{display:block;font-size:13.5px}.gs-res small{color:var(--muted);font-size:12px}
+
 </style>
 </head>
 <body>
@@ -409,6 +418,7 @@ td .sub{display:block;color:var(--muted);font-size:12px;margin-top:2px}
     <header class="topbar">
       <button class="btn btn-light icon-btn menu-btn" onclick="toggleSidebar(true)" aria-label="القائمة"><svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
       <div><h1 id="topTitle"></h1><small id="todayText"></small></div><div class="sp"></div>
+      <div class="gs hide-m"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="gsInput" placeholder="بحث سريع: مستأجر، محل، جوال، رقم سند… (Ctrl+K)" autocomplete="off" oninput="globalSearch(this.value)" onfocus="globalSearch(this.value)" onblur="setTimeout(()=>document.getElementById('gsResults').classList.add('hidden'),150)"><div id="gsResults" class="gs-res hidden"></div></div>
       <span id="cloudState" class="cloud-pill" onclick="syncNow(false)"><i></i><span>—</span></span>
       <button class="btn btn-gold hide-m" onclick="openReceipt()">+ سند قبض</button>
     </header>
@@ -437,7 +447,7 @@ const DEFAULT_CONTRACT_CLAUSES=[
 
 /* ===== أملاك علي يحيى الشريمي وأولاده — النواة: البيانات والحسابات والمزامنة =====
    متوافق 100% مع بنية بيانات النسخة السابقة (aliAmlakDB / جدول ali_amlak_store) */
-const APP_VERSION='C1.0';
+const APP_VERSION='C1.1';
 const AR_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const BIZ='أملاك علي يحيى الشريمي وأولاده';
 const DEFAULT_DATA={
@@ -1000,7 +1010,7 @@ function saveContract(){
   if(!shopId||!tenant||!start||!term||!rent)return toast('أكمل الحقول الإلزامية (المحل، المستأجر، البداية، المدة، الإيجار)','error');
   const conflict=activeContractForShop(shopId);if(conflict&&conflict.id!==editingContractId)return toast('يوجد عقد نشط لهذا المحل','error');
   if(hasEjarContract&&(!v('ejarContractNo')||!v('ejarDueDate')||!v('ejarEndDate')))return toast('أدخل رقم عقد إيجار وتاريخ الاستحقاق والانتهاء','error');
-  if(hasEjarContract&&db.contracts.some(c=>c.id!==editingContractId&&c.ejarContractNo===v('ejarContractNo')))return toast('رقم عقد منصة إيجار مسجل مسبقًا','error');
+  if(hasEjarContract&&db.contracts.some(c=>c.id!==editingContractId&&c.hasEjarContract&&c.ejarContractNo===v('ejarContractNo')))return toast('رقم عقد منصة إيجار مسجل مسبقًا','error');
   const data={shopId,tenant,phone:v('tenantPhone'),tenantId:v('tenantId'),tenantType:v('tenantType'),activity:v('tenantActivity'),tenantAddress:v('tenantAddress'),start,contractType,months,rent,opening:+v('openingArrears')||0,deposit:+v('deposit')||0,dueDay:+v('dueDay')||1,paymentMethod:contractType==='annual'?'سنوي':v('contractPaymentMethod'),allowSublease:v('allowSublease')==='true',hasEjarContract,ejarContractNo:hasEjarContract?v('ejarContractNo'):'',ejarCommercialName:hasEjarContract?(v('ejarCommercialName')||tenant):'',ejarDueDate:hasEjarContract?v('ejarDueDate'):'',ejarEndDate:hasEjarContract?v('ejarEndDate'):'',notes:v('contractNotes')};
   if(editingContractId){
     const c=contractById(editingContractId),old={...c};Object.assign(c,data,{updatedAt:nowISO()});
@@ -1041,7 +1051,7 @@ PAGES['ejar-contracts']=host=>{
 function ejarFiltered(){const q=F.ejQ.toLowerCase();return ejarContracts().filter(c=>{const d=daysUntil(c.ejarEndDate);if(F.ejF==='expired'&&!(d!==null&&d<0))return false;if(F.ejF==='30'&&!(d!==null&&d>=0&&d<=30))return false;if(F.ejF==='60'&&!(d!==null&&d>=0&&d<=60))return false;const s=shopById(c.shopId);return !q||[c.ejarContractNo,c.tenant,c.phone,c.ejarCommercialName,s?.name,s?.no].join(' ').toLowerCase().includes(q)}).sort((a,b)=>String(a.ejarEndDate).localeCompare(String(b.ejarEndDate)))}
 function drawEjar(){$('#ejBody').innerHTML=ejarFiltered().map(c=>{const s=shopById(c.shopId),st=ejarExpiryStatus(c),dd=daysUntil(c.ejarDueDate);return `<tr><td><b class="num">${esc(c.ejarContractNo)}</b></td><td>${esc(c.tenant)}<span class="sub">${esc(c.ejarCommercialName||'')}</span></td><td>${esc(s?.name||'—')}</td><td class="num">${dateAr(c.ejarDueDate)}${dd!==null&&dd>=0&&dd<=15?' <span class="badge orange">قريب</span>':''}</td><td class="num">${dateAr(c.ejarEndDate)}</td><td><span class="badge ${st.cls}">${st.label}</span>${c.status!=='active'?' <span class="badge gray">العقد الداخلي منتهٍ</span>':''}</td><td><div class="row-acts"><button class="btn btn-light btn-sm" onclick="openEjarEdit('${c.id}')">${ic('edit')}تعديل</button></div></td></tr>`}).join('')||`<tr><td colspan="7">${empty(ejarContracts().length?'لا توجد نتائج':'لا توجد عقود مرتبطة بمنصة إيجار — اربطها من نموذج العقد','landmark')}</td></tr>`}
 function openEjarEdit(cid){const c=contractById(cid);openModal({title:'بيانات عقد منصة إيجار — '+esc(c.tenant),body:`<div class="form-grid"><div class="field"><label>رقم عقد إيجار *</label><input id="eNo" value="${esc(c.ejarContractNo||'')}"></div><div class="field"><label>الاسم التجاري</label><input id="eName" value="${esc(c.ejarCommercialName||c.tenant)}"></div><div class="field"><label>تاريخ الاستحقاق القادم *</label><input id="eDue" type="date" value="${esc(c.ejarDueDate||'')}"></div><div class="field"><label>تاريخ الانتهاء *</label><input id="eEnd" type="date" value="${esc(c.ejarEndDate||'')}"></div></div>`,foot:`<button class="btn btn-primary" onclick="saveEjarEdit('${cid}')">${ic('check')}حفظ</button><button class="btn btn-light" onclick="closeModal()">إلغاء</button>`})}
-function saveEjarEdit(cid){const c=contractById(cid),no=v('eNo');if(!no||!v('eDue')||!v('eEnd'))return toast('أكمل الحقول المطلوبة','error');if(db.contracts.some(x=>x.id!==cid&&x.ejarContractNo===no))return toast('رقم العقد مسجل مسبقًا','error');Object.assign(c,{hasEjarContract:true,ejarContractNo:no,ejarCommercialName:v('eName')||c.tenant,ejarDueDate:v('eDue'),ejarEndDate:v('eEnd'),updatedAt:nowISO()});log('تعديل عقد منصة إيجار',no+' — '+c.tenant);closeModal();saveDB();toast('تم تحديث بيانات عقد إيجار')}
+function saveEjarEdit(cid){const c=contractById(cid),no=v('eNo');if(!no||!v('eDue')||!v('eEnd'))return toast('أكمل الحقول المطلوبة','error');if(db.contracts.some(x=>x.id!==cid&&x.hasEjarContract&&x.ejarContractNo===no))return toast('رقم العقد مسجل مسبقًا','error');Object.assign(c,{hasEjarContract:true,ejarContractNo:no,ejarCommercialName:v('eName')||c.tenant,ejarDueDate:v('eDue'),ejarEndDate:v('eEnd'),updatedAt:nowISO()});log('تعديل عقد منصة إيجار',no+' — '+c.tenant);closeModal();saveDB();toast('تم تحديث بيانات عقد إيجار')}
 
 /* ===== الصفحات (2): القبض، الصرف، المتأخرات، الكشوف، المحصل ===== */
 Object.assign(F,{rFrom:'',rTo:'',rShop:'',rMethod:'',rQ:'',eFrom:'',eTo:'',eShop:'',eCat:'',eQ:'',stCon:'',stFrom:'',stTo:'',colQ:'',colF:'debt'});
@@ -1344,6 +1354,173 @@ function arrearsSpec(){const t=today(),dues=db.dues.filter(d=>d.amount-d.paid>0.
 function printArrearsReport(){printSpec(arrearsSpec())}
 function printStatement(){const d=getStatementData(F.stCon,F.stFrom,F.stTo);if(!d)return toast('اختر عقدًا','error');printSpec(reportSpec('كشف حساب مستأجر',d.c.tenant+' — '+(d.shop?.name||'')+' — '+rangeText(F.stFrom,F.stTo),`<div class="report-meta"><div><b>المستأجر:</b> ${esc(d.c.tenant)}</div><div><b>المحل:</b> ${esc(d.shop?.name||'')} (رقم ${esc(d.shop?.no||'')})</div><div><b>الجوال:</b> ${esc(d.c.phone||'—')}</div><div><b>مدة العقد:</b> ${dateAr(d.c.start)} — ${dateAr(contractEndDate(d.c))}</div></div>`+kpis([['إجمالي المستحق',money(d.debit)],['إجمالي المسدد',money(d.credit)],['المتأخر حتى '+dateAr(d.cutoff),money(d.overdue)],['الرصيد الختامي',money(d.ending)]])+statementTableHTML(d,''),'portrait'))}
 function printEjarReport(){const list=ejarFiltered();printSpec(reportSpec('تقرير عقود منصة إيجار',F.ejF?({expired:'المنتهية',30:'تنتهي خلال 30 يوم',60:'تنتهي خلال 60 يوم'}[F.ejF]):'جميع العقود',`<table><thead><tr><th>م</th><th>رقم عقد إيجار</th><th>المستأجر</th><th>الاسم التجاري</th><th>المحل</th><th>الجوال</th><th>الاستحقاق القادم</th><th>الانتهاء</th><th>الحالة</th></tr></thead><tbody>${list.map((c,i)=>`<tr><td>${i+1}</td><td>${esc(c.ejarContractNo)}</td><td>${esc(c.tenant)}</td><td>${esc(c.ejarCommercialName||'')}</td><td>${esc(shopById(c.shopId)?.name||'')}</td><td>${esc(c.phone||'')}</td><td>${dateAr(c.ejarDueDate)}</td><td>${dateAr(c.ejarEndDate)}</td><td>${esc(ejarExpiryStatus(c).label)}</td></tr>`).join('')||'<tr><td colspan="9">لا توجد عقود</td></tr>'}</tbody></table>`,'landscape'))}
+
+/* ===== تحسينات C1.1: تفقيط، هجري، تجديد العقود، كشف التحصيل الشهري، الإقفال اليومي، البحث الشامل، النسخ التلقائية، فحص السلامة =====
+   كل ما هنا إما قراءة فقط أو إضافة سجلات جديدة بطلب المستخدم؛ لا يغيّر أي رصيد أو سند أو عقد قائم. */
+
+/* ---------- التفقيط بالعربية ---------- */
+const TF_ONES=['','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة','أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];
+const TF_TENS=['','','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'];
+const TF_HUND=['','مائة','مائتان','ثلاثمائة','أربعمائة','خمسمائة','ستمائة','سبعمائة','ثمانمائة','تسعمائة'];
+function tf999(n){const h=Math.floor(n/100),r=n%100,p=[];if(h)p.push(TF_HUND[h]);if(r){if(r<20)p.push(TF_ONES[r]);else{const u=r%10,t=Math.floor(r/10);p.push(u?TF_ONES[u]+' و'+TF_TENS[t]:TF_TENS[t])}}return p.join(' و')}
+function tfScale(n,one,two,few,many){if(n===1)return one;if(n===2)return two;if(n>=3&&n<=10)return tf999(n)+' '+few;return tf999(n)+' '+many}
+function tafqeet(amount){
+  amount=Math.round(Number(amount||0)*100)/100;let riyal=Math.floor(amount);const hal=Math.round((amount-riyal)*100);
+  if(riyal===0&&hal===0)return 'صفر ريال';
+  const parts=[],m=Math.floor(riyal/1e6),k=Math.floor((riyal%1e6)/1000),r=riyal%1000;
+  if(m)parts.push(tfScale(m,'مليون','مليونان','ملايين','مليون'));
+  if(k)parts.push(tfScale(k,'ألف','ألفان','آلاف','ألف'));
+  if(r)parts.push(tf999(r));
+  let s=parts.join(' و');s=(s?s+' ريال':'');
+  if(hal)s+=(s?' و':'')+tf999(hal)+' هللة';
+  return 'فقط '+s+' لا غير';
+}
+function hijri(d){try{return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-latn',{day:'numeric',month:'long',year:'numeric'}).format(new Date((d||today())+'T12:00:00'))}catch{return ''}}
+
+/* إضافة التفقيط والتاريخ الهجري لسندات القبض والصرف دون تغيير أي بيانات */
+const _printReceipt=printReceipt;
+printReceipt=function(rid,mode){_printReceipt(rid,mode);const r=db.receipts.find(x=>x.id===rid);if(!r)return;const s=$('#printSheet');
+  if(s.classList.contains('thermal')){const t=s.querySelector('table');t?.insertAdjacentHTML('afterend',`<div style="font-size:11px;margin-top:4px">${esc(tafqeet(r.amount))}</div><div style="font-size:11px">الموافق: ${esc(hijri(r.date))}</div>`)}
+  else{s.querySelector('.amount-box')?.insertAdjacentHTML('beforeend',`<div style="font-size:13px;font-weight:600;margin-top:4px">${esc(tafqeet(r.amount))}</div>`);const dt=[...s.querySelectorAll('.rh div div')].find(x=>x.textContent.startsWith('التاريخ'));dt?.insertAdjacentHTML('afterend',`<div style="font-size:11px">${esc(hijri(r.date))} هـ</div>`)}};
+const _printExpense=printExpense;
+printExpense=function(eid){_printExpense(eid);const e=db.expenses.find(x=>x.id===eid);$('#printSheet .amount-box')?.insertAdjacentHTML('beforeend',`<div style="font-size:13px;font-weight:600;margin-top:4px">${esc(tafqeet(e.amount))}</div>`)};
+
+/* ---------- التقرير المالي بنفس تنسيق النسخة السابقة (بيان الأشهر المسددة + خيارات الأعمدة) ---------- */
+Object.assign(F,{repOverdue:true,repFuture:true,repMonth:today().slice(0,7),clDate:today(),clUser:''});
+function getShopReportData(sid,from,to){const shop=shopById(sid);if(!shop)return null;const ids=db.contracts.filter(c=>c.shopId===sid).map(c=>c.id),cutoff=to||today();const receipts=db.receipts.filter(r=>ids.includes(r.contractId)&&inDateRange(r.date,from,to)),expenses=db.expenses.filter(e=>e.shopId===sid&&inDateRange(e.date,from,to));return {shop,receipts,expenses,receiptTotal:receipts.reduce((s,r)=>s+(+r.amount||0),0),expenseTotal:expenses.reduce((s,e)=>s+(+e.amount||0),0),overdue:ids.reduce((s,c)=>s+contractOverdueAmountAsOf(c,cutoff),0),futureOutstanding:ids.reduce((s,c)=>s+contractFutureOutstandingAsOf(c,cutoff),0)}}
+function financialPeriodHTML(d,details){
+  const o={overdue:F.repOverdue,future:F.repFuture},rows=db.shops.filter(s=>!d.sid||s.id===d.sid).sort((a,b)=>String(a.no).localeCompare(String(b.no),'ar',{numeric:true})).map(s=>getShopReportData(s.id,d.from,d.to));
+  const general=d.expenses.filter(e=>!e.shopId).reduce((s,e)=>s+(+e.amount||0),0),cols=5+Number(o.overdue)+Number(o.future),cutoff=d.to||today();
+  const cells=x=>`<td>${esc(x.shop.name)}</td><td style="white-space:normal;min-width:160px">${esc([...new Set(x.receipts.map(receiptCoverageSummary))].join('، ')||'لا توجد مقبوضات خلال الفترة')}</td><td>${money(x.receiptTotal)}</td><td>${money(x.expenseTotal)}</td><td>${money(x.receiptTotal-x.expenseTotal)}</td>${o.overdue?`<td>${money(x.overdue)}</td>`:''}${o.future?`<td>${money(x.futureOutstanding)}</td>`:''}`;
+  let h=kpis([['مقبوضات الفترة',money(d.rec)],['مصروفات الفترة',money(d.exp)],['صافي الفترة',money(d.rec-d.exp)],['عدد سندات القبض',d.receipts.length]])+`<p>الصافي = المقبوضات − المصروفات خلال الفترة المحددة.</p>${o.overdue||o.future?`<p>أرصدة الالتزامات محسوبة حتى ${dateAr(cutoff)} ولا تدخل في حساب صافي الفترة.</p>`:''}
+  <table><thead><tr><th>المحل</th><th>بيان السداد / عن استحقاق</th><th>مقبوضات الفترة</th><th>مصروفات الفترة</th><th>الصافي</th>${o.overdue?'<th>المتأخرات حتى نهاية الفترة</th>':''}${o.future?'<th>الالتزامات المستقبلية</th>':''}</tr></thead><tbody>${rows.map(x=>`<tr>${cells(x)}</tr>`).join('')}${!d.sid&&general?`<tr><td>مصروفات عامة غير مرتبطة بمحل</td><td>تفصيل البيان في جدول المصروفات أدناه</td><td>${money(0)}</td><td>${money(general)}</td><td>${money(-general)}</td>${o.overdue?'<td>—</td>':''}${o.future?'<td>—</td>':''}</tr>`:''}${!rows.length&&!general?`<tr><td colspan="${cols}">لا توجد بيانات</td></tr>`:''}</tbody><tfoot><tr><th>الإجمالي</th><th>—</th><th>${money(d.rec)}</th><th>${money(d.exp)}</th><th>${money(d.rec-d.exp)}</th>${o.overdue?`<th>${money(rows.reduce((s,x)=>s+x.overdue,0))}</th>`:''}${o.future?`<th>${money(rows.reduce((s,x)=>s+x.futureOutstanding,0))}</th>`:''}</tr></tfoot></table>`;
+  if(details)h+=`<h3 class="report-title">سندات القبض خلال الفترة</h3><table><thead><tr><th>السند</th><th>التاريخ</th><th>المستأجر</th><th>المحل</th><th>المبلغ</th><th>بيان السداد</th><th>الطريقة</th></tr></thead><tbody>${d.receipts.map(r=>{const c=contractById(r.contractId);return `<tr><td>${esc(r.no)}</td><td>${dateAr(r.date)}</td><td>${esc(c?.tenant||'—')}</td><td>${esc(shopById(c?.shopId)?.name||'—')}</td><td>${money(r.amount)}</td><td>${esc(receiptCoverageSummary(r))}</td><td>${esc(r.method)}</td></tr>`}).join('')||'<tr><td colspan="7">لا توجد سندات قبض ضمن الفترة</td></tr>'}</tbody></table>`;
+  h+=`<h3 class="report-title">المصروفات خلال الفترة</h3><table><thead><tr><th>السند</th><th>التاريخ</th><th>المحل</th><th>البند</th><th>بيان المصروف</th><th>المستفيد</th><th>المبلغ</th><th>الطريقة</th></tr></thead><tbody>${d.expenses.map(e=>`<tr><td>${esc(e.no)}</td><td>${dateAr(e.date)}</td><td>${esc(shopById(e.shopId)?.name||'مصروف عام')}</td><td>${esc(e.category||'—')}</td><td style="white-space:pre-wrap;overflow-wrap:anywhere;min-width:160px">${esc(e.note||'لم يسجل بيان')}</td><td>${esc(e.payee||'—')}</td><td>${money(e.amount)}</td><td>${esc(e.method||'—')}</td></tr>`).join('')||'<tr><td colspan="8">لا توجد مصروفات ضمن الفترة</td></tr>'}</tbody><tfoot><tr><th colspan="6">إجمالي المصروفات</th><th>${money(d.exp)}</th><th></th></tr></tfoot></table>`;
+  return h;
+}
+financialSpec=function(details){const d=periodData();if(d.from&&d.to&&d.from>d.to){toast('تاريخ البداية بعد تاريخ النهاية','error');return null}const name=d.sid?shopById(d.sid)?.name:'جميع المحلات';return reportSpec(details?'التقرير المالي التفصيلي':'التقرير المالي للفترة',name+' — '+rangeText(d.from,d.to),financialPeriodHTML(d,details),'landscape',{source:'reports',scope:{source:'reports',from:d.from,to:d.to,shopId:d.sid,method:'',search:''},revenue:Number(d.rec)})};
+
+/* ---------- كشف التحصيل الشهري (ورقة عمل للمحصل) ---------- */
+function monthlySheetSpec(){
+  const m=F.repMonth||today().slice(0,7),ms=m+'-01',[y,mo]=m.split('-').map(Number),me=new Date(Date.UTC(y,mo,0)).toISOString().slice(0,10);
+  const list=db.contracts.filter(c=>c.status==='active'||balanceForContract(c.id)>0.001).map(c=>{const ds=db.dues.filter(d=>d.contractId===c.id);const prev=ds.filter(d=>d.dueDate<ms).reduce((s,d)=>s+Math.max(0,d.amount-d.paid),0),inM=ds.filter(d=>d.dueDate>=ms&&d.dueDate<=me),mDue=inM.reduce((s,d)=>s+d.amount,0),mRem=inM.reduce((s,d)=>s+Math.max(0,d.amount-d.paid),0);return {c,s:shopById(c.shopId),prev,mDue,mRem,req:prev+mRem}}).filter(x=>x.mDue>0||x.prev>0.001).sort((a,b)=>String(a.s?.no).localeCompare(String(b.s?.no),'ar',{numeric:true}));
+  const T=k=>list.reduce((s,x)=>s+x[k],0);
+  return reportSpec('كشف التحصيل الشهري',AR_MONTHS[mo-1]+' '+y+' — يشمل متأخرات الأشهر السابقة',kpis([['مستحقات الشهر',money(T('mDue'))],['المتبقي من الشهر',money(T('mRem'))],['متأخرات سابقة',money(T('prev'))],['المطلوب تحصيله',money(T('req'))]])+
+  `<table><thead><tr><th>م</th><th>المحل</th><th>المستأجر</th><th>الجوال</th><th>متأخرات سابقة</th><th>مستحق الشهر</th><th>المتبقي من الشهر</th><th>المطلوب</th><th style="width:85px">المحصّل</th><th style="width:85px">التوقيع / ملاحظة</th></tr></thead><tbody>${list.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.s?.no||'')} ${esc(x.s?.name||'')}</td><td>${esc(x.c.tenant)}${x.c.status!=='active'?' (عقد منتهٍ)':''}</td><td>${esc(x.c.phone||'')}</td><td>${num(x.prev)}</td><td>${num(x.mDue)}</td><td>${num(x.mRem)}</td><td><b>${num(x.req)}</b></td><td></td><td></td></tr>`).join('')||'<tr><td colspan="10">لا توجد مستحقات</td></tr>'}</tbody><tfoot><tr><th colspan="4">الإجمالي</th><th>${num(T('prev'))}</th><th>${num(T('mDue'))}</th><th>${num(T('mRem'))}</th><th>${num(T('req'))}</th><th></th><th></th></tr></tfoot></table><p style="font-size:11px">المبالغ محسوبة حسب السداد المسجل حتى ${dateAr(today())}.</p>`,'landscape');
+}
+
+/* ---------- الإقفال اليومي (تسليم العهدة) ---------- */
+function closingSpec(date,user){
+  date=date||today();const rs=db.receipts.filter(r=>r.date===date&&(!user||r.user===user)).sort((a,b)=>String(a.createdAt).localeCompare(String(b.createdAt))),es=db.expenses.filter(e=>e.date===date&&(!user||e.user===user));
+  const by=(l,m)=>l.filter(x=>x.method===m).reduce((s,x)=>s+(+x.amount||0),0),rT=rs.reduce((s,r)=>s+(+r.amount||0),0),eT=es.reduce((s,e)=>s+(+e.amount||0),0),cashNet=by(rs,'نقدي')-by(es,'نقدي');
+  return reportSpec('الإقفال اليومي — تسليم العهدة',dateAr(date)+' ('+hijri(date)+' هـ)'+(user?' — '+user:' — جميع الموظفين'),
+  kpis([['إجمالي المقبوضات',money(rT)],['إجمالي المصروفات',money(eT)],['النقد الواجب تسليمه',money(cashNet)],['عدد السندات',rs.length+es.length]])+
+  `<table><thead><tr><th>طريقة الدفع</th><th>المقبوضات</th><th>المصروفات</th><th>الصافي</th></tr></thead><tbody>${METHODS.map(m=>`<tr><td>${m}</td><td>${num(by(rs,m))}</td><td>${num(by(es,m))}</td><td>${num(by(rs,m)-by(es,m))}</td></tr>`).join('')}</tbody><tfoot><tr><th>الإجمالي</th><th>${num(rT)}</th><th>${num(eT)}</th><th>${num(rT-eT)}</th></tr></tfoot></table>
+  <h3>سندات القبض</h3>${receiptsTable(rs)}${es.length?`<h3>سندات الصرف</h3>${expensesTable(es)}`:''}
+  <div class="signature-row"><span>المسلِّم: ${esc(user||'________________')}</span><span>المستلم: ________________</span><span>المبلغ المستلم نقدًا: ____________</span></div>`,'portrait');
+}
+function printClosing(user){printSpec(closingSpec(today(),user))}
+
+/* ---------- تجديد العقد ---------- */
+function addDays(d,n){const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+n);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')}
+function openRenew(cid){window.__renewCid=cid;{const dl=daysUntil(contractEndDate(contractById(cid)));if(dl!==null&&dl>60)return toast('التجديد متاح خلال آخر 60 يومًا من مدة العقد (المتبقي '+dl+' يوم)','error')}const c=contractById(cid),annual=c.contractType==='annual',term=annual?Math.max(1,Math.round(c.months/12)):c.months,start=addDays(contractEndDate(c),1),bal=balanceForContract(cid);
+  openModal({title:'تجديد عقد '+esc(c.tenant),body:`<div class="hl" style="margin-top:0"><span>العقد الحالي ينتهي في</span><b class="num">${dateAr(contractEndDate(c))}</b></div>
+  <div class="form-grid mt"><div class="field"><label>بداية العقد الجديد</label><input id="rnStart" type="date" value="${start}" oninput="renewSum()"></div><div class="field"><label>${annual?'عدد السنوات':'عدد الأشهر'}</label><input id="rnTerm" type="number" min="1" value="${term}" oninput="renewSum()"></div>
+  <div class="field"><label>${annual?'الإيجار السنوي الجديد':'الإيجار الشهري الجديد'}</label><input id="rnRent" type="number" min="0" value="${c.rent}" oninput="renewSum()"></div><div class="field"><label>زيادة سريعة</label><div style="display:flex;gap:6px">${[0,5,10].map(p=>`<button type="button" class="btn btn-light btn-sm" onclick="document.getElementById('rnRent').value=${Math.round(c.rent*(1+p/100))};renewSum()">${p?'+'+p+'%':'بدون زيادة'}</button>`).join('')}</div></div>
+  ${c.hasEjarContract?`<div class="field"><label>رقم عقد إيجار الجديد</label><input id="rnEjNo" value="${esc(c.ejarContractNo)}"></div><div class="field"><label>انتهاء عقد إيجار الجديد</label><input id="rnEjEnd" type="date" value="${esc(c.ejarEndDate||'')}"></div>`:''}
+  <div class="field full"><div class="hl" id="rnSum"></div></div></div>
+  ${bal>0.001?`<div class="alert orange mt">${ic('alert','width="18"')}<div>على العقد الحالي مبلغ غير مسدد <b class="num">${money(bal)}</b>. يبقى على العقد الحالي كما هو ويظهر في المتأخرات وتطبيق المحصل وسندات القبض حتى سداده — لا يُنقل ولا يتكرر.</div></div>`:''}`,
+  foot:`<button class="btn btn-primary" onclick="saveRenew('${cid}')">${ic('refresh')}تجديد العقد</button><button class="btn btn-light" onclick="closeModal()">إلغاء</button>`,onOpen:renewSum})}
+function renewSum(){const c=contractById(window.__renewCid),annual=c.contractType==='annual',t=+v('rnTerm')||0,months=annual?t*12:t;$('#rnSum').innerHTML=`<span>من <span class="num">${dateAr(v('rnStart'))}</span> إلى <span class="num">${dateAr(contractEndDate({start:v('rnStart'),months}))}</span></span><b class="num">${money(t*(+v('rnRent')||0))}</b>`}
+function saveRenew(cid){const c=contractById(cid),start=v('rnStart'),t=+v('rnTerm'),rent=+v('rnRent');if(!start||!(t>0)||!(rent>0))return toast('أكمل بيانات التجديد','error');
+  const months=c.contractType==='annual'?t*12:t;
+  const {id:_i,status:_s,createdAt:_c,updatedAt:_u,endedAt:_e,renewedTo:_r,...rest}=c;
+  const n={...rest,id:id('c'),start,months,rent,opening:0,status:'active',renewedFrom:c.id,createdAt:nowISO(),updatedAt:nowISO()};
+  if(c.hasEjarContract){n.ejarContractNo=v('rnEjNo')||c.ejarContractNo;n.ejarEndDate=v('rnEjEnd')||c.ejarEndDate}
+  c.status='ended';c.endedAt=today();c.renewedTo=n.id;c.updatedAt=nowISO();
+  if(n.hasEjarContract&&n.ejarContractNo===c.ejarContractNo){c.hasEjarContract=false}
+  db.contracts.push(n);generateDues(n);const s=shopById(n.shopId);if(s){s.status='rented';s.updatedAt=nowISO()}
+  log('تجديد عقد',c.tenant+' حتى '+dateAr(contractEndDate(n)));closeModal();saveDB();toast('تم تجديد العقد وتوليد '+db.dues.filter(d=>d.contractId===n.id).length+' استحقاق');openContractView(n.id);
+}
+
+/* ---------- البحث الشامل ---------- */
+function globalSearch(q){const box=$('#gsResults');q=String(q||'').trim().toLowerCase();if(!q){box.classList.add('hidden');return}
+  const res=[],coll=currentUser.role==='collector';
+  for(const c of db.contracts){const s=shopById(c.shopId);if([c.tenant,c.phone,c.tenantId,c.ejarContractNo,s?.name,s?.no].join(' ').toLowerCase().includes(q))res.push([c.status==='active'?'file':'archive',esc(c.tenant)+(c.status!=='active'?' <span class="badge gray">منتهٍ</span>':''),esc((s?.name||'')+' · متبقي '+num(balanceForContract(c.id))),coll?`openReceipt('${c.id}')`:`openContractView('${c.id}')`])}
+  if(!coll){for(const s of db.shops)if(!activeContractForShop(s.id)&&[s.name,s.no].join(' ').toLowerCase().includes(q))res.push(['store',esc(s.name),'محل '+stateBadge(s.status),`go('shops')`]);
+    for(const r of db.receipts)if(String(r.no).toLowerCase().includes(q)||String(r.ref||'').toLowerCase().includes(q))res.push(['cashIn','سند '+esc(r.no),esc(contractById(r.contractId)?.tenant||'')+' · '+num(r.amount),`receiptDetails('${r.id}')`]);
+    for(const e of db.expenses)if(String(e.no).toLowerCase().includes(q)||String(e.payee).toLowerCase().includes(q))res.push(['cashOut','صرف '+esc(e.no),esc(e.payee)+' · '+num(e.amount),`openExpense('${e.id}')`]);}
+  box.innerHTML=res.slice(0,12).map(([i,t,s,fn])=>`<button onmousedown="event.preventDefault()" onclick="document.getElementById('gsInput').value='';document.getElementById('gsResults').classList.add('hidden');${fn}">${ic(i)}<span><b>${t}</b><small>${s}</small></span></button>`).join('')||'<div class="muted" style="padding:12px">لا توجد نتائج</div>';box.classList.remove('hidden')}
+
+/* ---------- نسخ احتياطية تلقائية يومية على الجهاز (IndexedDB) ---------- */
+const SNAP={db:null};
+function snapDB(){return new Promise((res,rej)=>{if(SNAP.db)return res(SNAP.db);const r=indexedDB.open('aliAmlakSnapshots',1);r.onupgradeneeded=()=>r.result.createObjectStore('snaps',{keyPath:'date'});r.onsuccess=()=>{SNAP.db=r.result;res(r.result)};r.onerror=()=>rej(r.error)})}
+async function snapOp(mode,fn){const d=await snapDB();return new Promise((res,rej)=>{const tx=d.transaction('snaps',mode),st=tx.objectStore('snaps');const out=fn(st);tx.oncomplete=()=>res(out?.result??out);tx.onerror=()=>rej(tx.error)})}
+async function takeSnapshot(force){try{if(!db.shops.length&&!db.receipts.length)return;const date=today();if(!force&&localStorage.getItem('aliAmlakSnapDate')===date)return;await snapOp('readwrite',st=>st.put({date,at:nowISO(),counts:{shops:db.shops.length,contracts:db.contracts.length,receipts:db.receipts.length,expenses:db.expenses.length},data:JSON.stringify(db)}));localStorage.setItem('aliAmlakSnapDate',date);const keys=await snapOp('readonly',st=>st.getAllKeys());const old=keys.sort().slice(0,Math.max(0,keys.length-30));if(old.length)await snapOp('readwrite',st=>old.forEach(k=>st.delete(k)))}catch(e){console.warn('snapshot',e)}}
+async function listSnapshots(){try{const all=await snapOp('readonly',st=>st.getAll());return all.map(({data,...x})=>x).sort((a,b)=>b.date.localeCompare(a.date))}catch{return []}}
+async function snapshotData(date){return snapOp('readonly',st=>st.get(date))}
+async function downloadSnapshot(date){const s=await snapshotData(date);downloadBlob(s.data,'ali-amlak-auto-'+date+'.json','application/json')}
+async function restoreSnapshot(date){const s=await snapshotData(date);const f=new File([s.data],'auto-'+date+'.json');importBackup({target:{files:[f]}})}
+async function drawSnapshots(){const el=$('#snapList');if(!el)return;const l=await listSnapshots();el.innerHTML=l.length?l.map(s=>`<div class="li"><div class="av">${ic('archive','width="18"')}</div><div class="tx"><b class="num">${dateAr(s.date)}</b><small>${s.counts.shops} محل · ${s.counts.contracts} عقد · ${s.counts.receipts} قبض · ${s.counts.expenses} صرف</small></div><button class="btn btn-light btn-sm" onclick="downloadSnapshot('${s.date}')">${ic('download')}</button><button class="btn btn-light btn-sm" onclick="restoreSnapshot('${s.date}')">استعادة</button></div>`).join(''):'<p class="muted">لا توجد نسخ بعد — تُنشأ نسخة تلقائيًا كل يوم.</p>'}
+
+/* ---------- فحص سلامة البيانات (قراءة فقط) ---------- */
+function healthCheck(){
+  const issues=[],fixable=[];
+  db.dues.forEach(d=>{const a=paidForDueAsOf(d.id);if(Math.abs(a-(+d.paid||0))>0.01)issues.push(['red',`استحقاق «${d.label}» للمستأجر ${contractById(d.contractId)?.tenant||'؟'}: المسجل كمسدد ${num(d.paid)} بينما مجموع السندات ${num(a)}`]);if(d.paid>d.amount+0.01)issues.push(['red',`استحقاق «${d.label}» مسدد بأكثر من قيمته`])});
+  db.receipts.forEach(r=>{if(!contractById(r.contractId))issues.push(['red',`السند ${r.no} مرتبط بعقد غير موجود`]);const s=(r.allocations||[]).reduce((x,a)=>x+(+a.amount||0),0)+(+r.advance||0);if(Math.abs(s-r.amount)>0.01)issues.push(['orange',`السند ${r.no}: مجموع التوزيع ${num(s)} لا يساوي مبلغه ${num(r.amount)}`])});
+  const nos={};db.receipts.forEach(r=>nos[r.no]=(nos[r.no]||0)+1);Object.entries(nos).filter(x=>x[1]>1).forEach(([n])=>issues.push(['orange',`رقم السند ${n} مكرر`]));
+  db.contracts.forEach(c=>{if(!shopById(c.shopId))issues.push(['red',`العقد ${c.tenant} مرتبط بمحل غير موجود`]);if(!db.dues.some(d=>d.contractId===c.id))issues.push(['orange',`العقد ${c.tenant} بلا جدول استحقاقات`])});
+  db.shops.forEach(s=>{const a=activeContractForShop(s.id);if(a&&s.status!=='rented')fixable.push([s.id,'rented',`المحل ${s.name} عليه عقد نشط لكن حالته «${s.status==='vacant'?'شاغر':'صيانة'}»`]);if(!a&&s.status==='rented')fixable.push([s.id,'vacant',`المحل ${s.name} حالته «مؤجر» ولا يوجد عليه عقد نشط`]);if(db.contracts.filter(c=>c.shopId===s.id&&c.status==='active').length>1)issues.push(['red',`المحل ${s.name} عليه أكثر من عقد نشط`])});
+  window.__fix=fixable;
+  openModal({title:'فحص سلامة البيانات',body:(!issues.length&&!fixable.length?`<div class="alert green">${ic('check','width="18"')}<div><b>البيانات سليمة</b>تم فحص ${db.contracts.length} عقد و${db.dues.length} استحقاق و${db.receipts.length} سند قبض — لا توجد ملاحظات.</div></div>`:'')+issues.map(([c,t])=>`<div class="alert ${c}">${ic('alert','width="18"')}<div>${esc(t)}</div></div>`).join('')+fixable.map(([,,t])=>`<div class="alert">${ic('store','width="18"')}<div>${esc(t)}</div></div>`).join('')+(issues.length?`<p class="muted" style="font-size:12.5px">هذا الفحص للعرض فقط ولم يغيّر شيئًا. الملاحظات الحمراء تحتاج مراجعة يدوية؛ أرسلها لي إن احتجت.</p>`:''),
+  foot:fixable.length?`<button class="btn btn-primary" onclick="__fix.forEach(([i,st])=>{const s=shopById(i);s.status=st;s.updatedAt=nowISO()});log('تصحيح حالة المحلات',__fix.length+' محل');closeModal();saveDB();toast('تم تصحيح حالة المحلات')">تصحيح حالة المحلات فقط</button>`:''});
+}
+
+/* ---------- ربط التحسينات بالواجهة ---------- */
+REPORTS.splice(2,0,['monthly','كشف التحصيل الشهري','ورقة للمحصل: مستحق الشهر + المتأخر + خانة للتوقيع','book'],['closing','الإقفال اليومي','تسليم عهدة اليوم حسب الموظف وطريقة الدفع','wallet']);
+const _currentReportSpec=currentReportSpec;
+currentReportSpec=function(){if(F.repSel==='monthly')return monthlySheetSpec();if(F.repSel==='closing')return closingSpec(F.clDate,F.clUser);return _currentReportSpec()};
+function reportExtraControls(){
+  if(F.repSel==='summary'||F.repSel==='detail')return `<label class="inl"><input type="checkbox" style="width:auto;min-height:0" ${F.repOverdue?'checked':''} onchange="F.repOverdue=this.checked;renderAll()"> عمود المتأخرات</label><label class="inl"><input type="checkbox" style="width:auto;min-height:0" ${F.repFuture?'checked':''} onchange="F.repFuture=this.checked;renderAll()"> عمود الالتزامات المستقبلية</label>`;
+  if(F.repSel==='monthly')return `<label class="inl">الشهر <input type="month" value="${F.repMonth}" onchange="F.repMonth=this.value;renderAll()"></label>`;
+  if(F.repSel==='closing')return `<label class="inl">اليوم <input type="date" value="${F.clDate}" onchange="F.clDate=this.value;renderAll()"></label><select onchange="F.clUser=this.value;renderAll()"><option value="">كل الموظفين</option>${opts([...new Set([...db.users.map(u=>u.name),...db.receipts.map(r=>r.user)].filter(Boolean))],F.clUser)}</select>`;
+  return '';
+}
+const _reportsPage=PAGES.reports;
+PAGES.reports=host=>{_reportsPage(host);const ex=reportExtraControls();if(ex){const h=host.querySelector('#repPreview')?.previousElementSibling;h?.insertAdjacentHTML('afterend',`<div class="toolbar" style="margin:-4px 0 12px">${ex}</div>`)}};
+
+/* المحصل: يظهر أيضًا العقود المنتهية التي عليها رصيد، مع زر اتصال وإقفال اليوم */
+drawCollector=function(){const q=F.colQ.toLowerCase(),list=db.contracts.filter(c=>c.status==='active'||balanceForContract(c.id)>0.001).map(c=>({c,s:shopById(c.shopId),od:overdueForContract(c.id),bal:contractBalanceAsOf(c.id)})).filter(x=>(F.colF!=='debt'||x.bal>0.001)&&(F.colF!=='paid'||x.bal<=0.001)&&(!q||[x.c.tenant,x.s?.name,x.s?.no,x.c.phone].join(' ').toLowerCase().includes(q))).sort((a,b)=>b.od-a.od||b.bal-a.bal);
+  $('#colList').innerHTML=list.map(x=>`<div class="card col-item"><div class="av">${esc(initials(x.c.tenant))}</div><div class="tx"><h4>${esc(x.c.tenant)} ${x.c.status!=='active'?'<span class="badge gray">عقد سابق</span>':''}</h4><p>${esc(x.s?.name||'')} · <span class="num">${esc(x.c.phone||'بدون جوال')}</span></p><div class="od ${x.od>0.001?'':'ok'}">${esc(contractOverdueSummary(x.c.id,2))}</div></div><div><div class="debt num" style="color:${x.od>0.001?'var(--red)':'var(--ink)'}">${num(x.bal)}</div><div style="display:flex;gap:6px">${x.c.phone?`<a class="btn btn-light btn-sm" href="tel:${esc(x.c.phone)}">اتصال</a>`:''}<button class="btn btn-success btn-sm" onclick="openReceipt('${x.c.id}')">تسجيل سداد</button></div></div></div>`).join('')||empty('لا يوجد مستأجرون مطابقون','users')};
+const _colPage=PAGES.collector;
+PAGES.collector=host=>{_colPage(host);host.querySelector('.big-acts')?.insertAdjacentHTML('beforeend',`<button class="btn btn-light" onclick="printClosing(currentUser.name)">${ic('wallet')}إقفال اليوم وطباعة التسليم</button>`)};
+
+/* عرض العقد: سجل السندات + زر التجديد */
+const _cv=openContractView;
+openContractView=function(cid){_cv(cid);const c=contractById(cid),rs=db.receipts.filter(r=>r.contractId===cid).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  const body=$('#modal .modal-body');body?.insertAdjacentHTML('beforeend',`<h4 style="margin:18px 0 8px">سجل سندات القبض (${rs.length})</h4>${rs.length?`<div class="list">${rs.map(r=>`<div class="li"><div class="tx"><b class="num">${esc(r.no)} · ${dateAr(r.date)}</b><small>${esc(receiptCoverageSummary(r))} · ${esc(r.method)}</small></div><div class="amt num" style="color:var(--green)">${num(r.amount)}</div><button class="btn btn-ghost icon-btn btn-sm" onclick="printReceipt('${r.id}')">${ic('print')}</button></div>`).join('')}</div>`:'<p class="muted">لا توجد سندات</p>'}${c.renewedFrom?`<p class="muted">مجدد من عقد سابق — <a href="#" onclick="openContractView('${c.renewedFrom}');return false">عرض العقد السابق</a></p>`:''}${c.renewedTo?`<p class="muted">تم تجديده — <a href="#" onclick="openContractView('${c.renewedTo}');return false">عرض العقد الجديد</a></p>`:''}`);
+  if(c.status==='active'&&can('edit')&&(daysUntil(contractEndDate(c))??0)<=60)$('#modal .modal-foot')?.insertAdjacentHTML('beforeend',`<button class="btn btn-gold" onclick="openRenew('${cid}')">${ic('refresh')}تجديد العقد</button>`)};
+/* قائمة العقود: إضافة التجديد */
+const _drawContracts=drawContracts;
+drawContracts=function(){_drawContracts();document.querySelectorAll('#conBody tr').forEach(tr=>{const b=tr.querySelector('.row-acts .btn-success');const m=tr.querySelector('.menu-pop');const cid=b?.getAttribute('onclick')?.match(/'(.+)'/)?.[1];if(cid&&m&&can('edit')){const d=daysUntil(contractEndDate(contractById(cid)));m.insertAdjacentHTML('afterbegin',`<button onclick="this.closest('.menu').classList.remove('open');openRenew('${cid}')">${ic('refresh')}تجديد العقد${d!==null&&d<=60?' <span class="badge orange">'+(d<0?'منتهٍ':d+' يوم')+'</span>':''}</button>`)}})};
+
+/* اللوحة: مستحقات الأيام السبعة القادمة */
+const _dash=PAGES.dashboard;
+PAGES.dashboard=host=>{_dash(host);const t=today(),lim=addDays(t,7),up=db.dues.filter(d=>d.dueDate>=t&&d.dueDate<=lim&&d.amount-d.paid>0.001).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+  const col=host.querySelectorAll('.g-dash > .grid')[1];col?.insertAdjacentHTML('afterbegin',`<div class="card card-pad"><div class="card-title"><h3>مستحقات الأيام السبعة القادمة</h3><small class="num">${num(up.reduce((s,d)=>s+d.amount-d.paid,0))}</small></div>${up.length?`<div class="list">${up.slice(0,6).map(d=>{const c=contractById(d.contractId);return `<div class="li"><div class="tx"><b>${esc(c?.tenant)}</b><small>${esc(d.label)} · <span class="num">${dateAr(d.dueDate)}</span></small></div><div class="amt num">${num(d.amount-d.paid)}</div><button class="btn btn-success btn-sm" onclick="openReceipt('${d.contractId}')">تحصيل</button></div>`}).join('')}</div>`:'<p class="muted" style="margin:0">لا توجد مستحقات خلال الأسبوع القادم.</p>'}</div>`)};
+
+/* النظام: النسخ التلقائية وفحص السلامة */
+const _sys=PAGES.system;
+PAGES.system=host=>{_sys(host);host.querySelector('.grid.g2')?.insertAdjacentHTML('afterend',`<div class="grid g2 mt"><div class="card card-pad"><div class="card-title"><h3>النسخ التلقائية اليومية</h3><small>على هذا الجهاز · آخر 30 يومًا</small></div><div class="list" id="snapList"><p class="muted">جارٍ التحميل…</p></div></div><div class="card card-pad"><div class="card-title"><h3>فحص سلامة البيانات</h3></div><p class="muted" style="line-height:1.9;margin-top:0">يتحقق من تطابق المسدد في كل استحقاق مع سندات القبض، والسندات المرتبطة بعقود محذوفة، والأرقام المكررة، وحالة المحلات. الفحص للعرض فقط ولا يغيّر أي رصيد.</p><button class="btn btn-primary" onclick="healthCheck()">${ic('shield')}تشغيل الفحص</button></div></div>`);drawSnapshots()};
+
+/* ربط البحث الشامل والنسخ التلقائية بالتشغيل */
+const _init=init;
+init=function(){_init();setTimeout(()=>takeSnapshot(),4000);setInterval(()=>takeSnapshot(),30*60*1000);
+  document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'&&currentUser){e.preventDefault();$('#gsInput')?.focus()}})};
+
+/* تنبيه في سند القبض إذا كان على العقد السابق (قبل التجديد) مبلغ غير مسدد */
+const _rp=receiptPreview;
+receiptPreview=function(ch){_rp(ch);const cid=v('receiptContract');const c=cid&&contractById(cid);if(!c?.renewedFrom)return;const pc=contractById(c.renewedFrom);const pb=pc?balanceForContract(pc.id):0;if(pb>0.001)$('#allocPrev')?.insertAdjacentHTML('afterbegin',`<div class="alert orange">${ic('alert','width="18"')}<div><b>على العقد السابق لنفس المستأجر ${money(pb)} غير مسدد</b>السند يُسجَّل على العقد المختار فقط. <a href="#" onclick="const s=document.getElementById('receiptContract');s.value='${pc.id}';receiptPreview(true);return false">التسجيل على العقد السابق</a></div></div>`)};
 
 init();
 </script>
