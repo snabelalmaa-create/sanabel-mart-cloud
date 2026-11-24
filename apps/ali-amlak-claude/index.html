@@ -505,7 +505,7 @@ const DEFAULT_CONTRACT_CLAUSES=[
 
 /* ===== أملاك علي يحيى الشريمي وأولاده — النواة: البيانات والحسابات والمزامنة =====
    متوافق 100% مع بنية بيانات النسخة السابقة (aliAmlakDB / جدول ali_amlak_store) */
-const APP_VERSION='C1.9';
+const APP_VERSION='C2.0';
 const AR_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const BIZ='أملاك علي يحيى الشريمي وأولاده';
 const DEFAULT_DATA={
@@ -1872,6 +1872,64 @@ sheet=function(cls,html){if(/thermal/.test(cls))return legacyPrint(cls,html);con
   setTimeout(()=>{const h=s.innerHTML,t=(h.match(/<strong>([^<]{2,80})<\/strong>/)||[])[1]||(/receipt-a4/.test(h)?'سند قبض':/contract-doc/.test(h)?'عقد إيجار':'تقرير');showPDF(cls,h,t+' — '+today())},0)};
 /* تقارير التسوية والأرشيف تستخدم نفس المحرك */
 settlementPDF=async function(rid,share){const r=archiveById(rid);if(!r)return;await showPDF('a4 '+(r.orientation||'portrait'),archivedReportHTML(r),r.title);if(share&&PDFV.blob)pdfShare()};
+
+/* ===== تعديل التقارير المحفوظة في الأرشيف =====
+   1) إعادة إصدار التقرير من البيانات الحالية بعد تصحيح الفترة/المحل/الاسم (يحافظ على رقمه وملاحقه).
+   2) تحرير مباشر لنص التقرير لتصحيح أي كلمة أو رقم.
+   لا يغيّر أي سند أو رصيد — يعدّل نسخة التقرير المحفوظة فقط. */
+function archKind(r){if(r.meta?.source==='settlement')return 'settlement';const t=String(r.title||'');
+  if(r.meta?.source==='receipts')return 'receipts';
+  if(r.meta?.source==='reports'){if(t.includes('التفصيلي')&&t.includes('المالي'))return 'detail';if(t.includes('المحل'))return 'shop';return 'summary'}
+  if(t.includes('المتأخرات'))return 'arrears';if(t.includes('كشف التحصيل الشهري'))return 'monthly';if(t.includes('الإقفال اليومي'))return 'closing';if(t.includes('منصة إيجار'))return 'ejar';return 'other'}
+const ARCH_REGEN=['summary','detail','shop','receipts','arrears','monthly','closing'];
+let AE=null;
+function openArchiveEdit(rid){const r=archiveById(rid);if(!r)return;const k=archKind(r);if(k==='settlement')return openSettlement(rid);
+  const sc=r.meta?.scope||{},regen=ARCH_REGEN.includes(k);
+  AE={rid,k,title:r.title,from:sc.from||'',to:sc.to||'',shopId:sc.shopId||'',method:sc.method||'',month:r.meta?.month||'',date:r.meta?.date||'',user:r.meta?.user||'',tab:regen?'regen':'text'};
+  if(k==='monthly'&&!AE.month)AE.month=r.meta?.month||monthStart().slice(0,7);if(k==='closing'&&!AE.date)AE.date=r.meta?.date||today();
+  openModal({title:'تعديل التقرير — '+esc(r.title)+' ('+esc(r.no)+')',size:'lg',body:`<div class="tabs">${regen?`<button id="aeT1" class="on" onclick="aeTab('regen')">إعادة إصدار من البيانات</button>`:''}<button id="aeT2" class="${regen?'':'on'}" onclick="aeTab('text')">تحرير النص مباشرة</button></div><div id="aeBody"></div>`,
+    foot:`<button class="btn btn-primary" onclick="saveArchiveEdit()">${ic('check')}حفظ التعديل</button><button class="btn btn-light" onclick="closeModal()">إلغاء</button>`,onOpen:aeDraw});}
+function aeTab(t){aeCollect();AE.tab=t;$('#aeT1')?.classList.toggle('on',t==='regen');$('#aeT2')?.classList.toggle('on',t==='text');aeDraw()}
+function aeDraw(){const r=archiveById(AE.rid),b=$('#aeBody');
+  if(AE.tab==='text'){b.innerHTML=`<div class="alert" style="margin-top:0">${ic('edit','width="18"')}<div>اضغط على أي نص أو رقم داخل التقرير وعدّله مباشرة، ثم احفظ. التعديل يخص نسخة التقرير المحفوظة فقط ولا يغيّر السندات أو الأرصدة.</div></div><div class="field mb"><label>اسم التقرير</label><input id="aeTitle" value="${esc(AE.title)}"></div><div id="aeEdit" class="preview-doc" contenteditable="true" spellcheck="false" style="outline:2px dashed var(--gold);outline-offset:-2px;max-height:56vh">${r.html}</div>`;return}
+  const shopSel=['summary','detail','shop','receipts'].includes(AE.k);
+  b.innerHTML=`<div class="alert" style="margin-top:0">${ic('refresh','width="18"')}<div>يُعاد بناء التقرير من البيانات الحالية بالإعدادات التالية، ويحتفظ برقمه (${esc(r.no)}) وملاحقه. صحّح الخطأ في السندات أو المصروفات أولًا إن كان الخطأ في البيانات نفسها.</div></div>
+  <div class="form-grid"><div class="field full"><label>اسم التقرير</label><input id="aeTitle" value="${esc(AE.title)}"></div>
+  ${['summary','detail','shop','receipts'].includes(AE.k)?`<div class="field"><label>من تاريخ</label><input type="date" id="aeFrom" value="${AE.from}"></div><div class="field"><label>إلى تاريخ</label><input type="date" id="aeTo" value="${AE.to}"></div>`:''}
+  ${shopSel?`<div class="field"><label>المحل</label><select id="aeShop">${AE.k==='shop'?'':'<option value="">جميع المحلات</option>'}${opts(db.shops.map(s=>[s.id,s.no+' — '+s.name]),AE.shopId)}</select></div>`:''}
+  ${AE.k==='receipts'?`<div class="field"><label>طريقة الدفع</label><select id="aeMethod"><option value="">كل الطرق</option>${opts(METHODS,AE.method)}</select></div>`:''}
+  ${AE.k==='monthly'?`<div class="field"><label>الشهر</label><input type="month" id="aeMonth" value="${AE.month}"></div>`:''}
+  ${AE.k==='closing'?`<div class="field"><label>اليوم</label><input type="date" id="aeDate" value="${AE.date}"></div><div class="field"><label>الموظف</label><select id="aeUser"><option value="">كل الموظفين</option>${opts([...new Set([...db.users.map(u=>u.name),...db.receipts.map(x=>x.user)].filter(Boolean))],AE.user)}</select></div>`:''}
+  ${['summary','detail'].includes(AE.k)?`<div class="field full" style="flex-direction:row;gap:16px"><label class="inl"><input type="checkbox" id="aeOd" style="width:auto;min-height:0" ${F.repOverdue?'checked':''}> عمود المتأخرات</label><label class="inl"><input type="checkbox" id="aeFu" style="width:auto;min-height:0" ${F.repFuture?'checked':''}> عمود الالتزامات المستقبلية</label></div>`:''}
+  </div>${(r.supplements||[]).length?`<p class="muted" style="font-size:12.5px">الملاحق المرفقة (${r.supplements.length}) ستُحدَّث تلقائيًا على إيرادات التقرير الجديدة.</p>`:''}`}
+function aeCollect(){if(!AE)return;const g=i=>document.getElementById(i);if(g('aeTitle'))AE.title=g('aeTitle').value;if(g('aeFrom'))AE.from=g('aeFrom').value;if(g('aeTo'))AE.to=g('aeTo').value;if(g('aeShop'))AE.shopId=g('aeShop').value;if(g('aeMethod'))AE.method=g('aeMethod').value;if(g('aeMonth'))AE.month=g('aeMonth').value;if(g('aeDate'))AE.date=g('aeDate').value;if(g('aeUser'))AE.user=g('aeUser').value;if(g('aeOd'))AE.od=g('aeOd').checked;if(g('aeFu'))AE.fu=g('aeFu').checked}
+function aeBuildSpec(){const save={...F};try{
+  if(['summary','detail','shop'].includes(AE.k)){Object.assign(F,{repFrom:AE.from,repTo:AE.to,repShop:AE.shopId});if(AE.od!==undefined)F.repOverdue=AE.od;if(AE.fu!==undefined)F.repFuture=AE.fu;return AE.k==='shop'?shopDetailSpec(AE.shopId):financialSpec(AE.k==='detail')}
+  if(AE.k==='receipts'){Object.assign(F,{rFrom:AE.from,rTo:AE.to,rShop:AE.shopId,rMethod:AE.method,rQ:''});return receiptsReportSpec()}
+  if(AE.k==='arrears')return arrearsSpec();
+  if(AE.k==='monthly'){F.repMonth=AE.month;const s=monthlySheetSpec();s.meta={...(s.meta||{}),month:AE.month};return s}
+  if(AE.k==='closing'){const s=closingSpec(AE.date,AE.user);s.meta={...(s.meta||{}),date:AE.date,user:AE.user};return s}
+}finally{for(const k of Object.keys(F))F[k]=save[k]}}
+function aeRefreshSupplements(r){const prev=supplement;try{for(const s of (r.supplements||[])){supplement={parentId:r.id,editId:s.id,revenue:Number(r.meta?.revenue??s.revenue),data:structuredClone(s.data)};if(!Array.isArray(supplement.data.expenses))supplement.data.expenses=[];const t=supCalc();Object.assign(s,{revenue:t.revenue,net:t.net,updatedAt:nowISO(),html:reportDocumentHTML(reportSpec(s.data.title||s.title,r.no+' — '+r.subtitle,supplementHTML(),'portrait'))})}}finally{supplement=prev}}
+async function saveArchiveEdit(){aeCollect();const r=archiveById(AE.rid);if(!String(AE.title).trim())return toast('اكتب اسم التقرير','error');
+  if(AE.tab==='text'){const ed=$('#aeEdit');if(!ed)return;ed.querySelectorAll('script,iframe,object,embed').forEach(n=>n.remove());r.html=ed.innerHTML;r.title=AE.title.trim();r.edited=true;r.updatedAt=nowISO();r.editedBy=currentUser.name;log('تحرير نص تقرير',r.no+' — '+r.title);closeModal();saveDB();toast('تم حفظ التعديل على التقرير');return}
+  if(AE.from&&AE.to&&AE.from>AE.to)return toast('تاريخ البداية بعد النهاية','error');if(AE.k==='shop'&&!AE.shopId)return toast('اختر المحل','error');
+  const spec=aeBuildSpec();if(!spec)return;
+  const oldRev=r.meta?.revenue;spec.title=AE.title.trim();
+  Object.assign(r,{title:spec.title,subtitle:spec.subtitle,orientation:spec.orientation==='auto'?detectOrientation(spec.content):spec.orientation,html:reportDocumentHTML(spec),meta:spec.meta?structuredClone(spec.meta):r.meta,updatedAt:nowISO(),regeneratedAt:nowISO(),editedBy:currentUser.name});
+  if((r.supplements||[]).length&&r.meta&&Number.isFinite(r.meta.revenue))aeRefreshSupplements(r);
+  log('إعادة إصدار تقرير',r.no+' — '+r.title+(oldRev!==undefined&&r.meta?.revenue!==undefined&&oldRev!==r.meta.revenue?' (الإيرادات '+num(oldRev)+' ← '+num(r.meta.revenue)+')':''));closeModal();saveDB();toast('تم تحديث التقرير '+r.no);
+}
+/* حفظ معطيات الشهر/اليوم مع التقارير الجديدة لتسهيل تعديلها لاحقًا */
+const _msSpec=monthlySheetSpec;monthlySheetSpec=function(){const s=_msSpec();s.meta={...(s.meta||{}),kind:'monthly',month:F.repMonth};return s};
+const _clSpec=closingSpec;closingSpec=function(d,u){const s=_clSpec(d,u);s.meta={...(s.meta||{}),kind:'closing',date:d||today(),user:u||''};return s};
+/* زر التعديل وشارة «معدّل» في الأرشيف */
+const _arcDraw2=drawArchive;
+drawArchive=function(){_arcDraw2();document.querySelectorAll('#arcList tbody tr').forEach(tr=>{const b=tr.querySelector('.row-acts .btn-light');const rid=b?.getAttribute('onclick')?.match(/'(.+)'/)?.[1];if(!rid)return;const r=archiveById(rid);
+  if(can('edit'))b.insertAdjacentHTML('beforebegin',`<button class="btn btn-gold btn-sm" onclick="openArchiveEdit('${rid}')">${ic('edit')}تعديل</button>`);
+  if(r?.edited||r?.regeneratedAt){const td=tr.querySelector('td');td?.querySelector('b')?.insertAdjacentHTML('afterend',` <span class="badge amber" title="${esc('آخر تعديل: '+new Date(r.updatedAt).toLocaleString('en-GB')+(r.editedBy?' — '+r.editedBy:''))}">معدّل</span>`)}})};
+const _prevArch=previewArchived;
+previewArchived=function(rid){_prevArch(rid);if(can('edit'))$('#modal .modal-foot')?.insertAdjacentHTML('afterbegin',`<button class="btn btn-gold" onclick="openArchiveEdit('${rid}')">${ic('edit')}تعديل التقرير</button>`)};
 
 init();
 </script>
