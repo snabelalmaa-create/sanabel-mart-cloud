@@ -440,6 +440,11 @@ table.t th.right,table.t td.right{text-align:left}
 .st-row .dp-show{min-width:0}
 @media (max-width:860px){.st-row,.st-row.expenses{grid-template-columns:1fr 1fr;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff}}
 
+.st-sys{display:grid;grid-template-columns:70px 88px 90px 1fr 100px 80px auto;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:6px;font-size:13.5px}
+.st-sys.off{opacity:.55;background:var(--line-2)}.st-sys.off b{text-decoration:line-through}
+.st-sys .acts{display:flex;gap:4px}
+@media (max-width:860px){.st-sys{grid-template-columns:1fr 1fr}}
+
 </style>
 </head>
 <body>
@@ -505,7 +510,7 @@ const DEFAULT_CONTRACT_CLAUSES=[
 
 /* ===== أملاك علي يحيى الشريمي وأولاده — النواة: البيانات والحسابات والمزامنة =====
    متوافق 100% مع بنية بيانات النسخة السابقة (aliAmlakDB / جدول ali_amlak_store) */
-const APP_VERSION='C2.0';
+const APP_VERSION='C2.1';
 const AR_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const BIZ='أملاك علي يحيى الشريمي وأولاده';
 const DEFAULT_DATA={
@@ -1732,7 +1737,7 @@ function stSysExpenses(s){return db.expenses.filter(e=>inDateRange(e.date,s.from
 function stCalc(s){
   const cids=s.shopId?db.contracts.filter(c=>c.shopId===s.shopId).map(c=>c.id):null;
   const receipts=db.receipts.filter(r=>inDateRange(r.date,s.from,s.to)&&(!cids||cids.includes(r.contractId)));
-  const sys=s.includeSystemExpenses?stSysExpenses(s):[];
+  const ex0=new Set(s.excludedExpenses||[]);const sys=s.includeSystemExpenses?stSysExpenses(s).filter(e=>!ex0.has(e.id)):[];
   const tr=s.transfers.filter(t=>+t.amount>0),ex=s.expenses.filter(e=>+e.amount>0);
   const shopOfReceipt=r=>contractById(r.contractId)?.shopId||'';
   const keys=new Set([...receipts.map(shopOfReceipt),...tr.map(t=>t.shopId||''),...ex.map(e=>e.shopId||''),...sys.map(e=>e.shopId||'')]);
@@ -1757,10 +1762,10 @@ PAGES.settlements=host=>{const list=settlementList();
   (list.length?`<div class="table-wrap"><table class="t"><thead><tr><th>اسم التقرير</th><th>الفترة</th><th class="right">المقبوضات</th><th class="right">المحوّل للمالك</th><th class="right">المصروفات</th><th class="right">الباقي</th><th>آخر تعديل</th><th></th></tr></thead><tbody>${list.map(r=>{const s=r.settlement,c=s?stCalc(s):null;return `<tr><td><b>${esc(r.title)}</b><span class="sub">${esc(r.no)}</span></td><td>${esc(r.subtitle||'')}</td><td class="right num">${c?num(c.revenue):'—'}</td><td class="right num">${c?num(c.transferred):'—'}</td><td class="right num">${c?num(c.expenses):'—'}</td><td class="right"><b class="num" style="color:${c&&c.remaining<0?'var(--red)':'var(--brand)'}">${c?num(c.remaining):'—'}</b></td><td class="num">${new Date(r.updatedAt||r.createdAt).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'})}</td><td><div class="row-acts"><button class="btn btn-light btn-sm" onclick="openSettlement('${r.id}')">${ic('edit')}فتح</button>${menu([['download','تنزيل PDF',`settlementPDF('${r.id}')`],['upload','مشاركة PDF (واتساب)',`settlementPDF('${r.id}',true)`],['print','طباعة',`printArchived('${r.id}')`],['plus','نسخة لفترة جديدة',`openSettlement('${r.id}',true)`],can('delete')&&['trash','حذف',`deleteSettlement('${r.id}')`,'danger']])}</div></td></tr>`}).join('')}</tbody></table></div>`:empty('لا توجد تقارير تسوية بعد — أنشئ أول تقرير من الزر بالأعلى','wallet'))};
 
 /* ---------- المحرر ---------- */
-function openSettlement(rid,asCopy){
-  const r=rid?archiveById(rid):null,base=r?.settlement;
+function openSettlement(rid,asCopy,restore){
+  const r=rid?archiveById(rid):null,base=restore||r?.settlement;
   ST=base?structuredClone(base):{name:'تسوية '+monthLabel(F.repFrom||monthStart()),from:F.repFrom||monthStart(),to:F.repTo||today(),shopId:F.repShop||'',includeSystemExpenses:true,transfers:[],expenses:[],note:''};
-  ST.id=asCopy?null:(r?.id||null);if(asCopy){ST.name=ST.name+' (نسخة)';ST.transfers=[];ST.expenses=[];ST.from=monthStart();ST.to=today()}
+  ST.id=restore?(restore.id||null):asCopy?null:(r?.id||null);if(asCopy){ST.name=ST.name+' (نسخة)';ST.transfers=[];ST.expenses=[];ST.from=monthStart();ST.to=today()}
   if(!ST.transfers.length)ST.transfers.push({date:today(),shopId:'',amount:'',note:''});
   openModal({title:ST.id?'تقرير التسوية — '+esc(ST.name):'تقرير تسوية جديد',size:'lg',body:`<div class="form-grid">
     <div class="field full"><label>اسم التقرير * (للرجوع له لاحقًا)</label><input id="stName" value="${esc(ST.name)}" oninput="ST.name=this.value"></div>
@@ -1773,11 +1778,12 @@ function openSettlement(rid,asCopy){
     <div id="stSum" class="mt"></div>`,
     foot:`<button class="btn btn-primary" onclick="saveSettlement()">${ic('check')}حفظ التقرير</button><button class="btn btn-light" onclick="saveSettlement('pdf')">${ic('download')}حفظ وتنزيل PDF</button><button class="btn btn-success" onclick="saveSettlement('share')">${ic('upload')}حفظ وإرسال PDF</button><button class="btn btn-light" onclick="saveSettlement('print')">${ic('print')}حفظ وطباعة</button>`,onOpen:()=>{stRows();stDraw()}});
 }
-function stSetMonth(m){if(!m)return;const [y,mo]=m.split('-').map(Number);ST.from=m+'-01';ST.to=new Date(Date.UTC(y,mo,0)).toISOString().slice(0,10);const a=document.getElementById('stFrom'),b=document.getElementById('stTo');if(a)a.value=ST.from;if(b)b.value=ST.to;if(!ST.name||/^تسوية /.test(ST.name)){ST.name='تسوية '+AR_MONTHS[mo-1]+' '+y;const n=document.getElementById('stName');if(n)n.value=ST.name}stDraw()}
+function stSetMonth(m){if(!m)return;const [y,mo]=m.split('-').map(Number);ST.from=m+'-01';ST.to=new Date(Date.UTC(y,mo,0)).toISOString().slice(0,10);const mm=document.getElementById('stMonth');if(mm&&mm.value!==m)mm.value=m;const a=document.getElementById('stFrom'),b=document.getElementById('stTo');if(a)a.value=ST.from;if(b)b.value=ST.to;if(!ST.name||/^تسوية /.test(ST.name)){ST.name='تسوية '+AR_MONTHS[mo-1]+' '+y;const n=document.getElementById('stName');if(n)n.value=ST.name}stDraw()}
 function stRowHTML(kind,x,i){const del=`<button type="button" class="btn btn-ghost icon-btn btn-sm" style="color:var(--red)" onclick="ST.${kind}.splice(${i},1);stRows();stDraw()">${ic('trash')}</button>`;
   return `<div class="st-row ${kind}"><input type="date" value="${esc(x.date||'')}" onchange="ST.${kind}[${i}].date=this.value"><select onchange="ST.${kind}[${i}].shopId=this.value;stDraw()">${stShopOpts(x.shopId)}</select>${kind==='expenses'?`<input placeholder="البند" value="${esc(x.category||'')}" oninput="ST.${kind}[${i}].category=this.value" list="stCats">`:''}<input type="number" min="0" step="0.01" placeholder="المبلغ" value="${esc(x.amount)}" oninput="ST.${kind}[${i}].amount=this.value;stDraw()"><input placeholder="البيان" value="${esc(x.note||'')}" oninput="ST.${kind}[${i}].note=this.value">${del}</div>`}
 function stRows(){$('#stTr').innerHTML=ST.transfers.map((x,i)=>stRowHTML('transfers',x,i)).join('')||'<p class="muted">لا توجد تحويلات</p>';$('#stEx').innerHTML=`<datalist id="stCats">${EXP_CATS.map(c=>`<option value="${c}">`).join('')}</datalist>`+(ST.expenses.map((x,i)=>stRowHTML('expenses',x,i)).join('')||'<p class="muted" style="margin:0 0 8px">لا توجد مصروفات إضافية</p>')}
-function stDraw(){const c=stCalc(ST);const sys=$('#stSys');if(sys)sys.innerHTML=ST.includeSystemExpenses?(c.sys.length?`<div class="alert" style="margin:0">${ic('cashOut','width="18"')}<div><b>${c.sys.length} سند صرف مسجل في الفترة بإجمالي ${money(c.sysExp)} — يُخصم تلقائيًا</b>${c.sys.slice(0,4).map(e=>esc(e.no+' '+(e.note||e.category||''))).join('، ')}${c.sys.length>4?' …':''}</div></div>`:'<p class="muted" style="margin:0">لا توجد سندات صرف مسجلة في هذه الفترة.</p>'):'';
+function stDraw(){const c=stCalc(ST);const sys=$('#stSys');if(sys){const all=ST.includeSystemExpenses?stSysExpenses(ST):[];const exc=new Set(ST.excludedExpenses||[]);
+  sys.innerHTML=!ST.includeSystemExpenses?'':all.length?`<div style="font-weight:600;font-size:13.5px;margin-bottom:6px">سندات الصرف المسجلة في الفترة (${all.length}) — المحدد منها يُخصم من الباقي: <span class="num">${money(c.sysExp)}</span></div>${all.map(e=>`<div class="st-sys ${exc.has(e.id)?'off':''}"><label class="inl"><input type="checkbox" style="width:auto;min-height:0" ${exc.has(e.id)?'':'checked'} onchange="stToggleExp('${e.id}',this.checked)"> يُخصم</label><span class="num">${dateAr(e.date)}</span><b class="num">${esc(e.no)}</b><span>${esc(e.category||'')} — ${esc(e.note||e.payee||'')}</span><span>${esc(shopById(e.shopId)?.name||'عام')}</span><b class="num">${num(e.amount)}</b><span class="acts"><button type="button" class="btn btn-light btn-sm" onclick="stViewExpense('${e.id}')">${ic('eye')}عرض</button>${can('edit')?`<button type="button" class="btn btn-light btn-sm" onclick="stEditExpense('${e.id}')">${ic('edit')}تعديل السند</button>`:''}${can('delete')?`<button type="button" class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="stDeleteExpense('${e.id}')">${ic('trash')}حذف السند</button>`:''}</span></div>`).join('')}<p class="muted" style="font-size:12px;margin:6px 0 0">إلغاء علامة «يُخصم» يستبعد السند من هذا التقرير فقط. أما «تعديل السند» و«حذف السند» فيغيّران سند الصرف نفسه في البرنامج.</p>`:'<p class="muted" style="margin:0">لا توجد سندات صرف مسجلة في هذه الفترة.</p>'}
   $('#stSum').innerHTML=`<div class="grid g4"><div class="card kpi t-green"><div class="lbl">مقبوضات الفترة</div><div class="val num" style="font-size:20px">${num(c.revenue)}</div><div class="sub">${c.receipts.length} سند قبض</div></div><div class="card kpi t-blue"><div class="lbl">المحوّل للمالك</div><div class="val num" style="font-size:20px">${num(c.transferred)}</div></div><div class="card kpi t-red"><div class="lbl">المصروفات</div><div class="val num" style="font-size:20px">${num(c.expenses)}</div></div><div class="card kpi t-gold"><div class="lbl">الباقي</div><div class="val num" style="font-size:20px;color:${c.remaining<0?'var(--red)':'var(--brand)'}">${num(c.remaining)}</div></div></div>`}
 async function saveSettlement(after){
   if(!String(ST.name||'').trim())return toast('اكتب اسمًا للتقرير','error');if(ST.from&&ST.to&&ST.from>ST.to)return toast('تاريخ البداية بعد النهاية','error');
@@ -1815,6 +1821,17 @@ drawArchive=function(){_arcDraw();document.querySelectorAll('#arcList tbody tr')
 /* زر في صفحة التقارير */
 const _repPage2=PAGES.reports;
 PAGES.reports=host=>{_repPage2(host);host.querySelector('.page-head .acts')?.insertAdjacentHTML('afterbegin',`<button class="btn btn-gold" onclick="openSettlement()">${ic('wallet')}تقرير تسوية للفترة</button>`)};
+
+function stToggleExp(eid,on){const x=new Set(ST.excludedExpenses||[]);if(on)x.delete(eid);else x.add(eid);ST.excludedExpenses=[...x];stDraw()}
+/* تعديل/حذف سند صرف من داخل تقرير التسوية ثم الرجوع للتقرير بنفس البيانات */
+function stBack(){const st=window.__stReturn;window.__stReturn=null;if(st)openSettlement(null,false,st)}
+function stEditExpense(eid){window.__stReturn=structuredClone(ST);openExpense(eid);const f=$('#modal .modal-foot');if(f){const cancel=[...f.querySelectorAll('button')].find(b=>b.textContent.includes('إلغاء'));if(cancel)cancel.setAttribute('onclick','stBack()');const save=f.querySelector('.btn-danger');if(save){const o=save.getAttribute('onclick');save.setAttribute('onclick',o+';if(!document.getElementById(\'expenseAmount\'))stBack()')}}}
+async function stDeleteExpense(eid){window.__stReturn=structuredClone(ST);const before=db.expenses.length;await deleteExpense(eid);if(db.expenses.length<before&&window.__stReturn)window.__stReturn.excludedExpenses=(window.__stReturn.excludedExpenses||[]).filter(x=>x!==eid);stBack()}
+
+function stViewExpense(eid){const e=db.expenses.find(x=>x.id===eid);if(!e)return;window.__stReturn=structuredClone(ST);
+  openModal({title:'سند صرف '+esc(e.no),size:'sm',body:`<div class="num" style="text-align:center;font-size:26px;font-weight:700;color:var(--red);margin-bottom:12px">${money(e.amount)}</div><dl class="kv"><dt>رقم السند</dt><dd class="num">${esc(e.no)}</dd><dt>التاريخ</dt><dd class="num">${dateAr(e.date)}</dd><dt>البند</dt><dd>${esc(e.category||'—')}</dd><dt>المستفيد</dt><dd>${esc(e.payee||'—')}</dd><dt>المحل</dt><dd>${esc(shopById(e.shopId)?.name||'عام / بدون محل')}</dd><dt>طريقة الدفع</dt><dd>${esc(e.method||'—')}</dd><dt>البيان</dt><dd style="white-space:pre-wrap">${esc(e.note||'—')}</dd><dt>سجّله</dt><dd>${esc(e.user||'—')}${e.createdAt?' · <span class="num">'+new Date(e.createdAt).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'})+'</span>':''}</dd></dl>`,
+  foot:`<button class="btn btn-primary" onclick="stBack()">رجوع للتقرير</button>${can('edit')?`<button class="btn btn-light" onclick="window.__stReturn&&(ST=window.__stReturn);stEditExpense('${eid}')">${ic('edit')}تعديل</button>`:''}${can('delete')?`<button class="btn btn-ghost" style="color:var(--red)" onclick="window.__stReturn&&(ST=window.__stReturn);stDeleteExpense('${eid}')">${ic('trash')}حذف</button>`:''}<button class="btn btn-ghost" onclick="printExpense('${eid}')">${ic('print')}طباعة</button>`});
+  $('#modal .modal-head button')?.setAttribute('onclick','stBack()')}
 
 /* ===== محرك PDF ثابت لمقاس A4: البرنامج يرسم المستند بنفسه بالمقاس الصحيح =====
    لا يعتمد على إعدادات الطباعة في المتصفح (الهوامش/المقياس/اتجاه الورقة)، فيطلع مرتبًا دائمًا. */
