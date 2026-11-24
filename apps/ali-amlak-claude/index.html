@@ -317,13 +317,13 @@ td .sub{display:block;color:var(--muted);font-size:13px;margin-top:2px}
   .print-sheet.thermal h2,.print-sheet.thermal h3{text-align:center;margin:4px 0}
   .print-sheet.thermal table{width:100%;border-collapse:collapse;font-size:12px}.print-sheet.thermal td{padding:3px 2px;vertical-align:top}
   .print-sheet .line{border-top:1px dashed #000;margin:7px 0}
-  .print-sheet.a4{font-size:12px;margin:0 auto}
+  .print-sheet.a4{font-size:13.5px;margin:0 auto;line-height:1.6}
   .print-sheet.a4.portrait{width:auto}
   .print-sheet.a4.landscape{width:auto}
-  .print-sheet.a4.landscape table{font-size:10px}
-  .print-sheet.a4 h2{font-size:20px;margin:0}.print-sheet.a4 h3{font-size:16px}
-  .print-sheet.a4 table{width:100%;font-size:11px;border-collapse:collapse;margin-top:10px}
-  .print-sheet.a4 th,.print-sheet.a4 td{border:1px solid #c9ccd1;padding:6px 7px;text-align:right}
+  .print-sheet.a4.landscape table{font-size:12px}
+  .print-sheet.a4 h2{font-size:22px;margin:0}.print-sheet.a4 h3{font-size:17px;margin:14px 0 6px}
+  .print-sheet.a4 table{width:100%;font-size:12.5px;border-collapse:collapse;margin-top:10px}
+  .print-sheet.a4 th,.print-sheet.a4 td{border:1px solid #c9ccd1;padding:7px 8px;text-align:right;vertical-align:top}
   .print-sheet.a4 th{background:#eef2ef!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-sheet .report-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid #0b5a43;padding-bottom:10px;margin-bottom:14px}
   .print-sheet .report-head small{color:#555}
@@ -331,14 +331,14 @@ td .sub{display:block;color:var(--muted);font-size:13px;margin-top:2px}
   .print-sheet .report-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:10px 0}
   .print-sheet .report-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
   .print-sheet .report-kpi{border:1px solid #c9ccd1;border-radius:8px;padding:8px}
-  .print-sheet .report-kpi small{display:block;color:#555}.print-sheet .report-kpi strong{display:block;margin-top:3px;font-size:14px}
+  .print-sheet .report-kpi small{display:block;color:#555;font-size:12.5px}.print-sheet .report-kpi strong{display:block;margin-top:3px;font-size:17px}
   .print-sheet .signature-row{display:flex;justify-content:space-between;margin-top:34px;break-inside:avoid}
   .print-sheet .badge{border:1px solid #999;background:none!important;color:#000!important;padding:1px 6px}
   .print-sheet .btn,.no-print{display:none!important}
   .receipt-a4{border:2px solid #0b5a43;border-radius:10px;padding:18px 22px}
   .receipt-a4 .rh{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0b5a43;padding-bottom:10px}
   .receipt-a4 .amount-box{border:2px dashed #0b5a43;border-radius:10px;padding:10px 16px;text-align:center;font-size:20px;font-weight:700;margin:14px 0}
-  .contract-doc{font-size:12px;line-height:1.85}
+  .contract-doc{font-size:13.5px;line-height:1.85}
   .contract-doc .contract-cover{border:2px solid #0b5a43;padding:14px;min-height:250mm}
   .contract-doc .contract-brand{text-align:center;border-bottom:3px double #0b5a43;padding-bottom:10px;margin-bottom:12px}
   .contract-doc .contract-brand h1{margin:0;font-size:23px}
@@ -505,7 +505,7 @@ const DEFAULT_CONTRACT_CLAUSES=[
 
 /* ===== أملاك علي يحيى الشريمي وأولاده — النواة: البيانات والحسابات والمزامنة =====
    متوافق 100% مع بنية بيانات النسخة السابقة (aliAmlakDB / جدول ali_amlak_store) */
-const APP_VERSION='C1.8';
+const APP_VERSION='C1.9';
 const AR_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const BIZ='أملاك علي يحيى الشريمي وأولاده';
 const DEFAULT_DATA={
@@ -1367,10 +1367,10 @@ function buildPrintDoc(cls,html){const css=[...document.querySelectorAll('style'
   html,body{margin:0!important;padding:0!important;background:#fff!important;width:auto!important;min-width:0!important;height:auto!important;min-height:0!important}
   #printSheet{display:block!important;margin:0!important}#printSheet:not(.thermal){width:auto!important}#printSheet.thermal{width:72mm!important;margin:0 auto!important}</style></head><body><div id="printSheet" class="print-sheet ${cls}">${html}</div></body></html>`}
 function sheet(cls,html){const s=$('#printSheet');s.className='print-sheet '+cls;s.innerHTML=html;setPageSize(cls);window.__sheetReady=true;
-  document.getElementById('printFrame')?.remove();const f=document.createElement('iframe');f.id='printFrame';f.setAttribute('aria-hidden','true');f.style.cssText='position:fixed;left:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none';document.body.appendChild(f);
+  setTimeout(()=>{html=s.innerHTML;document.getElementById('printFrame')?.remove();const f=document.createElement('iframe');f.id='printFrame';f.setAttribute('aria-hidden','true');f.style.cssText='position:fixed;left:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none';document.body.appendChild(f);
   const d=f.contentDocument;d.open();d.write(buildPrintDoc(cls,html));d.close();
   const go=()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){window.print()}finally{window.__sheetReady=false}};
-  const fontsReady=d.fonts?.ready||Promise.resolve();Promise.race([fontsReady,new Promise(r=>setTimeout(r,1500))]).then(()=>setTimeout(go,120))}
+  const fontsReady=d.fonts?.ready||Promise.resolve();Promise.race([fontsReady,new Promise(r=>setTimeout(r,1500))]).then(()=>setTimeout(go,120))},0)}
 function reportHeader(title,subtitle=''){const st=db.settings,owner=st.ownerName&&!st.businessName.includes(st.ownerName)?`<div>${esc(st.ownerName)}</div>`:'';return `<div class="report-head"><div><h2 style="text-align:right">${esc(st.businessName)}</h2>${owner}<small>${esc(st.address||'')}${st.commercialNo?' · س.ت '+esc(st.commercialNo):''}</small></div><div style="text-align:left"><strong>${esc(title)}</strong><div>${esc(subtitle)}</div><small>تاريخ الطباعة: ${dateAr(today())}</small></div></div>`}
 function reportSpec(title,subtitle,content,orientation='auto',meta=null){return {title,subtitle,content,orientation,meta}}
 function detectOrientation(content){const m=String(content).match(/<th/g);return m&&m.length>14?'landscape':'portrait'}
@@ -1764,7 +1764,7 @@ function openSettlement(rid,asCopy){
   if(!ST.transfers.length)ST.transfers.push({date:today(),shopId:'',amount:'',note:''});
   openModal({title:ST.id?'تقرير التسوية — '+esc(ST.name):'تقرير تسوية جديد',size:'lg',body:`<div class="form-grid">
     <div class="field full"><label>اسم التقرير * (للرجوع له لاحقًا)</label><input id="stName" value="${esc(ST.name)}" oninput="ST.name=this.value"></div>
-    <div class="field"><label>من تاريخ</label><input type="date" id="stFrom" value="${ST.from}" onchange="ST.from=this.value;stDraw()"></div><div class="field"><label>إلى تاريخ</label><input type="date" id="stTo" value="${ST.to}" onchange="ST.to=this.value;stDraw()"></div>
+    <div class="field full"><label>الشهر (اختيار سريع يضبط الفترة من أول الشهر لآخره)</label><input type="month" id="stMonth" value="${ST.from.slice(0,7)}" onchange="stSetMonth(this.value)"></div><div class="field"><label>من تاريخ</label><input type="date" id="stFrom" value="${ST.from}" onchange="ST.from=this.value;document.getElementById('stMonth').value=this.value.slice(0,7);stDraw()"></div><div class="field"><label>إلى تاريخ</label><input type="date" id="stTo" value="${ST.to}" onchange="ST.to=this.value;stDraw()"></div>
     <div class="field"><label>المحلات</label><select onchange="ST.shopId=this.value;stDraw()"><option value="">جميع المحلات</option>${stShopOpts(ST.shopId,false)}</select></div>
     <div class="field"><label>سندات الصرف المسجلة في البرنامج</label><select onchange="ST.includeSystemExpenses=this.value==='1';stDraw()">${opts([['1','تُخصم تلقائيًا من الباقي'],['0','لا تُخصم']],ST.includeSystemExpenses?'1':'0')}</select></div>
     <div class="fieldset"><h4>المبالغ المحوّلة للمالك مباشرة</h4><div id="stTr"></div><button type="button" class="btn btn-light btn-sm" onclick="ST.transfers.push({date:today(),shopId:'',amount:'',note:''});stRows()">${ic('plus')}إضافة تحويل</button></div>
@@ -1773,6 +1773,7 @@ function openSettlement(rid,asCopy){
     <div id="stSum" class="mt"></div>`,
     foot:`<button class="btn btn-primary" onclick="saveSettlement()">${ic('check')}حفظ التقرير</button><button class="btn btn-light" onclick="saveSettlement('pdf')">${ic('download')}حفظ وتنزيل PDF</button><button class="btn btn-success" onclick="saveSettlement('share')">${ic('upload')}حفظ وإرسال PDF</button><button class="btn btn-light" onclick="saveSettlement('print')">${ic('print')}حفظ وطباعة</button>`,onOpen:()=>{stRows();stDraw()}});
 }
+function stSetMonth(m){if(!m)return;const [y,mo]=m.split('-').map(Number);ST.from=m+'-01';ST.to=new Date(Date.UTC(y,mo,0)).toISOString().slice(0,10);const a=document.getElementById('stFrom'),b=document.getElementById('stTo');if(a)a.value=ST.from;if(b)b.value=ST.to;if(!ST.name||/^تسوية /.test(ST.name)){ST.name='تسوية '+AR_MONTHS[mo-1]+' '+y;const n=document.getElementById('stName');if(n)n.value=ST.name}stDraw()}
 function stRowHTML(kind,x,i){const del=`<button type="button" class="btn btn-ghost icon-btn btn-sm" style="color:var(--red)" onclick="ST.${kind}.splice(${i},1);stRows();stDraw()">${ic('trash')}</button>`;
   return `<div class="st-row ${kind}"><input type="date" value="${esc(x.date||'')}" onchange="ST.${kind}[${i}].date=this.value"><select onchange="ST.${kind}[${i}].shopId=this.value;stDraw()">${stShopOpts(x.shopId)}</select>${kind==='expenses'?`<input placeholder="البند" value="${esc(x.category||'')}" oninput="ST.${kind}[${i}].category=this.value" list="stCats">`:''}<input type="number" min="0" step="0.01" placeholder="المبلغ" value="${esc(x.amount)}" oninput="ST.${kind}[${i}].amount=this.value;stDraw()"><input placeholder="البيان" value="${esc(x.note||'')}" oninput="ST.${kind}[${i}].note=this.value">${del}</div>`}
 function stRows(){$('#stTr').innerHTML=ST.transfers.map((x,i)=>stRowHTML('transfers',x,i)).join('')||'<p class="muted">لا توجد تحويلات</p>';$('#stEx').innerHTML=`<datalist id="stCats">${EXP_CATS.map(c=>`<option value="${c}">`).join('')}</datalist>`+(ST.expenses.map((x,i)=>stRowHTML('expenses',x,i)).join('')||'<p class="muted" style="margin:0 0 8px">لا توجد مصروفات إضافية</p>')}
@@ -1814,6 +1815,62 @@ drawArchive=function(){_arcDraw();document.querySelectorAll('#arcList tbody tr')
 /* زر في صفحة التقارير */
 const _repPage2=PAGES.reports;
 PAGES.reports=host=>{_repPage2(host);host.querySelector('.page-head .acts')?.insertAdjacentHTML('afterbegin',`<button class="btn btn-gold" onclick="openSettlement()">${ic('wallet')}تقرير تسوية للفترة</button>`)};
+
+/* ===== محرك PDF ثابت لمقاس A4: البرنامج يرسم المستند بنفسه بالمقاس الصحيح =====
+   لا يعتمد على إعدادات الطباعة في المتصفح (الهوامش/المقياس/اتجاه الورقة)، فيطلع مرتبًا دائمًا. */
+const PDF_LIBS=['https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js','https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'];
+function scopedPrintCss(){
+  const css=[...document.querySelectorAll('style')].filter(s=>!['pageSizeStyle','pdfScopeStyle'].includes(s.id)).map(s=>s.textContent).join('\n');let out='';
+  const re=/@media\s+print\s*\{/g;let m;while((m=re.exec(css))){let i=re.lastIndex,depth=1;while(i<css.length&&depth){if(css[i]==='{')depth++;else if(css[i]==='}')depth--;i++}out+=css.slice(re.lastIndex,i-1)+'\n'}
+  // قواعد الطباعة تُطبَّق على حاوية الرسم فقط
+  const rules=[];let i=0,depth=0,start=0;for(;i<out.length;i++){if(out[i]==='{')depth++;else if(out[i]==='}'){depth--;if(!depth){rules.push(out.slice(start,i+1).trim());start=i+1}}}
+  return '@scope (.pdf-render){\n'+rules.filter(r=>r&&!/^(html|body|@page)/.test(r)).map(r=>r.replace(/#printSheet/g,'.pdf-sheet')).join('\n')+'\n}';
+}
+async function renderPDF(cls,html){
+  for(const s of PDF_LIBS)await loadScript(s);
+  if(!document.getElementById('pdfScopeStyle')){const st=document.createElement('style');st.id='pdfScopeStyle';st.textContent=scopedPrintCss();document.head.appendChild(st)}
+  const land=/landscape|page-copy/.test(cls),pw=land?297:210,ph=land?210:297,M=10,cw=pw-2*M,chMM=ph-2*M-6,PX=96/25.4,W=Math.round(cw*PX);
+  const host=document.createElement('div');host.className='pdf-render';host.setAttribute('dir','rtl');host.style.cssText=`position:fixed;left:-30000px;top:0;width:${W}px;background:#fff;color:#000;z-index:-1`;
+  host.innerHTML=`<div class="pdf-sheet print-sheet ${cls}" style="display:block;background:#fff">${html}</div>`;document.body.appendChild(host);
+  try{await Promise.race([document.fonts?.ready||Promise.resolve(),new Promise(r=>setTimeout(r,2500))]);await new Promise(r=>setTimeout(r,100));
+    const el=host.firstElementChild,top=el.getBoundingClientRect().top,H=el.scrollHeight;
+    const soft=[...el.querySelectorAll('tr,h1,h2,h3,p,.report-kpis,.report-head,.report-meta,.signature-row,.signature-box,.contract-clause,.contract-section,.alloc,section')].map(n=>n.getBoundingClientRect().top-top).filter(y=>y>0);
+    const hard=[...el.querySelectorAll('.page-break,.archive-attachment')].map(n=>n.getBoundingClientRect().top-top).filter(y=>y>2).sort((a,b)=>a-b);
+    let scale=2.2;while(H*scale>30000&&scale>1)scale-=0.2;
+    const canvas=await window.html2canvas(el,{scale,backgroundColor:'#fff',useCORS:true,logging:false,width:el.offsetWidth,height:H,windowWidth:Math.max(innerWidth,W+40)});
+    if(!canvas.width||!canvas.height)throw new Error('فشل رسم المستند');
+    const {jsPDF}=window.jspdf,pdf=new jsPDF({unit:'mm',format:'a4',orientation:land?'landscape':'portrait',compress:true});
+    const pagePx=chMM*PX,slices=[];let s=0;
+    while(s<H-2){let e=Math.min(s+pagePx,H);const h=hard.find(y=>y>s+20&&y<e);if(h)e=h;else if(e<H){const c=soft.filter(y=>y>s+pagePx*0.45&&y<=e);if(c.length)e=Math.max(...c)}slices.push([s,e]);s=e}
+    slices.forEach(([a,b],i)=>{const sh=Math.max(1,Math.round((b-a)*scale)),c2=document.createElement('canvas');c2.width=canvas.width;c2.height=sh;const g=c2.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c2.width,sh);g.drawImage(canvas,0,Math.round(a*scale),canvas.width,sh,0,0,canvas.width,sh);
+      if(i)pdf.addPage();pdf.addImage(c2.toDataURL('image/jpeg',0.9),'JPEG',M,M,cw,(b-a)/PX);
+      if(slices.length>1){pdf.setFontSize(9);pdf.setTextColor(120);pdf.text(`${i+1} / ${slices.length}`,pw/2,ph-5,{align:'center'})}});
+    return pdf.output('blob');
+  }finally{host.remove()}
+}
+function pdfName(t){return String(t||'مستند').replace(/[\\/:*?"<>|]/g,'').trim().slice(0,70)+'.pdf'}
+const PDFV={url:null,blob:null,name:'',cls:'',html:''};
+async function showPDF(cls,html,title){
+  openModal({title:'معاينة PDF — '+esc(title||''),size:'lg',body:`<div id="pdfBox" style="height:72vh;display:grid;place-items:center;background:#e9e6df;border-radius:12px"><div class="muted">جارٍ تجهيز المستند بمقاس A4…</div></div>`,
+    foot:`<button class="btn btn-primary" id="pdfPrintBtn" disabled onclick="pdfPrint()">${ic('print')}طباعة</button><button class="btn btn-light" id="pdfDlBtn" disabled onclick="downloadBlob(PDFV.blob,PDFV.name,'application/pdf')">${ic('download')}تنزيل PDF</button><button class="btn btn-success" id="pdfShBtn" disabled onclick="pdfShare()">${ic('upload')}إرسال (واتساب)</button><button class="btn btn-ghost" onclick="closeModal();legacyPrint(PDFV.cls,PDFV.html)" title="الطباعة المباشرة من المتصفح">طباعة مباشرة</button>`});
+  Object.assign(PDFV,{cls,html,name:pdfName(title)});
+  try{const blob=await renderPDF(cls,html);if(PDFV.url)URL.revokeObjectURL(PDFV.url);PDFV.blob=blob;PDFV.url=URL.createObjectURL(blob);
+    const box=$('#pdfBox');if(!box)return;
+    if(navigator.pdfViewerEnabled!==false&&innerWidth>860)box.outerHTML=`<iframe id="pdfFrame" src="${PDFV.url}#view=FitH" style="width:100%;height:72vh;border:0;border-radius:12px;background:#e9e6df"></iframe>`;
+    else box.innerHTML=`<div style="text-align:center"><div style="font-size:42px">📄</div><b>${esc(PDFV.name)}</b><p class="muted">الملف جاهز — اضغط تنزيل أو إرسال</p></div>`;
+    ['pdfPrintBtn','pdfDlBtn','pdfShBtn'].forEach(i=>{const b=document.getElementById(i);if(b)b.disabled=false});
+  }catch(e){console.error(e);const box=$('#pdfBox');if(box)box.innerHTML=`<div style="text-align:center;padding:20px"><b>تعذر تجهيز PDF</b><p class="muted">${esc(String(e.message||e))}</p><button class="btn btn-primary" onclick="closeModal();legacyPrint(PDFV.cls,PDFV.html)">طباعة مباشرة بدلًا من ذلك</button></div>`}
+}
+function pdfPrint(){const f=document.getElementById('pdfFrame');try{if(f){f.contentWindow.focus();f.contentWindow.print();return}}catch{}const w=window.open(PDFV.url,'_blank');if(!w)downloadBlob(PDFV.blob,PDFV.name,'application/pdf')}
+async function pdfShare(){const file=new File([PDFV.blob],PDFV.name,{type:'application/pdf'});if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:PDFV.name});return}catch(e){if(e.name==='AbortError')return}}downloadBlob(PDFV.blob,PDFV.name,'application/pdf');toast('تم تنزيل الملف — أرفقه في محادثة واتساب')}
+
+/* كل مستندات A4 تمر عبر محرك PDF؛ الإيصال الحراري يبقى طباعة مباشرة */
+const legacyPrint=sheet;
+sheet=function(cls,html){if(/thermal/.test(cls))return legacyPrint(cls,html);const s=$('#printSheet');s.className='print-sheet '+cls;s.innerHTML=html;
+  // ننتظر لحظة حتى تُضاف التحسينات (التفقيط/الهجري) على المستند ثم نرسمه
+  setTimeout(()=>{const h=s.innerHTML,t=(h.match(/<strong>([^<]{2,80})<\/strong>/)||[])[1]||(/receipt-a4/.test(h)?'سند قبض':/contract-doc/.test(h)?'عقد إيجار':'تقرير');showPDF(cls,h,t+' — '+today())},0)};
+/* تقارير التسوية والأرشيف تستخدم نفس المحرك */
+settlementPDF=async function(rid,share){const r=archiveById(rid);if(!r)return;await showPDF('a4 '+(r.orientation||'portrait'),archivedReportHTML(r),r.title);if(share&&PDFV.blob)pdfShare()};
 
 init();
 </script>
