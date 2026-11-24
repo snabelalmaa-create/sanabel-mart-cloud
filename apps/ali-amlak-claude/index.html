@@ -1828,6 +1828,7 @@ function scopedPrintCss(){
 }
 async function renderPDF(cls,html){
   for(const s of PDF_LIBS)await loadScript(s);
+  if(typeof window.html2canvas!=='function'||!window.jspdf){PDF_LIBS.forEach(s=>document.querySelector(`script[src="${s}"]`)?.remove());throw new Error('تعذر تحميل أداة PDF — تحقق من اتصال الإنترنت، أو استخدم «طباعة مباشرة»')}
   if(!document.getElementById('pdfScopeStyle')){const st=document.createElement('style');st.id='pdfScopeStyle';st.textContent=scopedPrintCss();document.head.appendChild(st)}
   const land=/landscape|page-copy/.test(cls),pw=land?297:210,ph=land?210:297,M=10,cw=pw-2*M,chMM=ph-2*M-6,PX=96/25.4,W=Math.round(cw*PX);
   const host=document.createElement('div');host.className='pdf-render';host.setAttribute('dir','rtl');host.style.cssText=`position:fixed;left:-30000px;top:0;width:${W}px;background:#fff;color:#000;z-index:-1`;
