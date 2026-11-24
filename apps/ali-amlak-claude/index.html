@@ -384,7 +384,7 @@ td .sub{display:block;color:var(--muted);font-size:13px;margin-top:2px}
 
 /* C1.3 */
 td.num,th.num{display:table-cell}
-.app{grid-template-columns:262px 1fr}
+@media (min-width:861px){.app{grid-template-columns:262px 1fr}}
 @media (min-width:1700px){html,body{font-size:17px}}
 @media print{
   .print-sheet.page-copy{width:auto;font-size:11px}
@@ -447,6 +447,28 @@ table.t th.right,table.t td.right{text-align:left}
 
 .st-sum td:nth-child(n+3),.st-sum th:nth-child(n+3){white-space:nowrap}
 @media print{.print-sheet .st-sum td:nth-child(n+3),.print-sheet .st-sum th:nth-child(n+3){white-space:nowrap}}
+/* الجوال: منع أي محتوى عريض من توسيع الصفحة */
+.grid>*,.col-shell>*,.g-dash>*{min-width:0}
+.preview-doc{max-width:100%}
+@media (max-width:860px){
+  html,body{overflow-x:hidden}
+  .sidebar:not(.open){visibility:hidden}
+  .preview-doc .report-head{flex-direction:column}
+  .modal{padding:0}.modal-card{border-radius:0;min-height:100vh;max-width:none}
+  .modal-body{max-height:none}
+  .modal-foot{position:sticky;bottom:0;border-radius:0}
+  .modal-foot .btn{flex:1}
+  .page-head .acts{width:100%}.page-head .acts .btn{flex:1}
+  .toast-wrap{bottom:calc(84px + env(safe-area-inset-bottom))}
+  .gs-res{max-height:60vh}
+}
+@media (max-width:860px){
+  .toolbar>.grow,.toolbar>.search{flex:1 1 100%}
+  .toolbar>label.inl{flex:1 1 calc(50% - 6px);min-width:0;gap:4px}
+  .toolbar label.inl .dp-wrap{flex:1;min-width:0}
+  .dp-show{font-size:14px;letter-spacing:0;padding-left:36px!important;padding-right:6px!important}
+  .dp-btn{width:26px;height:26px;left:5px}
+}
 
 </style>
 </head>
@@ -513,7 +535,7 @@ const DEFAULT_CONTRACT_CLAUSES=[
 
 /* ===== أملاك علي يحيى الشريمي وأولاده — النواة: البيانات والحسابات والمزامنة =====
    متوافق 100% مع بنية بيانات النسخة السابقة (aliAmlakDB / جدول ali_amlak_store) */
-const APP_VERSION='C2.5';
+const APP_VERSION='C2.6';
 const AR_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const BIZ='أملاك علي يحيى الشريمي وأولاده';
 const DEFAULT_DATA={
