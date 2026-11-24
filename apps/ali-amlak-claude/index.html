@@ -304,22 +304,22 @@ td .sub{display:block;color:var(--muted);font-size:13px;margin-top:2px}
 
 /* ---------- الطباعة ---------- */
 #printSheet{display:none}
-@page a4portrait{size:A4 portrait;margin:10mm}
-@page a4landscape{size:A4 landscape;margin:10mm}
-@page thermal80{margin:2mm}
+
+
+
 @media print{
   html,body{background:#fff!important}
   body{height:auto!important;min-height:0!important;margin:0!important}
   body>:not(#printSheet){display:none!important}
   #printSheet{display:block!important;background:#fff;color:#000;font-family:'IBM Plex Sans Arabic',Tahoma,Arial;direction:rtl}
   #printSheet table{page-break-inside:auto}#printSheet thead{display:table-header-group}#printSheet tfoot{display:table-footer-group}#printSheet tr{break-inside:avoid}
-  .print-sheet.thermal{page:thermal80;width:74mm;padding:2mm;font-size:12px}
+  .print-sheet.thermal{width:72mm;padding:2mm;font-size:12px}
   .print-sheet.thermal h2,.print-sheet.thermal h3{text-align:center;margin:4px 0}
   .print-sheet.thermal table{width:100%;border-collapse:collapse;font-size:12px}.print-sheet.thermal td{padding:3px 2px;vertical-align:top}
   .print-sheet .line{border-top:1px dashed #000;margin:7px 0}
   .print-sheet.a4{font-size:12px;margin:0 auto}
-  .print-sheet.a4.portrait{page:a4portrait;width:190mm}
-  .print-sheet.a4.landscape{page:a4landscape;width:277mm}
+  .print-sheet.a4.portrait{width:auto}
+  .print-sheet.a4.landscape{width:auto}
   .print-sheet.a4.landscape table{font-size:10px}
   .print-sheet.a4 h2{font-size:20px;margin:0}.print-sheet.a4 h3{font-size:16px}
   .print-sheet.a4 table{width:100%;font-size:11px;border-collapse:collapse;margin-top:10px}
@@ -387,7 +387,7 @@ td.num,th.num{display:table-cell}
 .app{grid-template-columns:262px 1fr}
 @media (min-width:1700px){html,body{font-size:17px}}
 @media print{
-  .print-sheet.page-copy{page:a4landscape;width:277mm;font-size:11px}
+  .print-sheet.page-copy{width:auto;font-size:11px}
   .print-sheet.page-copy .btn,.print-sheet.page-copy .menu,.print-sheet.page-copy .toolbar,.print-sheet.page-copy .row-acts,.print-sheet.page-copy .acts,.print-sheet.page-copy .quick,.print-sheet.page-copy .page-head,.print-sheet.page-copy .search,.print-sheet.page-copy input,.print-sheet.page-copy select{display:none!important}
   .print-sheet.page-copy .card,.print-sheet.page-copy .table-wrap{box-shadow:none!important;border:1px solid #ccc!important;break-inside:avoid-page;overflow:visible!important}
   .print-sheet.page-copy table.t{min-width:0!important;font-size:10.5px}
@@ -399,6 +399,13 @@ td.num,th.num{display:table-cell}
   .print-sheet.thermal{width:72mm}
 }
 table.t th.right,table.t td.right{text-align:left}
+
+@media print{
+  #printSheet{width:auto!important;max-width:none!important;margin:0!important;overflow:visible!important}
+  .print-sheet.a4 table{table-layout:auto;width:100%!important}
+  .print-sheet .report-head,.print-sheet .report-kpis{break-inside:avoid}
+  .print-sheet .signature-row{break-inside:avoid;page-break-inside:avoid}
+}
 
 </style>
 </head>
@@ -1318,7 +1325,9 @@ function importBackup(ev){const f=ev.target.files[0];if(!f)return;const rd=new F
 async function startFresh(){const pin=await ask('مسح بيانات العمل','سيتم حذف جميع المحلات والعقود والسندات والتقارير نهائيًا.\nأدخل الرقم السري للمدير للتأكيد:',{ok:'متابعة',danger:true,input:{type:'password',placeholder:'الرقم السري'}});if(pin===null)return;if(pin!==String(currentUser.pin))return toast('الرقم السري غير صحيح','error');const w=await ask('تأكيد أخير','اكتب كلمة «حذف» لإتمام العملية:',{ok:'مسح نهائي',danger:true,input:{placeholder:'حذف'}});if(w!=='حذف')return toast('لم يتم المسح','error');for(const k of ['shops','contracts','dues','receipts','expenses','reportArchive'])(db[k]||[]).forEach(r=>tomb(k,r.id));Object.assign(db,{shops:[],contracts:[],dues:[],receipts:[],expenses:[],reportArchive:[],queue:[],logs:[]});log('مسح بيانات العمل','');saveDB();toast('تم مسح بيانات العمل')}
 
 /* ===== الطباعة والتقارير المؤرشفة ===== */
-function sheet(cls,html){const s=$('#printSheet');s.className='print-sheet '+cls;s.innerHTML=html;setTimeout(()=>window.print(),150)}
+/* حجم الورقة يُحدَّد لحظة الطباعة حتى يُرسم التقرير على عرض الورقة الفعلي (عمودي/أفقي/حراري) */
+function setPageSize(cls){let st=document.getElementById('pageSizeStyle');if(!st){st=document.createElement('style');st.id='pageSizeStyle';document.head.appendChild(st)}st.textContent=/thermal/.test(cls)?'@page{margin:2mm}':/landscape|page-copy/.test(cls)?'@page{size:A4 landscape;margin:10mm}':'@page{size:A4 portrait;margin:10mm}'}
+function sheet(cls,html){const s=$('#printSheet');s.className='print-sheet '+cls;s.innerHTML=html;setPageSize(cls);setTimeout(()=>window.print(),150)}
 function reportHeader(title,subtitle=''){const st=db.settings,owner=st.ownerName&&!st.businessName.includes(st.ownerName)?`<div>${esc(st.ownerName)}</div>`:'';return `<div class="report-head"><div><h2 style="text-align:right">${esc(st.businessName)}</h2>${owner}<small>${esc(st.address||'')}${st.commercialNo?' · س.ت '+esc(st.commercialNo):''}</small></div><div style="text-align:left"><strong>${esc(title)}</strong><div>${esc(subtitle)}</div><small>تاريخ الطباعة: ${dateAr(today())}</small></div></div>`}
 function reportSpec(title,subtitle,content,orientation='auto',meta=null){return {title,subtitle,content,orientation,meta}}
 function detectOrientation(content){const m=String(content).match(/<th/g);return m&&m.length>14?'landscape':'portrait'}
@@ -1560,7 +1569,7 @@ const _sheet=sheet;
 sheet=function(cls,html){window.__sheetReady=true;_sheet(cls,html)};
 window.addEventListener('beforeprint',()=>{if(window.__sheetReady||!currentUser)return;const s=$('#printSheet'),page=$('#page'),modal=$('#modal .modal-body');const src=modal||page;if(!src)return;
   const clone=src.cloneNode(true);clone.querySelectorAll('input,select,textarea').forEach(i=>{if(i.type==='checkbox'||i.type==='file')return;const sp=document.createElement('span');sp.textContent=i.tagName==='SELECT'?(i.options[i.selectedIndex]?.text||''):i.value;i.replaceWith(sp)});
-  const title=modal?($('#modal .modal-head h3')?.textContent||''):($('#topTitle')?.textContent||'');s.className='print-sheet page-copy';s.innerHTML=reportHeader(title,'')+clone.innerHTML});
+  const title=modal?($('#modal .modal-head h3')?.textContent||''):($('#topTitle')?.textContent||'');s.className='print-sheet page-copy';setPageSize('page-copy');s.innerHTML=reportHeader(title,'')+clone.innerHTML});
 window.addEventListener('afterprint',()=>{window.__sheetReady=false});
 
 /* ---------- قوائم الاختيار الطويلة: مربع بحث بجزء من الاسم ---------- */
