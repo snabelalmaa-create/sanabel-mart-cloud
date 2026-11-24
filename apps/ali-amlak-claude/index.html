@@ -433,6 +433,7 @@ table.t th.right,table.t td.right{text-align:left}
 .dp-foot .btn{flex:1}
 @media (max-width:860px){.toolbar .dp-wrap{flex:1}.dp-show{min-width:0}}
 @media print{.dp-btn{display:none}}
+@media print{.print-sheet.reminder>div{width:auto!important;padding:0!important}}
 
 </style>
 </head>
@@ -499,7 +500,7 @@ const DEFAULT_CONTRACT_CLAUSES=[
 
 /* ===== أملاك علي يحيى الشريمي وأولاده — النواة: البيانات والحسابات والمزامنة =====
    متوافق 100% مع بنية بيانات النسخة السابقة (aliAmlakDB / جدول ali_amlak_store) */
-const APP_VERSION='C1.4';
+const APP_VERSION='C1.5';
 const AR_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const BIZ='أملاك علي يحيى الشريمي وأولاده';
 const DEFAULT_DATA={
@@ -1206,7 +1207,7 @@ function drawArrears(){
   if(F.arView==='tenant'){
     const g={};dues.forEach(d=>{(g[d.contractId]=g[d.contractId]||[]).push(d)});
     const rows=Object.entries(g).map(([cid,ds])=>({c:contractById(cid),ds,tot:ds.reduce((s,d)=>s+d.amount-d.paid,0),oldest:ds[0].dueDate})).sort((a,b)=>b.tot-a.tot);
-    $('#arBody').innerHTML=`<div class="table-wrap"><table class="t"><thead><tr><th>المستأجر</th><th>المحل</th><th>الاستحقاقات</th><th>أقدم استحقاق</th><th class="right">الإجمالي</th><th></th></tr></thead><tbody>${rows.map(x=>`<tr><td><b>${esc(x.c.tenant)}</b><span class="sub num">${esc(x.c.phone||'')}</span></td><td>${esc(shopById(x.c.shopId)?.name||'—')}</td><td style="font-size:13px;max-width:360px">${x.ds.slice(0,4).map(d=>esc(d.label)).join('، ')}${x.ds.length>4?' و'+(x.ds.length-4)+' أخرى':''}</td><td class="num">${dateAr(x.oldest)} <span class="badge ${x.oldest<t?'red':'gray'}">${x.oldest<t?Math.abs(daysUntil(x.oldest))+' يوم':'قادم'}</span></td><td class="right"><b class="num" style="color:var(--red)">${num(x.tot)}</b></td><td><div class="row-acts">${x.c.phone?`<a class="btn btn-light btn-sm" target="_blank" rel="noopener" href="${waLink(x.c.phone,`السلام عليكم ${x.c.tenant}\nنود تذكيركم بالمبالغ المستحقة على ${shopById(x.c.shopId)?.name||'المحل'}: ${money(x.tot)}\n${outstandingParts(x.c.id,F.arF!=='all').join('\n')}\n${db.settings.businessName}`)}">تذكير واتساب</a>`:''}<button class="btn btn-success btn-sm" onclick="openReceipt('${x.c.id}')">تحصيل</button></div></td></tr>`).join('')||`<tr><td colspan="6">${empty('لا توجد متأخرات 🎉','check')}</td></tr>`}</tbody>${rows.length?`<tfoot><tr><td colspan="4">الإجمالي (${rows.length} مستأجر)</td><td class="right num">${num(rows.reduce((s,x)=>s+x.tot,0))}</td><td></td></tr></tfoot>`:''}</table></div>`;
+    $('#arBody').innerHTML=`<div class="table-wrap"><table class="t"><thead><tr><th>المستأجر</th><th>المحل</th><th>الاستحقاقات</th><th>أقدم استحقاق</th><th class="right">الإجمالي</th><th></th></tr></thead><tbody>${rows.map(x=>`<tr><td><b>${esc(x.c.tenant)}</b><span class="sub num">${esc(x.c.phone||'')}</span></td><td>${esc(shopById(x.c.shopId)?.name||'—')}</td><td style="font-size:13px;max-width:360px">${x.ds.slice(0,4).map(d=>esc(d.label)).join('، ')}${x.ds.length>4?' و'+(x.ds.length-4)+' أخرى':''}</td><td class="num">${dateAr(x.oldest)} <span class="badge ${x.oldest<t?'red':'gray'}">${x.oldest<t?Math.abs(daysUntil(x.oldest))+' يوم':'قادم'}</span></td><td class="right"><b class="num" style="color:var(--red)">${num(x.tot)}</b></td><td><div class="row-acts"><button class="btn btn-light btn-sm" onclick="openReminder('${x.c.id}')">مطالبة PDF</button><button class="btn btn-success btn-sm" onclick="openReceipt('${x.c.id}')">تحصيل</button></div></td></tr>`).join('')||`<tr><td colspan="6">${empty('لا توجد متأخرات 🎉','check')}</td></tr>`}</tbody>${rows.length?`<tfoot><tr><td colspan="4">الإجمالي (${rows.length} مستأجر)</td><td class="right num">${num(rows.reduce((s,x)=>s+x.tot,0))}</td><td></td></tr></tfoot>`:''}</table></div>`;
   }else{
     $('#arBody').innerHTML=`<div class="table-wrap"><table class="t"><thead><tr><th>المستأجر</th><th>المحل</th><th>الاستحقاق</th><th>التاريخ</th><th class="right">القيمة</th><th class="right">المسدد</th><th class="right">المتبقي</th><th>الحالة</th><th></th></tr></thead><tbody>${dues.map(d=>{const c=contractById(d.contractId),late=d.dueDate<t;return `<tr><td>${esc(c.tenant)}</td><td>${esc(shopById(c.shopId)?.name||'—')}</td><td>${esc(d.label)}</td><td class="num">${dateAr(d.dueDate)}</td><td class="right num">${num(d.amount)}</td><td class="right num">${num(d.paid)}</td><td class="right"><b class="num">${num(d.amount-d.paid)}</b></td><td><span class="badge ${late?'red':'orange'}">${late?'متأخر':'قادم'}</span></td><td><button class="btn btn-success btn-sm" onclick="openReceipt('${d.contractId}')">تحصيل</button></td></tr>`}).join('')||`<tr><td colspan="9">${empty('لا توجد متأخرات','check')}</td></tr>`}</tbody></table></div>`;
   }
@@ -1652,6 +1653,53 @@ document.addEventListener('click',()=>{if(dp.el)dpClose()});
 window.addEventListener('resize',dpClose);
 new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nodeType===1){if(n.matches?.('input[type=date],input[type=month]'))enhanceDates(n.parentNode);else if(n.querySelector?.('input[type=date],input[type=month]'))enhanceDates(n)}}).observe(document.documentElement,{childList:true,subtree:true});
 document.addEventListener('DOMContentLoaded',()=>enhanceDates());enhanceDates();
+
+/* ---------- مطالبة بالمتأخرات كملف PDF ترسل عبر واتساب ---------- */
+const DEFAULT_REMINDER_NOTE='نأمل منكم التكرم بالمبادرة بسداد المبالغ المتأخرة الموضحة أعلاه خلال سبعة أيام من تاريخه، وفي حال تم السداد نرجو تجاهل هذه المطالبة. شاكرين ومقدرين تعاونكم.';
+function reminderData(cid){const c=contractById(cid),t=today();const dues=db.dues.filter(d=>d.contractId===cid&&d.amount-d.paid>0.001&&d.dueDate<t).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));return {c,s:shopById(c.shopId),dues,total:dues.reduce((x,d)=>x+d.amount-d.paid,0),future:contractFutureOutstandingAsOf(cid,t)}}
+function reminderHTML(cid,note){const {c,s,dues,total}=reminderData(cid),st=db.settings,t=today(),G='#0b5a43';
+  const cell='border:1px solid #d5d9d6;padding:7px 8px;text-align:right';
+  return `<div style="font-family:'IBM Plex Sans Arabic',Tahoma,Arial;direction:rtl;color:#14231d;background:#fff;padding:34px 38px;width:794px;box-sizing:border-box;font-size:13.5px;line-height:1.7">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid ${G};padding-bottom:12px">
+    <div><div style="font-size:21px;font-weight:700;color:${G}">${esc(st.businessName)}</div><div style="color:#666;font-size:12px">${esc(st.address||'')}${st.commercialNo?' · س.ت '+esc(st.commercialNo):''}</div></div>
+    <div style="text-align:left;font-size:12px;color:#444"><div>التاريخ: <b dir="ltr">${dateAr(t)}</b></div><div>${esc(hijri(t))} هـ</div></div></div>
+  <div style="text-align:center;margin:20px 0 14px"><span style="display:inline-block;background:${G};color:#fff;font-size:19px;font-weight:700;padding:7px 28px;border-radius:8px">مطالبة بمبالغ إيجار متأخرة</span></div>
+  <p style="margin:0 0 4px">السادة / <b>${esc(c.tenant)}</b> المحترمين</p><p style="margin:0 0 12px">السلام عليكم ورحمة الله وبركاته،</p>
+  <p style="margin:0 0 14px">نفيدكم بأن المبالغ التالية مستحقة ومتأخرة السداد عن ${esc(s?.name||'المحل')} (رقم ${esc(s?.no||'')}) حتى تاريخ <b dir="ltr">${dateAr(t)}</b>:</p>
+  <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#eef3f0">${['م','الاستحقاق','تاريخ الاستحقاق','القيمة','المسدد','المتبقي','أيام التأخير'].map(h=>`<th style="${cell};font-weight:700">${h}</th>`).join('')}</tr></thead>
+  <tbody>${dues.map((d,i)=>`<tr><td style="${cell}">${i+1}</td><td style="${cell}">${esc(d.label)}</td><td style="${cell}" dir="ltr">${dateAr(d.dueDate)}</td><td style="${cell}" dir="ltr">${num(d.amount)}</td><td style="${cell}" dir="ltr">${num(d.paid)}</td><td style="${cell};font-weight:700" dir="ltr">${num(d.amount-d.paid)}</td><td style="${cell};color:#c0392b" dir="ltr">${Math.abs(daysUntil(d.dueDate))}</td></tr>`).join('')}</tbody>
+  <tfoot><tr style="background:#fbe8e5"><td colspan="5" style="${cell};font-weight:700">إجمالي المبلغ المتأخر</td><td colspan="2" style="${cell};font-weight:700;font-size:15px;color:#c0392b"><span dir="ltr">${num(total)}</span> ر.س</td></tr></tfoot></table>
+  <div style="margin:10px 0 0;font-size:12.5px;color:#444">المبلغ كتابةً: <b>${esc(tafqeet(total))}</b></div>
+  <p style="margin:18px 0 0;white-space:pre-wrap">${esc(note||DEFAULT_REMINDER_NOTE)}</p>
+  <div style="display:flex;justify-content:space-between;margin-top:40px;font-size:13px"><div>المؤجر: <b>${esc(st.ownerName||st.businessName)}</b></div><div>التوقيع / الختم: ____________________</div></div>
+  <div style="margin-top:30px;border-top:1px dashed #bbb;padding-top:8px;font-size:11px;color:#777;text-align:center">هذه المطالبة صادرة من نظام إدارة الأملاك — طرق السداد: نقدًا لدى المحصل أو تحويل بنكي مع إرسال الإيصال</div></div>`}
+function loadScript(src){return new Promise((res,rej)=>{if(document.querySelector(`script[src="${src}"]`))return res();const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('تعذر تحميل مكتبة PDF — تحقق من الإنترنت'));document.head.appendChild(s)})}
+async function reminderPDF(cid,note){
+  await loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');await loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+  const host=document.createElement('div');host.style.cssText='position:fixed;left:-10000px;top:0;z-index:-1';host.innerHTML=reminderHTML(cid,note);document.body.appendChild(host);
+  try{await document.fonts?.ready;const canvas=await html2canvas(host.firstElementChild,{scale:2,backgroundColor:'#fff'});const {jsPDF}=window.jspdf;const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+    const pw=210,ph=297,ih=canvas.height*pw/canvas.width;let y=0;const img=canvas.toDataURL('image/jpeg',0.92);
+    pdf.addImage(img,'JPEG',0,0,pw,ih);y=ph;while(y<ih){pdf.addPage();pdf.addImage(img,'JPEG',0,-y,pw,ih);y+=ph}
+    return pdf.output('blob')}finally{host.remove()}}
+function reminderFileName(cid){const {c}=reminderData(cid);return 'مطالبة-متأخرات-'+String(c.tenant).replace(/[\\/:*?"<>|]/g,'').slice(0,40)+'-'+today()+'.pdf'}
+function reminderShortText(cid){const {c,s,total}=reminderData(cid);return `السلام عليكم ${c.tenant}\nمرفق لكم مطالبة بالمبالغ المتأخرة على ${s?.name||'المحل'} بإجمالي ${money(total)}.\nنأمل التكرم بالسداد، وشاكرين تعاونكم.\n${db.settings.businessName}`}
+function openReminder(cid){const {c,dues,total}=reminderData(cid);if(!dues.length)return toast('لا توجد مبالغ متأخرة على هذا المستأجر','error');
+  openModal({title:'مطالبة بالمتأخرات — '+esc(c.tenant),size:'lg',body:`<div class="field mb"><label>نص المطالبة (يُحفظ للمرات القادمة)</label><textarea id="remNote" rows="3" oninput="document.getElementById('remPrev').innerHTML=reminderHTML('${cid}',this.value)">${esc(db.settings.reminderNote||DEFAULT_REMINDER_NOTE)}</textarea></div><div class="preview-doc" style="padding:0;display:flex;justify-content:center;background:#e9e6df"><div id="remPrev" style="transform:scale(.82);transform-origin:top center;margin-bottom:-120px">${reminderHTML(cid,db.settings.reminderNote)}</div></div>`,
+  foot:`<button class="btn btn-success" onclick="sendReminder('${cid}')">${ic('upload')}إرسال PDF عبر واتساب</button><button class="btn btn-light" onclick="downloadReminder('${cid}')">${ic('download')}تنزيل PDF</button><button class="btn btn-light" onclick="printReminder('${cid}')">${ic('print')}طباعة</button>${c.phone?`<a class="btn btn-ghost" target="_blank" rel="noopener" href="${waLink(c.phone,reminderShortText(cid))}">نص قصير فقط</a>`:''}`})}
+function remNoteSave(){const n=v('remNote');if(n&&n!==(db.settings.reminderNote||DEFAULT_REMINDER_NOTE)){db.settings.reminderNote=n;persistLocal();saveDB()}return n}
+async function sendReminder(cid){const note=remNoteSave(),{c}=reminderData(cid);toast('جارٍ تجهيز ملف PDF…');
+  try{const blob=await reminderPDF(cid,note),file=new File([blob],reminderFileName(cid),{type:'application/pdf'});log('مطالبة متأخرات PDF',c.tenant);
+    if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:reminderShortText(cid),title:'مطالبة بالمتأخرات'});return}catch(e){if(e.name==='AbortError')return}}
+    downloadBlob(blob,file.name,'application/pdf');
+    if(c.phone){window.open(waLink(c.phone,reminderShortText(cid)),'_blank','noopener');toast('تم تنزيل الملف — أرفقه في محادثة واتساب التي فُتحت (اسحبه إلى المحادثة)')}else toast('تم تنزيل الملف — لا يوجد رقم جوال للمستأجر')
+  }catch(e){toast(String(e.message||e),'error')}}
+async function downloadReminder(cid){const note=remNoteSave();try{toast('جارٍ تجهيز ملف PDF…');downloadBlob(await reminderPDF(cid,note),reminderFileName(cid),'application/pdf')}catch(e){toast(String(e.message||e),'error')}}
+function printReminder(cid){const note=remNoteSave();sheet('a4 portrait reminder',reminderHTML(cid,note))}
+/* إضافة زر المطالبة في شاشة العقد وتطبيق المحصل */
+const _cv2=openContractView;
+openContractView=function(cid){_cv2(cid);if(reminderData(cid).dues.length)$('#modal .modal-foot')?.insertAdjacentHTML('beforeend',`<button class="btn btn-light" onclick="openReminder('${cid}')">مطالبة PDF</button>`)};
+const _dc2=drawCollector;
+drawCollector=function(){_dc2();document.querySelectorAll('#colList .col-item').forEach(el=>{const b=el.querySelector('.btn-success');const cid=b?.getAttribute('onclick')?.match(/'(.+)'/)?.[1];if(cid&&overdueForContract(cid)>0.001)b.insertAdjacentHTML('beforebegin',`<button class="btn btn-light btn-sm" onclick="openReminder('${cid}')">مطالبة</button>`)})};
 
 init();
 </script>
