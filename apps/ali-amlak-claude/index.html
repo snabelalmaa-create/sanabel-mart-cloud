@@ -1655,7 +1655,9 @@ new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nod
 document.addEventListener('DOMContentLoaded',()=>enhanceDates());enhanceDates();
 
 /* ---------- مطالبة بالمتأخرات كملف PDF ترسل عبر واتساب ---------- */
-const DEFAULT_REMINDER_NOTE='نأمل منكم التكرم بالمبادرة بسداد المبالغ المتأخرة الموضحة أعلاه خلال سبعة أيام من تاريخه، وفي حال تم السداد نرجو تجاهل هذه المطالبة. شاكرين ومقدرين تعاونكم.';
+const DEFAULT_REMINDER_NOTE='نأمل منكم المبادرة بسداد المبالغ المتأخرة الموضحة أعلاه، وفي حال تم السداد نرجو تجاهل هذه المطالبة. شاكرين ومقدرين تعاونكم.';
+const OLD_REMINDER_NOTE='نأمل منكم التكرم بالمبادرة بسداد المبالغ المتأخرة الموضحة أعلاه خلال سبعة أيام من تاريخه، وفي حال تم السداد نرجو تجاهل هذه المطالبة. شاكرين ومقدرين تعاونكم.';
+function reminderNote(){const n=db.settings.reminderNote;return !n||n===OLD_REMINDER_NOTE?DEFAULT_REMINDER_NOTE:n}
 function reminderData(cid){const c=contractById(cid),t=today();const dues=db.dues.filter(d=>d.contractId===cid&&d.amount-d.paid>0.001&&d.dueDate<t).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));return {c,s:shopById(c.shopId),dues,total:dues.reduce((x,d)=>x+d.amount-d.paid,0),future:contractFutureOutstandingAsOf(cid,t)}}
 function reminderHTML(cid,note){const {c,s,dues,total}=reminderData(cid),st=db.settings,t=today(),G='#0b5a43';
   const cell='border:1px solid #d5d9d6;padding:7px 8px;text-align:right';
@@ -1684,9 +1686,9 @@ async function reminderPDF(cid,note){
 function reminderFileName(cid){const {c}=reminderData(cid);return 'مطالبة-متأخرات-'+String(c.tenant).replace(/[\\/:*?"<>|]/g,'').slice(0,40)+'-'+today()+'.pdf'}
 function reminderShortText(cid){const {c,s,total}=reminderData(cid);return `السلام عليكم ${c.tenant}\nمرفق لكم مطالبة بالمبالغ المتأخرة على ${s?.name||'المحل'} بإجمالي ${money(total)}.\nنأمل التكرم بالسداد، وشاكرين تعاونكم.\n${db.settings.businessName}`}
 function openReminder(cid){const {c,dues,total}=reminderData(cid);if(!dues.length)return toast('لا توجد مبالغ متأخرة على هذا المستأجر','error');
-  openModal({title:'مطالبة بالمتأخرات — '+esc(c.tenant),size:'lg',body:`<div class="field mb"><label>نص المطالبة (يُحفظ للمرات القادمة)</label><textarea id="remNote" rows="3" oninput="document.getElementById('remPrev').innerHTML=reminderHTML('${cid}',this.value)">${esc(db.settings.reminderNote||DEFAULT_REMINDER_NOTE)}</textarea></div><div class="preview-doc" style="padding:0;display:flex;justify-content:center;background:#e9e6df"><div id="remPrev" style="transform:scale(.82);transform-origin:top center;margin-bottom:-120px">${reminderHTML(cid,db.settings.reminderNote)}</div></div>`,
+  openModal({title:'مطالبة بالمتأخرات — '+esc(c.tenant),size:'lg',body:`<div class="field mb"><label>نص المطالبة (يُحفظ للمرات القادمة)</label><textarea id="remNote" rows="3" oninput="document.getElementById('remPrev').innerHTML=reminderHTML('${cid}',this.value)">${esc(reminderNote())}</textarea></div><div class="preview-doc" style="padding:0;display:flex;justify-content:center;background:#e9e6df"><div id="remPrev" style="transform:scale(.82);transform-origin:top center;margin-bottom:-120px">${reminderHTML(cid,reminderNote())}</div></div>`,
   foot:`<button class="btn btn-success" onclick="sendReminder('${cid}')">${ic('upload')}إرسال PDF عبر واتساب</button><button class="btn btn-light" onclick="downloadReminder('${cid}')">${ic('download')}تنزيل PDF</button><button class="btn btn-light" onclick="printReminder('${cid}')">${ic('print')}طباعة</button>${c.phone?`<a class="btn btn-ghost" target="_blank" rel="noopener" href="${waLink(c.phone,reminderShortText(cid))}">نص قصير فقط</a>`:''}`})}
-function remNoteSave(){const n=v('remNote');if(n&&n!==(db.settings.reminderNote||DEFAULT_REMINDER_NOTE)){db.settings.reminderNote=n;persistLocal();saveDB()}return n}
+function remNoteSave(){const n=v('remNote');if(n&&n!==reminderNote()){db.settings.reminderNote=n;persistLocal();saveDB()}return n}
 async function sendReminder(cid){const note=remNoteSave(),{c}=reminderData(cid);toast('جارٍ تجهيز ملف PDF…');
   try{const blob=await reminderPDF(cid,note),file=new File([blob],reminderFileName(cid),{type:'application/pdf'});log('مطالبة متأخرات PDF',c.tenant);
     if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text:reminderShortText(cid),title:'مطالبة بالمتأخرات'});return}catch(e){if(e.name==='AbortError')return}}
