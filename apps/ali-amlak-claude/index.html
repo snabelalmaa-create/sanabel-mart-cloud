@@ -406,6 +406,33 @@ table.t th.right,table.t td.right{text-align:left}
   .print-sheet .report-head,.print-sheet .report-kpis{break-inside:avoid}
   .print-sheet .signature-row{break-inside:avoid;page-break-inside:avoid}
 }
+/* منتقي التاريخ */
+.dp-wrap{position:relative;display:inline-flex;align-items:center;width:100%}
+.toolbar .dp-wrap{width:auto}
+.dp-show{direction:ltr;text-align:center;font-variant-numeric:tabular-nums;font-size:15.5px;font-weight:600;letter-spacing:.5px;padding-left:40px!important;min-width:150px;cursor:pointer;font-family:var(--font)}
+.dp-btn{position:absolute;left:6px;top:50%;transform:translateY(-50%);border:0;background:var(--brand-soft);color:var(--brand);width:30px;height:30px;border-radius:8px;display:grid;place-items:center;cursor:pointer}
+.dp-pop{position:fixed;z-index:500;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 60px -16px rgba(0,0,0,.35);padding:14px;width:380px;max-width:calc(100vw - 16px);font-family:var(--font)}
+.dp-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.dp-title{flex:1;display:flex;gap:6px}
+.dp-title select{min-height:40px;font-size:15.5px;font-weight:700;padding:6px 8px;text-align:center}
+.dp-nav{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card-2);font-size:24px;line-height:1;cursor:pointer;color:var(--brand)}
+.dp-nav:hover{background:var(--brand-soft)}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dp-dn span{text-align:center;font-size:11.5px;color:var(--muted);font-weight:600;padding:4px 0}
+.dp-grid button{height:44px;border:0;border-radius:11px;background:none;font-size:17px;font-weight:600;cursor:pointer;font-variant-numeric:tabular-nums;color:var(--ink);font-family:var(--font)}
+.dp-grid button:hover{background:var(--brand-soft)}
+.dp-grid button.fri{color:var(--red)}
+.dp-grid button.today{box-shadow:inset 0 0 0 2px var(--gold)}
+.dp-grid button.on{background:var(--brand);color:#fff}
+.dp-months{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.dp-months button{border:1px solid var(--line);background:var(--card-2);border-radius:12px;padding:10px 4px;cursor:pointer;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:var(--font)}
+.dp-months button b{font-size:18px}
+.dp-months button.today{border-color:var(--gold)}
+.dp-months button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.dp-foot{display:flex;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line-2)}
+.dp-foot .btn{flex:1}
+@media (max-width:860px){.toolbar .dp-wrap{flex:1}.dp-show{min-width:0}}
+@media print{.dp-btn{display:none}}
 
 </style>
 </head>
@@ -472,7 +499,7 @@ const DEFAULT_CONTRACT_CLAUSES=[
 
 /* ===== أملاك علي يحيى الشريمي وأولاده — النواة: البيانات والحسابات والمزامنة =====
    متوافق 100% مع بنية بيانات النسخة السابقة (aliAmlakDB / جدول ali_amlak_store) */
-const APP_VERSION='C1.3';
+const APP_VERSION='C1.4';
 const AR_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const BIZ='أملاك علي يحيى الشريمي وأولاده';
 const DEFAULT_DATA={
@@ -1584,6 +1611,47 @@ const _stPage=PAGES.statements;F.stQ='';
 PAGES.statements=host=>{_stPage(host);const sel=host.querySelector('.toolbar select');if(!sel)return;const inp=document.createElement('input');inp.id='stQ';inp.value=F.stQ;inp.placeholder='ابحث عن المستأجر بجزء من الاسم أو الجوال أو المحل…';inp.style.maxWidth='300px';sel.before(inp);
   const hit=c=>smatch(F.stQ,[c.tenant,c.phone,shopById(c.shopId)?.name,shopById(c.shopId)?.no]);[...sel.options].forEach(o=>{const c=contractById(o.value);o.hidden=!!F.stQ&&!(c&&hit(c))});
   inp.addEventListener('input',()=>{F.stQ=inp.value;const cur=contractById(F.stCon);const m=cur&&hit(cur)?cur:db.contracts.find(hit);if(m)setF('stCon',m.id);else renderAll()})};
+
+/* ---------- منتقي تاريخ مخصص: أرقام إنجليزية، تقويم كبير وواضح، يبدأ الأسبوع بالسبت ----------
+   يحوّل كل حقل تاريخ/شهر تلقائيًا؛ القيمة الداخلية تبقى YYYY-MM-DD كما هي فلا يتأثر أي حساب. */
+const DP_DAYS=['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
+const dp={el:null,input:null,mode:'date',y:0,m:0};
+const pad2=n=>String(n).padStart(2,'0');
+function dpFmt(val,mode){if(!val)return '';if(mode==='month'){const [y,m]=val.split('-');return m+'/'+y}const [y,m,d]=val.split('-');return d+'/'+m+'/'+y}
+function dpParse(txt,mode){txt=normAr(txt).replace(/[^\d\/\-\.]/g,'');if(!txt)return '';let p=txt.split(/[\/\-\.]/).filter(Boolean).map(Number);
+  if(mode==='month'){if(p.length!==2)return null;let [a,b]=p;const [y,m]=a>12?[a,b]:[b,a];return m>=1&&m<=12&&y>1900?y+'-'+pad2(m):null}
+  if(p.length!==3)return null;let y,m,d;if(p[0]>31){[y,m,d]=p}else{[d,m,y]=p}if(y<100)y+=2000;const dt=new Date(y,m-1,d);return dt.getFullYear()===y&&dt.getMonth()===m-1&&dt.getDate()===d?y+'-'+pad2(m)+'-'+pad2(d):null}
+function dpSet(hidden,val){if(hidden.value===val)return;hidden.value=val;hidden.dispatchEvent(new Event('input',{bubbles:true}));hidden.dispatchEvent(new Event('change',{bubbles:true}))}
+function enhanceDates(root=document){root.querySelectorAll('input[type=date]:not([data-dp]),input[type=month]:not([data-dp])').forEach(inp=>{
+  const mode=inp.type==='month'?'month':'date';inp.dataset.dp=mode;inp.type='hidden';
+  const wrap=document.createElement('span');wrap.className='dp-wrap';
+  const show=document.createElement('input');show.type='text';show.className='dp-show';show.dir='ltr';show.inputMode='numeric';show.autocomplete='off';show.placeholder=mode==='month'?'mm/yyyy':'dd/mm/yyyy';show.value=dpFmt(inp.value,mode);
+  const btn=document.createElement('button');btn.type='button';btn.className='dp-btn';btn.tabIndex=-1;btn.setAttribute('aria-label','فتح التقويم');btn.innerHTML='<svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+  inp.after(wrap);wrap.append(show,btn,inp);
+  const open=()=>dpOpen(inp,show);btn.addEventListener('click',e=>{e.stopPropagation();dp.input===inp&&dp.el?dpClose():open()});show.addEventListener('click',e=>{e.stopPropagation();if(!dp.el||dp.input!==inp)open()});
+  show.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();show.blur()}if(e.key==='Escape')dpClose()});
+  show.addEventListener('blur',()=>{const val=dpParse(show.value,mode);if(val===null){show.value=dpFmt(inp.value,mode);toast('صيغة التاريخ غير صحيحة — اكتب مثل 24/11/2026','error');return}dpSet(inp,val);show.value=dpFmt(inp.value,mode)});
+  // تحديث العرض لو تغيّرت القيمة برمجيًا
+  const desc=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');Object.defineProperty(inp,'value',{get(){return desc.get.call(this)},set(x){desc.set.call(this,x);show.value=dpFmt(x,mode)}});
+})}
+function dpOpen(inp,show){dpClose();const mode=inp.dataset.dp,val=inp.value||(mode==='month'?today().slice(0,7):today());dp.input=inp;dp.show=show;dp.mode=mode;dp.y=+val.slice(0,4);dp.m=+val.slice(5,7)-1;
+  dp.el=document.createElement('div');dp.el.className='dp-pop';dp.el.addEventListener('mousedown',e=>e.preventDefault());dp.el.addEventListener('click',e=>e.stopPropagation());document.body.appendChild(dp.el);dpDraw();
+  const r=show.getBoundingClientRect(),w=dp.el.offsetWidth,h=dp.el.offsetHeight;let top=r.bottom+6,left=r.right-w;if(top+h>innerHeight-8)top=Math.max(8,r.top-h-6);if(left<8)left=8;if(left+w>innerWidth-8)left=innerWidth-w-8;dp.el.style.top=top+'px';dp.el.style.left=left+'px'}
+function dpClose(){dp.el?.remove();dp.el=null;dp.input=null}
+function dpPick(val){const inp=dp.input;dpClose();dpSet(inp,val);}
+function dpNav(d){if(dp.mode==='month')dp.y+=d;else{dp.m+=d;if(dp.m<0){dp.m=11;dp.y--}if(dp.m>11){dp.m=0;dp.y++}}dpDraw()}
+function dpDraw(){const cur=dp.input.value,t=today(),years=[];for(let y=dp.y-6;y<=dp.y+6;y++)years.push(y);
+  const head=`<div class="dp-head"><button type="button" class="dp-nav" onclick="dpNav(-1)" aria-label="السابق">›</button><div class="dp-title">${dp.mode==='date'?`<select onchange="dp.m=+this.value;dpDraw()">${AR_MONTHS.map((n,i)=>`<option value="${i}" ${i===dp.m?'selected':''}>${n} (${pad2(i+1)})</option>`).join('')}</select>`:''}<select onchange="dp.y=+this.value;dpDraw()" dir="ltr">${years.map(y=>`<option ${y===dp.y?'selected':''}>${y}</option>`).join('')}</select></div><button type="button" class="dp-nav" onclick="dpNav(1)" aria-label="التالي">‹</button></div>`;
+  let body='';
+  if(dp.mode==='month'){body=`<div class="dp-months">${AR_MONTHS.map((n,i)=>{const val=dp.y+'-'+pad2(i+1);return `<button type="button" class="${val===cur?'on':''} ${val===t.slice(0,7)?'today':''}" onclick="dpPick('${val}')"><b>${pad2(i+1)}</b>${n}</button>`}).join('')}</div>`}
+  else{const first=new Date(dp.y,dp.m,1),off=(first.getDay()+1)%7,days=new Date(dp.y,dp.m+1,0).getDate();let cells='';for(let i=0;i<off;i++)cells+='<span></span>';
+    for(let d=1;d<=days;d++){const val=dp.y+'-'+pad2(dp.m+1)+'-'+pad2(d),wd=(off+d-1)%7;cells+=`<button type="button" class="${val===cur?'on':''} ${val===t?'today':''} ${wd===6?'fri':''}" onclick="dpPick('${val}')">${d}</button>`}
+    body=`<div class="dp-grid dp-dn">${DP_DAYS.map(n=>`<span>${n}</span>`).join('')}</div><div class="dp-grid">${cells}</div>`}
+  dp.el.innerHTML=head+body+`<div class="dp-foot"><button type="button" class="btn btn-primary btn-sm" onclick="dpPick('${dp.mode==='month'?t.slice(0,7):t}')">${dp.mode==='month'?'الشهر الحالي':'اليوم'} <span dir="ltr">${dpFmt(dp.mode==='month'?t.slice(0,7):t,dp.mode)}</span></button><button type="button" class="btn btn-light btn-sm" onclick="dpPick('')">مسح</button><button type="button" class="btn btn-ghost btn-sm" onclick="dpClose()">إغلاق</button></div>`}
+document.addEventListener('click',()=>{if(dp.el)dpClose()});
+window.addEventListener('resize',dpClose);
+new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nodeType===1){if(n.matches?.('input[type=date],input[type=month]'))enhanceDates(n.parentNode);else if(n.querySelector?.('input[type=date],input[type=month]'))enhanceDates(n)}}).observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('DOMContentLoaded',()=>enhanceDates());enhanceDates();
 
 init();
 </script>
