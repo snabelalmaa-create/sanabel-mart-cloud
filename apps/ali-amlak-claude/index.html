@@ -447,7 +447,7 @@ const DEFAULT_CONTRACT_CLAUSES=[
 
 /* ===== أملاك علي يحيى الشريمي وأولاده — النواة: البيانات والحسابات والمزامنة =====
    متوافق 100% مع بنية بيانات النسخة السابقة (aliAmlakDB / جدول ali_amlak_store) */
-const APP_VERSION='C1.1';
+const APP_VERSION='C1.2';
 const AR_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const BIZ='أملاك علي يحيى الشريمي وأولاده';
 const DEFAULT_DATA={
@@ -1521,6 +1521,18 @@ init=function(){_init();setTimeout(()=>takeSnapshot(),4000);setInterval(()=>take
 /* تنبيه في سند القبض إذا كان على العقد السابق (قبل التجديد) مبلغ غير مسدد */
 const _rp=receiptPreview;
 receiptPreview=function(ch){_rp(ch);const cid=v('receiptContract');const c=cid&&contractById(cid);if(!c?.renewedFrom)return;const pc=contractById(c.renewedFrom);const pb=pc?balanceForContract(pc.id):0;if(pb>0.001)$('#allocPrev')?.insertAdjacentHTML('afterbegin',`<div class="alert orange">${ic('alert','width="18"')}<div><b>على العقد السابق لنفس المستأجر ${money(pb)} غير مسدد</b>السند يُسجَّل على العقد المختار فقط. <a href="#" onclick="const s=document.getElementById('receiptContract');s.value='${pc.id}';receiptPreview(true);return false">التسجيل على العقد السابق</a></div></div>`)};
+
+/* ---------- النسخ الاحتياطية السحابية (جدول ali_amlak_backups) ----------
+   الخادم يحفظ نسخة يومية تلقائيًا + نسخة قبل أي تغيير (كل ساعة على الأكثر). لا يمكن حذفها أو تعديلها من التطبيق. */
+const BK_KIND={daily:'يومية تلقائية',auto:'قبل التعديل',manual:'يدوية'};
+async function cloudBackups(){const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_backups?select=id,created_at,kind,shops,contracts,receipts,expenses,note&order=created_at.desc&limit=80',{headers:cloudHeaders(false),cache:'no-store'});if(!r.ok)throw new Error(await cloudError(r));return r.json()}
+async function cloudBackupPayload(bid){const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_backups?id=eq.'+encodeURIComponent(bid)+'&select=payload,created_at',{headers:cloudHeaders(false),cache:'no-store'});if(!r.ok)throw new Error(await cloudError(r));const rows=await r.json();if(!rows[0])throw new Error('النسخة غير موجودة');return rows[0]}
+async function manualCloudBackup(){try{const p=structuredClone(db);p.settings.cloudAnonKey='';const note=await ask('نسخة احتياطية سحابية','اكتب ملاحظة للنسخة (اختياري):',{ok:'حفظ النسخة',input:{placeholder:'مثال: قبل إقفال الشهر'}});if(note===null)return;const r=await fetch(cleanCloudUrl(db.settings.cloudUrl)+'/rest/v1/ali_amlak_backups',{method:'POST',headers:{...cloudHeaders(true),Prefer:'return=minimal'},body:JSON.stringify({kind:'manual',payload:p,note:note||null,source_updated_at:db.settings.lastCloudUpdatedAt||null,shops:db.shops.length,contracts:db.contracts.length,receipts:db.receipts.length,expenses:db.expenses.length})});if(!r.ok)throw new Error(await cloudError(r));log('نسخة احتياطية سحابية',note||'');persistLocal();toast('تم حفظ النسخة في السحابة');drawCloudBackups()}catch(e){toast('تعذر الحفظ: '+String(e.message||e).slice(0,140),'error')}}
+async function downloadCloudBackup(bid){try{const r=await cloudBackupPayload(bid);downloadBlob(JSON.stringify(r.payload,null,1),'ali-amlak-cloud-'+String(r.created_at).slice(0,16).replace(/[:T]/g,'-')+'.json','application/json')}catch(e){toast('تعذر التنزيل: '+e.message,'error')}}
+async function restoreCloudBackup(bid){try{const r=await cloudBackupPayload(bid);importBackup({target:{files:[new File([JSON.stringify(r.payload)],'cloud-'+bid+'.json')]}})}catch(e){toast('تعذر الاستعادة: '+e.message,'error')}}
+async function drawCloudBackups(){const el=$('#cloudBkList');if(!el)return;el.innerHTML='<p class="muted">جارٍ التحميل…</p>';try{const l=await cloudBackups();el.innerHTML=l.length?l.map(b=>`<div class="li"><div class="av">${ic('cloud','width="18"')}</div><div class="tx"><b class="num">${new Date(b.created_at).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'})} <span class="badge ${b.kind==='manual'?'gold':b.kind==='daily'?'green':'gray'}">${BK_KIND[b.kind]||b.kind}</span></b><small>${b.shops} محل · ${b.contracts} عقد · ${b.receipts} قبض · ${b.expenses} صرف${b.note?' · '+esc(b.note):''}</small></div><button class="btn btn-light btn-sm" title="تنزيل" onclick="downloadCloudBackup(${b.id})">${ic('download')}</button>${currentUser.role==='admin'?`<button class="btn btn-light btn-sm" onclick="restoreCloudBackup(${b.id})">استعادة</button>`:''}</div>`).join(''):'<p class="muted">لا توجد نسخ بعد.</p>'}catch(e){el.innerHTML=`<p class="muted">تعذر الاتصال بالسحابة: ${esc(String(e.message||e).slice(0,120))}</p>`}}
+const _sys2=PAGES.system;
+PAGES.system=host=>{_sys2(host);host.querySelector('.grid.g2.mt')?.insertAdjacentHTML('beforebegin',`<div class="card card-pad mt"><div class="card-title"><div><h3>النسخ الاحتياطية في السحابة</h3><small>تلقائية من الخادم: نسخة يومية تُحفظ سنة كاملة، ونسخة قبل أي تعديل (كل ساعة على الأكثر) تُحفظ 14 يومًا. لا يمكن حذفها أو تعديلها من البرنامج.</small></div><div style="display:flex;gap:8px"><button class="btn btn-light btn-sm" onclick="drawCloudBackups()">${ic('refresh')}تحديث</button><button class="btn btn-primary btn-sm" onclick="manualCloudBackup()">${ic('cloud')}نسخة الآن</button></div></div><div class="list" id="cloudBkList" style="max-height:420px;overflow:auto"></div></div>`);drawCloudBackups()};
 
 init();
 </script>

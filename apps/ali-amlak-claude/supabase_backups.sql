@@ -1,0 +1,6 @@
+-- نسخ احتياطية سحابية لأملاك علي يحيى (مطبّقة على المشروع sanabel-mart بتاريخ 2026-11-24)
+-- الجدول ali_amlak_backups: قراءة وإضافة يدوية فقط من التطبيق، بلا تعديل أو حذف.
+-- trigger ali_amlak_backup_trg: يحفظ النسخة السابقة قبل أي تحديث للبيانات الرئيسية (مرة كل ساعة على الأكثر).
+-- cron ali-amlak-daily-backup: نسخة يومية 23:47 بتوقيت الرياض + حذف النسخ الساعية بعد 14 يومًا واليومية/اليدوية بعد سنة.
+-- لاستعادة نسخة من لوحة Supabase مباشرة (عند الطوارئ):
+--   update ali_amlak_store set payload = (select payload from ali_amlak_backups where id = <رقم النسخة>), updated_at = now() where id = 'main';
