@@ -401,7 +401,7 @@ td.num,th.num{display:table-cell}
 table.t th.right,table.t td.right{text-align:left}
 
 @media print{
-  #printSheet{width:auto!important;max-width:none!important;margin:0!important;overflow:visible!important}
+  #printSheet:not(.thermal){width:auto!important;max-width:none!important;margin:0!important;overflow:visible!important}
   .print-sheet.a4 table{table-layout:auto;width:100%!important}
   .print-sheet .report-head,.print-sheet .report-kpis{break-inside:avoid}
   .print-sheet .signature-row{break-inside:avoid;page-break-inside:avoid}
@@ -501,7 +501,7 @@ const DEFAULT_CONTRACT_CLAUSES=[
 
 /* ===== أملاك علي يحيى الشريمي وأولاده — النواة: البيانات والحسابات والمزامنة =====
    متوافق 100% مع بنية بيانات النسخة السابقة (aliAmlakDB / جدول ali_amlak_store) */
-const APP_VERSION='C1.6';
+const APP_VERSION='C1.7';
 const AR_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const BIZ='أملاك علي يحيى الشريمي وأولاده';
 const DEFAULT_DATA={
@@ -1356,7 +1356,17 @@ async function startFresh(){const pin=await ask('مسح بيانات العمل'
 /* ===== الطباعة والتقارير المؤرشفة ===== */
 /* حجم الورقة يُحدَّد لحظة الطباعة حتى يُرسم التقرير على عرض الورقة الفعلي (عمودي/أفقي/حراري) */
 function setPageSize(cls){let st=document.getElementById('pageSizeStyle');if(!st){st=document.createElement('style');st.id='pageSizeStyle';document.head.appendChild(st)}st.textContent=/thermal/.test(cls)?'@page{margin:2mm}':/landscape|page-copy/.test(cls)?'@page{size:A4 landscape;margin:10mm}':'@page{size:A4 portrait;margin:10mm}'}
-function sheet(cls,html){const s=$('#printSheet');s.className='print-sheet '+cls;s.innerHTML=html;setPageSize(cls);setTimeout(()=>window.print(),150)}
+function pageRule(cls){return /thermal/.test(cls)?'@page{margin:2mm}':/landscape|page-copy/.test(cls)?'@page{size:A4 landscape;margin:10mm}':'@page{size:A4 portrait;margin:10mm}'}
+/* الطباعة في صفحة مستقلة نظيفة (إطار مخفي) لا تحتوي إلا التقرير، فلا يتأثر بعرض نافذة البرنامج أو القائمة الجانبية أو التكبير */
+function buildPrintDoc(cls,html){const css=[...document.querySelectorAll('style')].filter(s=>s.id!=='pageSizeStyle').map(s=>s.textContent).join('\n');
+  return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(db.settings.businessName)}</title><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet"><style>${css}</style><style>${pageRule(cls)}
+  html,body{margin:0!important;padding:0!important;background:#fff!important;width:auto!important;min-width:0!important;height:auto!important;min-height:0!important}
+  #printSheet{display:block!important;margin:0!important}#printSheet:not(.thermal){width:auto!important}#printSheet.thermal{width:72mm!important;margin:0 auto!important}</style></head><body><div id="printSheet" class="print-sheet ${cls}">${html}</div></body></html>`}
+function sheet(cls,html){const s=$('#printSheet');s.className='print-sheet '+cls;s.innerHTML=html;setPageSize(cls);window.__sheetReady=true;
+  document.getElementById('printFrame')?.remove();const f=document.createElement('iframe');f.id='printFrame';f.setAttribute('aria-hidden','true');f.style.cssText='position:fixed;left:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none';document.body.appendChild(f);
+  const d=f.contentDocument;d.open();d.write(buildPrintDoc(cls,html));d.close();
+  const go=()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){window.print()}finally{window.__sheetReady=false}};
+  const fontsReady=d.fonts?.ready||Promise.resolve();Promise.race([fontsReady,new Promise(r=>setTimeout(r,1500))]).then(()=>setTimeout(go,120))}
 function reportHeader(title,subtitle=''){const st=db.settings,owner=st.ownerName&&!st.businessName.includes(st.ownerName)?`<div>${esc(st.ownerName)}</div>`:'';return `<div class="report-head"><div><h2 style="text-align:right">${esc(st.businessName)}</h2>${owner}<small>${esc(st.address||'')}${st.commercialNo?' · س.ت '+esc(st.commercialNo):''}</small></div><div style="text-align:left"><strong>${esc(title)}</strong><div>${esc(subtitle)}</div><small>تاريخ الطباعة: ${dateAr(today())}</small></div></div>`}
 function reportSpec(title,subtitle,content,orientation='auto',meta=null){return {title,subtitle,content,orientation,meta}}
 function detectOrientation(content){const m=String(content).match(/<th/g);return m&&m.length>14?'landscape':'portrait'}
@@ -1594,8 +1604,7 @@ const _sys2=PAGES.system;
 PAGES.system=host=>{_sys2(host);host.querySelector('.grid.g2.mt')?.insertAdjacentHTML('beforebegin',`<div class="card card-pad mt"><div class="card-title"><div><h3>النسخ الاحتياطية في السحابة</h3><small>تلقائية من الخادم: نسخة يومية تُحفظ سنة كاملة، ونسخة قبل أي تعديل (كل ساعة على الأكثر) تُحفظ 14 يومًا. لا يمكن حذفها أو تعديلها من البرنامج.</small></div><div style="display:flex;gap:8px"><button class="btn btn-light btn-sm" onclick="drawCloudBackups()">${ic('refresh')}تحديث</button><button class="btn btn-primary btn-sm" onclick="manualCloudBackup()">${ic('cloud')}نسخة الآن</button></div></div><div class="list" id="cloudBkList" style="max-height:420px;overflow:auto"></div></div>`);drawCloudBackups()};
 
 /* ---------- الطباعة: Ctrl+P من أي شاشة يطبع الشاشة الحالية بتنسيق A4 بدل صفحة فارغة ---------- */
-const _sheet=sheet;
-sheet=function(cls,html){window.__sheetReady=true;_sheet(cls,html)};
+
 window.addEventListener('beforeprint',()=>{if(window.__sheetReady||!currentUser)return;const s=$('#printSheet'),page=$('#page'),modal=$('#modal .modal-body');const src=modal||page;if(!src)return;
   const clone=src.cloneNode(true);clone.querySelectorAll('input,select,textarea').forEach(i=>{if(i.type==='checkbox'||i.type==='file')return;const sp=document.createElement('span');sp.textContent=i.tagName==='SELECT'?(i.options[i.selectedIndex]?.text||''):i.value;i.replaceWith(sp)});
   const title=modal?($('#modal .modal-head h3')?.textContent||''):($('#topTitle')?.textContent||'');s.className='print-sheet page-copy';setPageSize('page-copy');s.innerHTML=reportHeader(title,'')+clone.innerHTML});
