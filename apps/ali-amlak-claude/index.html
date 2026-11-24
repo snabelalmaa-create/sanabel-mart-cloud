@@ -434,6 +434,7 @@ table.t th.right,table.t td.right{text-align:left}
 @media (max-width:860px){.toolbar .dp-wrap{flex:1}.dp-show{min-width:0}}
 @media print{.dp-btn{display:none}}
 @media print{.print-sheet.reminder>div{width:auto!important;padding:0!important}}
+.upd-bar{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:400;background:var(--ink);color:#fff;border-radius:14px;padding:9px 10px 9px 16px;display:flex;gap:14px;align-items:center;box-shadow:0 14px 36px -10px rgba(0,0,0,.45);font-size:14.5px}
 
 </style>
 </head>
@@ -500,7 +501,7 @@ const DEFAULT_CONTRACT_CLAUSES=[
 
 /* ===== أملاك علي يحيى الشريمي وأولاده — النواة: البيانات والحسابات والمزامنة =====
    متوافق 100% مع بنية بيانات النسخة السابقة (aliAmlakDB / جدول ali_amlak_store) */
-const APP_VERSION='C1.5';
+const APP_VERSION='C1.6';
 const AR_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const BIZ='أملاك علي يحيى الشريمي وأولاده';
 const DEFAULT_DATA={
@@ -901,7 +902,7 @@ function init(){
   setupPin();renderLogin();
   const sid=sessionStorage.getItem('aliAmlakUser'),su=db.users.find(u=>u.id===sid&&u.active);
   if(su)startSession(su);else focusPin();
-  if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}).catch(()=>{});
   setCloudState(db.settings.cloudEnabled?'جارٍ الاتصال…':'السحابة غير مفعلة',db.settings.cloudEnabled?'busy':'error');
   setTimeout(()=>syncNow(true),700);
   cloud.pollTimer=setInterval(()=>{if(!document.hidden)syncNow(true)},8000);
@@ -1702,6 +1703,11 @@ const _cv2=openContractView;
 openContractView=function(cid){_cv2(cid);if(reminderData(cid).dues.length)$('#modal .modal-foot')?.insertAdjacentHTML('beforeend',`<button class="btn btn-light" onclick="openReminder('${cid}')">مطالبة PDF</button>`)};
 const _dc2=drawCollector;
 drawCollector=function(){_dc2();document.querySelectorAll('#colList .col-item').forEach(el=>{const b=el.querySelector('.btn-success');const cid=b?.getAttribute('onclick')?.match(/'(.+)'/)?.[1];if(cid&&overdueForContract(cid)>0.001)b.insertAdjacentHTML('beforebegin',`<button class="btn btn-light btn-sm" onclick="openReminder('${cid}')">مطالبة</button>`)})};
+
+/* ---------- فحص التحديثات: يظهر شريط عند توفر نسخة أحدث ---------- */
+async function checkForUpdate(){if(!location.protocol.startsWith('http'))return;try{const r=await fetch('./index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const t=await r.text();const m=t.match(/const APP_VERSION='([^']+)'/);if(m&&m[1]!==APP_VERSION&&!document.getElementById('updBar')){const b=document.createElement('div');b.id='updBar';b.className='upd-bar';b.innerHTML=`<span>يتوفر تحديث جديد للبرنامج (${esc(m[1])})</span><button class="btn btn-gold btn-sm" onclick="applyUpdate()">تحديث الآن</button>`;document.body.appendChild(b)}}catch{}}
+async function applyUpdate(){try{const regs=await navigator.serviceWorker?.getRegistrations?.()||[];await Promise.all(regs.map(r=>r.update().catch(()=>{})));const ks=await caches?.keys?.()||[];await Promise.all(ks.map(k=>caches.delete(k)))}catch{}location.reload()}
+setTimeout(checkForUpdate,5000);setInterval(checkForUpdate,10*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkForUpdate()});
 
 init();
 </script>
