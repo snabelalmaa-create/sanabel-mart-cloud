@@ -513,7 +513,7 @@ const DEFAULT_CONTRACT_CLAUSES=[
 
 /* ===== أملاك علي يحيى الشريمي وأولاده — النواة: البيانات والحسابات والمزامنة =====
    متوافق 100% مع بنية بيانات النسخة السابقة (aliAmlakDB / جدول ali_amlak_store) */
-const APP_VERSION='C2.4';
+const APP_VERSION='C2.5';
 const AR_MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const BIZ='أملاك علي يحيى الشريمي وأولاده';
 const DEFAULT_DATA={
@@ -1759,9 +1759,8 @@ function stCalc(s){
 }
 function stHTML(s){const c=stCalc(s),sh=shopById(s.shopId);
   return kpis([['مقبوضات الفترة',money(c.revenue)],['المحوّل للمالك مباشرة',money(c.transferred)],['المصروفات',money(c.expenses)],['الباقي بعد الخصم',money(c.remaining)]])+
-  `<p>الباقي = مقبوضات الفترة − المبالغ المحوّلة للمالك مباشرة − المصروفات خلال الفترة.${(s.extraReceipts||[]).length?' يشمل '+s.extraReceipts.length+' سند قبض مضاف يدويًا من خارج الفترة.':''}</p>
+  `<p>الباقي = مقبوضات الفترة − المبالغ المحوّلة للمالك مباشرة − المصروفات خلال الفترة.</p>
   <h3 class="report-title">الملخص حسب المحل</h3><table class="st-sum"><thead><tr><th>المحل</th><th>عن فترة السداد</th><th>المقبوضات</th><th>المحوّل للمالك</th><th>المصروفات</th><th>الباقي</th></tr></thead><tbody>${c.rows.map(r=>`<tr><td>${r.shop?esc(r.shop.no+' — '+r.shop.name):esc(r.label||'عام')}</td><td style="min-width:150px">${esc(r.cov||'—')}</td><td>${money(r.rec)}</td><td>${money(r.t)}</td><td>${money(r.e)}</td><td><b>${money(r.rem)}</b></td></tr>`).join('')||'<tr><td colspan="6">لا توجد حركات في الفترة</td></tr>'}</tbody><tfoot><tr><th>الإجمالي</th><th>—</th><th>${money(c.revenue)}</th><th>${money(c.transferred)}</th><th>${money(c.expenses)}</th><th>${money(c.remaining)}</th></tr></tfoot></table>
-  ${(s.extraReceipts||[]).length?`<h3 class="report-title">سندات قبض مضافة من خارج الفترة</h3><table><thead><tr><th>السند</th><th>التاريخ</th><th>المستأجر</th><th>المحل</th><th>عن فترة السداد</th><th>المبلغ</th></tr></thead><tbody>${s.extraReceipts.map(i=>db.receipts.find(r=>r.id===i)).filter(Boolean).map(r=>{const cc=contractById(r.contractId);return `<tr><td>${esc(r.no)}</td><td>${dateAr(r.date)}</td><td>${esc(cc?.tenant||'')}</td><td>${esc(shopById(cc?.shopId)?.name||'')}</td><td>${esc(receiptCoverageSummary(r))}</td><td>${money(r.amount)}</td></tr>`}).join('')}</tbody></table>`:''}
   <h3 class="report-title">المبالغ المحوّلة للمالك مباشرة</h3><table><thead><tr><th>م</th><th>التاريخ</th><th>عن المحل</th><th>المبلغ</th><th>البيان</th></tr></thead><tbody>${c.tr.map((t,i)=>`<tr><td>${i+1}</td><td>${dateAr(t.date)}</td><td>${esc(shopById(t.shopId)?.name||'عام')}</td><td>${money(t.amount)}</td><td style="white-space:pre-wrap">${esc(t.note||'—')}</td></tr>`).join('')||'<tr><td colspan="5">لا توجد تحويلات</td></tr>'}</tbody><tfoot><tr><th colspan="3">إجمالي المحوّل</th><th>${money(c.transferred)}</th><th></th></tr></tfoot></table>
   <h3 class="report-title">المصروفات خلال الفترة</h3><table><thead><tr><th>م</th><th>التاريخ</th><th>المحل</th><th>البند</th><th>المبلغ</th><th>البيان</th><th>المصدر</th></tr></thead><tbody>${[...c.sys.map(e=>({...e,src:'سند صرف '+e.no})),...c.ex.map(e=>({...e,src:'مضاف في التقرير'}))].sort((a,b)=>String(a.date).localeCompare(String(b.date))).map((e,i)=>`<tr><td>${i+1}</td><td>${dateAr(e.date)}</td><td>${esc(shopById(e.shopId)?.name||'عام')}</td><td>${esc(e.category||'—')}</td><td>${money(e.amount)}</td><td style="white-space:pre-wrap">${esc(e.note||'—')}</td><td>${esc(e.src)}</td></tr>`).join('')||'<tr><td colspan="7">لا توجد مصروفات</td></tr>'}</tbody><tfoot><tr><th colspan="4">إجمالي المصروفات</th><th>${money(c.expenses)}</th><th colspan="2"></th></tr></tfoot></table>
   <div class="report-kpis" style="grid-template-columns:1fr"><div class="report-kpi" style="text-align:center"><small>الباقي المستحق بعد خصم المحوّل والمصروفات</small><strong style="font-size:18px">${money(c.remaining)}</strong><small>${esc(tafqeet(Math.abs(c.remaining)))}${c.remaining<0?' (بالسالب)':''}</small></div></div>
@@ -1869,6 +1868,9 @@ function doAddReceiptToReport(arid,rid){const a=archiveById(arid),s=a.settlement
 const _rDone=receiptDone;receiptDone=function(rid){_rDone(rid);if(settlementList().length||can('edit'))$('#modal .modal-foot')?.insertAdjacentHTML('beforeend',`<button class="btn btn-gold" onclick="addReceiptToReport('${rid}')">${ic('wallet')}إضافة لتقرير تسوية</button>`)};
 const _drawR=drawReceipts;drawReceipts=function(){_drawR();document.querySelectorAll('#rBody tr').forEach(tr=>{const b=tr.querySelector('.row-acts .icon-btn');const rid=b?.getAttribute('onclick')?.match(/'(.+)'/)?.[1];const m=tr.querySelector('.menu-pop');if(rid&&m)m.insertAdjacentHTML('beforeend',`<button onclick="this.closest('.menu').classList.remove('open');addReceiptToReport('${rid}')">${ic('wallet')}إضافة لتقرير تسوية</button>`)})};
 const _rDet=receiptDetails;receiptDetails=function(rid){_rDet(rid);$('#modal .modal-foot')?.insertAdjacentHTML('beforeend',`<button class="btn btn-gold" onclick="addReceiptToReport('${rid}')">${ic('wallet')}إضافة لتقرير تسوية</button>`)};
+
+/* تحديث تقارير التسوية المحفوظة التي ظهر فيها قسم «سندات مضافة من خارج الفترة» */
+setTimeout(()=>{let n=0;for(const a of settlementList()){if(a.settlement&&/سندات قبض مضافة من خارج الفترة|مضاف يدويًا من خارج الفترة/.test(a.html||'')){const spec=stSpec(a.settlement);a.html=reportDocumentHTML(spec);a.updatedAt=nowISO();n++}}if(n)saveDB()},3000);
 
 /* ===== محرك PDF ثابت لمقاس A4: البرنامج يرسم المستند بنفسه بالمقاس الصحيح =====
    لا يعتمد على إعدادات الطباعة في المتصفح (الهوامش/المقياس/اتجاه الورقة)، فيطلع مرتبًا دائمًا. */
